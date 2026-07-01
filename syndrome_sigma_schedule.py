@@ -545,6 +545,11 @@ def summarize_chunk_diagnostics(chunk_diags: list[dict]) -> list[dict]:
         ratios_all, weights_all, sigma_all = [], [], []
         sigma_dist: dict = {}
         alt_ratios_all: list = []
+        # EP convergence/evidence metrics (Task 6; present only in EP mode).
+        ep_float_keys = ("src_site_l2", "src_site_delta_l2", "src_site_max_abs",
+                         "source_logZ", "source_free_energy")
+        ep_vals: dict = {k: [] for k in ep_float_keys}
+        ep_any_diverged = False
 
         for d in rows:
             r = tf.cast(d["syndrome_ratio"], tf.float32).numpy().reshape(-1)
@@ -555,6 +560,11 @@ def summarize_chunk_diagnostics(chunk_diags: list[dict]) -> list[dict]:
             sigma_all.append(s)
             for k, v in lookup_sigma_distribution(d["sigma"]).items():
                 sigma_dist[k] = sigma_dist.get(k, 0) + int(v)
+            for k in ep_float_keys:
+                if d.get(k) is not None:
+                    ep_vals[k].append(float(d[k]))
+            if d.get("ep_diverged"):
+                ep_any_diverged = True
 
             sd = d.get("sign_debug")
             if sd is not None and isinstance(sd, dict):
@@ -591,5 +601,11 @@ def summarize_chunk_diagnostics(chunk_diags: list[dict]) -> list[dict]:
                 "alt_mean_ratio": float(np.mean(alt_ratios)),
                 "primary_better": bool(np.mean(ratios) <= np.mean(alt_ratios)),
             }
+        # Attach aggregated EP metrics if this chunk carried them (EP mode).
+        if any(ep_vals[k] for k in ep_float_keys):
+            ep_summary = {f"mean_{k}": float(np.mean(ep_vals[k]))
+                          for k in ep_float_keys if ep_vals[k]}
+            ep_summary["ep_diverged"] = bool(ep_any_diverged)
+            entry["ep_metrics"] = ep_summary
         out.append(entry)
     return out
