@@ -131,6 +131,7 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                  bp_convergence=False, bp_conv_tol=1.0e-3,
                  bp_max_iter=200, bp_conv_verbose=False,
                  bp_track_delta=False,
+                 bp_reset_each_chunk=False,
                  k_payload=None, img_h=28, img_w=28, bits_per_pixel=8,
                  denoiser_kwargs=None,
                  # Adaptive sigma — either pass a scheduler or legacy params.
@@ -184,6 +185,11 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         # WITHOUT changing behaviour — fixed mode is stepped one iter at a time,
         # which is bit-identical to a single num_iter call (EP_THEORY.md §4.5).
         self._bp_track_delta = bool(bp_track_delta)
+        # DIAGNOSTIC (Part C): if True, reset the BP warm-start state
+        # (curr_msg_v2c=None) after each non-final chunk, so every chunk's BP
+        # starts cold from the current prior.  Used to test whether the warm-start
+        # state hides a source double-count.  Default False preserves warm-start.
+        self._bp_reset_each_chunk = bool(bp_reset_each_chunk)
         self._last_bp_stats = []
         self._last_src_site = None       # final source site of the latest decode
         self._k_payload_custom = int(k_payload) if k_payload is not None else None
@@ -335,6 +341,16 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
     @bp_track_delta.setter
     def bp_track_delta(self, value):
         self._bp_track_delta = bool(value)
+
+    @property
+    def bp_reset_each_chunk(self):
+        """True → drop the BP warm-start (msg_v2c) after each non-final chunk
+        (diagnostic; Part C — probes for warm-start-hidden source double-count)."""
+        return self._bp_reset_each_chunk
+
+    @bp_reset_each_chunk.setter
+    def bp_reset_each_chunk(self, value):
+        self._bp_reset_each_chunk = bool(value)
 
     @property
     def bp_conv_tol(self):
@@ -726,6 +742,12 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                 if ep_diag is not None:
                     chunk_diag.update(ep_diag)
                 self._last_chunk_diagnostics.append(chunk_diag)
+
+                # DIAGNOSTIC (Part C): optionally drop the BP warm-start so the
+                # next chunk starts cold from the (updated) prior.  Isolates
+                # whether msg_v2c carries a source residue across chunks.
+                if self._bp_reset_each_chunk:
+                    curr_msg_v2c = None
 
         finally:
             self._return_state = prev_return_state
