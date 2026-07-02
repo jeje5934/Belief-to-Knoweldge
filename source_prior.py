@@ -77,6 +77,14 @@ class SourcePriorDenoiser(nn.Module):
         # (sharper) bit-domain source site.  It is the fixed-variance path
         # required by Task 4; ``posterior_pixel_std`` overrides it per-call.
         self.sigma_post = sigma_post
+        # [Part D] Cavity per-pixel variance options (Approx A candidate).  The
+        # mean-only bit→pixel collapse (`llr_to_soft_field`) makes uncertain
+        # pixels mid-gray → an OOD denoiser input.  ``pixel_variance`` recovers a
+        # per-pixel cavity variance v_j; these flags let it drive (a) the denoiser
+        # σ (per-image scalar from √v_j) and/or (b) the pixel→bit read-out std.
+        # Default off preserves the fixed-σ / fixed-sigma_post path.
+        self.cavity_var_readout = False       # use √v_j as posterior_pixel_std
+        self.cavity_var_sigma = None          # None | "median" | "mean"
 
         weights = torch.tensor(
             [2 ** (bits_per_pixel - 1 - i) for i in range(bits_per_pixel)],
@@ -137,6 +145,21 @@ class SourcePriorDenoiser(nn.Module):
         img = soft_pixel / 255.0                     # μ_cav ∈ [0,1]
         img = img.reshape(B, 1, self.img_h, self.img_w)
         return img
+
+    def pixel_variance(self, llr):
+        """Per-pixel variance of the mean-field cavity image (independent bits).
+
+        μ_j = Σ_m w_m · p_jm   (the pixel mean `llr_to_soft_field` already uses)
+        v_j = Σ_m w_m² · p_jm·(1−p_jm)                          [Part D]
+
+        with w_m the bit place-value and p_jm = P(bit_m = 1) = sigmoid(llr).
+        Large v_j ⇒ the pixel is uncertain (the mean collapses to gray).  Units:
+        0..255² (variance); take sqrt for a per-pixel std in 0..255.  Shape [B, n_pix].
+        """
+        B = llr.shape[0]
+        p = torch.sigmoid(llr).reshape(B, self.n_pixels, self.bpp)
+        v = (p * (1.0 - p) * (self.bit_weights ** 2)).sum(dim=-1)
+        return v
 
     def soft_field_to_posterior_logits(self, img, posterior_pixel_std=None):
         """Projected pixel MEAN → bit-domain projected posterior LLRs.
@@ -265,15 +288,28 @@ class SourcePriorDenoiser(nn.Module):
             sigma = sigma.unsqueeze(0)
         sigma = sigma.expand(llr.shape[0])
 
+        # [Part D] cavity per-pixel std √v_j (0..255) from the independent-bit
+        # variance, used to (a) set a per-image σ and/or (b) the read-out std.
+        cav_std_pix = None
+        if self.cavity_var_readout or self.cavity_var_sigma is not None:
+            cav_std_pix = torch.sqrt(
+                self.pixel_variance(cavity_llr).clamp(min=1e-8))     # [B, n_pix], 0..255
+        if self.cavity_var_sigma is not None:
+            q = cav_std_pix / 255.0                                   # normalized per-pixel std
+            s_img = (q.median(dim=1).values if self.cavity_var_sigma == "median"
+                     else q.mean(dim=1))                              # per-image scalar
+            sigma = s_img.clamp(min=1e-3).to(sigma.dtype)            # override global σ
+
         # (3a) projection, 1st moment: Tweedie posterior mean via the EDM
         #      denoiser.  D(μ_cav; σ) = E[clean image | Gaussian obs] = the
         #      projected posterior MEAN.  EXACT given the score network.
         mu_proj = self.net(mu_cavity, sigma)
         mu_proj = mu_proj.clamp(0.0, 1.0)
 
-        # (3b) projection, 2nd moment: APPROXIMATED.  Spread the projected mean
-        #      into a soft per-level distribution using a FIXED projected pixel
-        #      std, then read off bit marginals.  [Approx C — fixed 2nd moment.]
+        # (3b) projection, 2nd moment.  [Part D] optionally use the per-pixel
+        #      cavity std √v_j as the read-out std (else fixed sigma_post / arg).
+        if self.cavity_var_readout and posterior_pixel_std is None:
+            posterior_pixel_std = cav_std_pix
         proj_llr = self.soft_field_to_posterior_logits(
             mu_proj, posterior_pixel_std=posterior_pixel_std)
 

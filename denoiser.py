@@ -59,6 +59,24 @@ class SoftDenoiser(tf.keras.layers.Layer):
     def prior_model(self):
         return self._prior
 
+    @property
+    def cavity_var_readout(self):
+        """[Part D] use per-pixel cavity std √v_j as the pixel→bit read-out std."""
+        return self._prior.cavity_var_readout
+
+    @cavity_var_readout.setter
+    def cavity_var_readout(self, value):
+        self._prior.cavity_var_readout = bool(value)
+
+    @property
+    def cavity_var_sigma(self):
+        """[Part D] set the denoiser σ per image from √v_j: None | 'median' | 'mean'."""
+        return self._prior.cavity_var_sigma
+
+    @cavity_var_sigma.setter
+    def cavity_var_sigma(self, value):
+        self._prior.cavity_var_sigma = value
+
     def load_weights_pt(self, path):
         state = torch.load(path, map_location=self._device, weights_only=True)
         self._prior.load_state_dict(state)
