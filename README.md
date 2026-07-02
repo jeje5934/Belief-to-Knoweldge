@@ -2,9 +2,10 @@
 
 5G-LDPC decoding of **Fashion-MNIST images** over an AWGN channel, with a
 learned EDM **score denoiser** supplying an image-domain prior. This branch
-(`pure-EP_ada-sigma`) reformulates the decoder as **Expectation Propagation
-(EP)** on a three-factor graph and documents, honestly, where pure EP works and
-where it does not.
+(`pure-EP_tweedie-2nd-diagonal-precision`) reformulates the decoder as
+**Expectation Propagation (EP)** on a three-factor graph and adds the principled
+**diagonal Tweedie 2nd-order (per-pixel) precision** for the source site — then
+shows, honestly, that it is *not enough* to make pure EP decode.
 
 > ### Status — read this first
 > **EP-aligned decoder. `full_ep` (α=1, the source site reflected in full) is the
@@ -16,6 +17,15 @@ where it does not.
 > hindsight, exactly this fractional EP (an implicit precision discount on the
 > denoiser). Do not read "EP" here as "it just works": the honest result is that
 > *pure* EP is a reference point and *fractional* EP is the practical decoder.
+>
+> **This branch adds diagonal Tweedie precision — and it does not save pure EP.**
+> Filling the source site's per-pixel precision with the real diagonal Tweedie
+> 2nd moment (`σ²·diag ∂D/∂x̃`) still gives BLER 1.0 under `full_ep`: the
+> denoiser's error is *inter-pixel correlated*, so a *diagonal* precision cannot
+> catch it, and the full `d×d` covariance (`d=784`→`d²≈6.1·10⁵`) is intractable
+> and unrepresentable by the Gaussian EP site. So the site cannot be correctly
+> *shaped*, only *down-weighted* → fractional EP. (Sibling branch
+> `pure-EP_ada-sigma` uses a fixed `sigma_post` instead.)
 > See `docs/EP_SCHEDULING_EXPERIMENT.md` §5 and `docs/EP_APPENDIX.md` §A.6.
 
 ---
@@ -82,20 +92,36 @@ poisoned every round (proven by per-round BER and cleanup-BP tests,
 precision discount** on the miscalibrated denoiser factor. This is the sharpest
 form of the project's **EP-fidelity vs performance** tension.
 
-## 4. This branch: source-projection variance via adaptive σ
+## 4. This branch: diagonal Tweedie 2nd-order precision (and why it is not enough)
 
-The EP source projection formally needs the **cavity variance**. This branch
-supplies it through the existing **syndrome-ratio adaptive σ** scheduler: the
-syndrome ratio (fraction of unsatisfied parity checks) is a cheap proxy for the
-cavity's **global, per-image** uncertainty (distance from the code manifold),
-and selects the denoiser σ per chunk (`FixedSigmaScheduler` /
-`HandcraftedLookupScheduler` / `CalibratedLookupScheduler`, see
-`syndrome_sigma_schedule.py`). The pixel→bit read-out uses a **fixed
-`sigma_post`** — a per-pixel precision **slot** exists
-(`source_prior.py`: `projected_pixel_precision`, `forward(return_precision=)`)
-but is not filled here. (The sibling branch
-`pure-EP_tweedie-2nd-diagonal-precision` fills it with a real diagonal Tweedie
-2nd moment; see there.)
+The EP source projection formally needs the source site's **precision** (2nd
+moment), not just its mean. This branch **computes it per pixel** from the
+denoiser's own Jacobian via Tweedie's formula:
+
+```
+Var[s_j | x̃] = σ² · ∂D_j/∂x̃_j          (Tweedie diagonal 2nd moment)
+```
+
+estimated by **Hutchinson finite differences** (Rademacher probes,
+**no backprop**; `source_prior.py::_tweedie_pixel_std`) and fed as the per-pixel
+`sigma_post` into the pixel→bit read-out. Toggle with
+`denoiser.tweedie_precision = True`; **default off** falls back to the fixed
+`sigma_post` (the `pure-EP_ada-sigma` behaviour). The `σ` itself still comes from
+the syndrome-ratio adaptive scheduler (a global per-image proxy for the cavity
+variance; `syndrome_sigma_schedule.py`).
+
+**Honest result — it does not rescue pure EP.** With the diagonal Tweedie
+precision, `full_ep` still decodes at **BLER 1.0**. The denoiser fails by
+hallucinating the *wrong garment* — an **inter-pixel correlated** error. A
+**diagonal** precision only measures per-pixel local sensitivity and cannot see
+it; catching it needs the full projected covariance `σ²·∂D/∂x̃`, a dense `d×d`
+matrix (`d = n_pix = 784` → `d² ≈ 6.1·10⁵` entries) that is intractable to
+estimate/propagate and, crucially, **not representable** by the diagonal Gaussian
+EP site. So *exact* EP for this factor is out of reach: the site cannot be
+correctly **shaped**, only **down-weighted** — which is the fundamental
+justification for **fractional EP** (§3). Details:
+`docs/EP_SCHEDULING_EXPERIMENT.md` §5.2, `docs/EP_APPENDIX.md` §A.6.4. The sibling
+branch `pure-EP_ada-sigma` omits this computation and uses a fixed `sigma_post`.
 
 ## 5. Documentation (`docs/`)
 

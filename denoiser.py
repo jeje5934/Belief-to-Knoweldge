@@ -59,6 +59,15 @@ class SoftDenoiser(tf.keras.layers.Layer):
     def prior_model(self):
         return self._prior
 
+    @property
+    def tweedie_precision(self):
+        """Toggle real Tweedie 2nd-moment per-pixel site precision (Approx C)."""
+        return self._prior.tweedie_precision
+
+    @tweedie_precision.setter
+    def tweedie_precision(self, value):
+        self._prior.tweedie_precision = bool(value)
+
     def load_weights_pt(self, path):
         state = torch.load(path, map_location=self._device, weights_only=True)
         self._prior.load_state_dict(state)

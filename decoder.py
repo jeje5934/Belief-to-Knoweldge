@@ -69,12 +69,10 @@ LDPC5GDecoder_soft — BP + source-extrinsic denoiser.
 
   Named approximations (see docs/EP_APPENDIX.md §A.6):
     * Approx C (2nd-moment calibration): the projected-posterior variance is a
-      FIXED sigma_post on this branch (over-confident); src_site carries the mean
-      (LLR) only.  A per-pixel precision slot exists (source_prior.py::
-      projected_pixel_precision); the diagonal Tweedie σ²·diag(∂D/∂x̃) is the
-      drop-in candidate, implemented on the sibling branch
-      pure-EP_tweedie-2nd-diagonal-precision and shown insufficient (correlated,
-      not diagonal).
+      fixed sigma_post by default, or the real diagonal Tweedie σ²·diag(∂D/∂x̃)
+      (source_prior.py::_tweedie_pixel_std, denoiser.tweedie_precision=True).  The
+      diagonal Tweedie is principled but INSUFFICIENT to rescue full_ep — the
+      denoiser's over-confidence is globally correlated, not diagonal (§5.2).
     * Approx D (sigma not from cavity variance): the denoiser sigma is chosen by
       the syndrome scheduler (a proxy for global per-image cavity uncertainty),
       not the cavity std (EP_THEORY.md §4.1 step 3).

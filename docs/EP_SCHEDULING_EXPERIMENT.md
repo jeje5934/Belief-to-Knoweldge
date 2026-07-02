@@ -144,7 +144,7 @@ waterfall 0.4–1.2 dB.
 
 ---
 
-## 5. Decode quality: full EP fails; damping is required
+## 5. Decode quality: full EP fails; damping is required (Tweedie insufficient)
 
 Convergence dynamics (§2) do not measure decoding. Measuring BLER/BER at 0.8 dB
 (CRC-checked; harness validated by turbo α=0.1 reproducing the README) exposes a
@@ -176,18 +176,33 @@ over-confident *wrong* image; `full_ep` (α_ep=1) trusts that site fully and the
 belief is corrupted. `full_ep` is EP-*aligned* (`full_ep == turbo α=1,β=0`,
 verified) but α=1 is empirically catastrophic — turbo α=1 also gives BLER 1.0.
 
-### 5.2 A principled per-pixel precision correction — candidate
+### 5.2 Diagonal Tweedie 2nd-moment precision does **not** rescue it (Approx C)
 
-The over-confidence is a *2nd-moment* (precision) miscalibration: this branch
-uses a **fixed** `sigma_post`, which is uniformly over-confident. The principled
-fix is to fill the source site's precision with the real per-pixel projected
-variance — the diagonal Tweedie 2nd moment `v_proj = σ²·∂D/∂x̃` — for which the
-precision slot already has the right shape (`source_prior.py`:
-`projected_pixel_precision`, `forward(return_precision=)`). **This branch does not
-implement it** (see the sibling branch `pure-EP_tweedie-2nd-diagonal-precision`,
-which does — and finds the *diagonal* insufficient because the denoiser's error
-is inter-pixel *correlated*, not diagonal; see that branch's `EP_APPENDIX.md`
-§A.6 / §5.2). The trade-off is named in `EP_APPENDIX.md` §A.6.
+Implementing the real Tweedie posterior variance `v_proj = σ²·∂D/∂x̃` (Hutchinson
+finite-diff diagonal, `source_prior.py::_tweedie_pixel_std`, no backprop) and
+using it as the per-pixel bit-LLR std still fails:
+
+| config | round-1 BER | BLER |
+|---|---|---|
+| `full_ep` fixed `sigma_post` | 0.13 → 0.46 | 1.000 |
+| `full_ep` + Tweedie (floor 0.5) | 0.13 → 0.43 | 1.000 |
+| `full_ep` + Tweedie (floor 3.0) | 0.13 → 0.46 | 1.000 |
+
+Why: the diagonal Jacobian measures **local sensitivity**, but the denoiser is
+locally *confident* (∂D/∂x̃ ≈ 0 on the ~90 % black background) while **globally
+wrong** (it hallucinates the wrong garment) — a *correlated* error the per-pixel
+diagonal cannot see. Diagonal-Gaussian pure EP is therefore still miscalibrated.
+
+**Why not just use the full covariance?** Capturing the correlated error needs
+the dense projected covariance `Cov[s|x̃] = σ²·∂D/∂x̃`, a `d×d` matrix with
+`d = 784` → `d² ≈ 6.1·10⁵` entries per image — not exposed by a score denoiser
+and intractable to estimate/propagate per chunk, and in any case **not
+representable** by the diagonal Gaussian EP site. So *exact* EP for this factor
+is computationally/representationally out of reach; the site cannot be correctly
+*shaped*, only *down-weighted* — which is the fundamental justification for
+fractional EP (§5.3, `EP_APPENDIX.md` §A.6.4). (The sibling branch
+`pure-EP_ada-sigma` reaches the same conclusion with a fixed `sigma_post`, i.e.
+without the diagonal-Tweedie computation.)
 
 ### 5.3 Fractional EP (damped site) is necessary **and** sufficient
 
@@ -210,11 +225,10 @@ non-accumulatively (`EP_APPENDIX.md` §A.6).
 
 **Honest failure of *pure* EP; damping required.** Full EP integration of this
 learned denoiser fails because the denoiser is fundamentally miscalibrated
-(globally over-confident); a per-pixel precision correction is the natural
-candidate (§5.2, implemented on the sibling branch and found insufficient because
-the error is correlated, not diagonal). **Fractional EP — a damped source site —
-is practically necessary and, with the accumulated site kept small, matches the
-best turbo (BLER ≈ 0.004).** This is the sharpest statement of the project's
-EP-fidelity-vs-performance tension.
+(globally over-confident), and the principled diagonal-Tweedie precision does not
+fix it (the miscalibration is correlated, not diagonal). **Fractional EP —
+a damped source site — is practically necessary and, with the accumulated site
+kept small, matches the best turbo (BLER ≈ 0.004).** This is the sharpest
+statement of the project's EP-fidelity-vs-performance tension.
 _Results table, waterfall-shift (dB), and the low-SNR schedule-adequacy diagnostic
 are inserted here once the sweep completes._

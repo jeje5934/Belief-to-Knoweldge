@@ -420,11 +420,8 @@ in [`EP_SCHEDULING_EXPERIMENT.md`](EP_SCHEDULING_EXPERIMENT.md).
 > the Bernoulli/Gaussian family *and is globally over-confident*; full site trust
 > corrupts the belief every round. A damped source site (`fractional_ep`, small
 > `ep_source_power`) is **required** to decode — not a cosmetic choice. See §5 of
-> the experiment report and `EP_APPENDIX.md` §A.6 for the decisive tests. (A
-> principled per-pixel precision correction is the natural candidate; the sibling
-> branch `pure-EP_tweedie-2nd-diagonal-precision` implements the diagonal Tweedie
-> 2nd moment and finds it insufficient — the miscalibration is correlated, not
-> diagonal.)
+> the experiment report and `EP_APPENDIX.md` §A.6 for the decisive tests and the
+> failed diagonal-Tweedie calibration.
 
 ---
 

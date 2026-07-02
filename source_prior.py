@@ -62,13 +62,29 @@ class SourcePriorDenoiser(nn.Module):
                  attn_resolutions=(7,),
                  dropout: float = 0.0,
                  sigma_data: float = 0.5,
-                 sigma_post: float = 3.0):
+                 sigma_post: float = 3.0,
+                 tweedie_precision: bool = False,
+                 tweedie_probes: int = 4,
+                 tweedie_eps: float = 0.02,
+                 tweedie_std_floor: float = 0.5,
+                 tweedie_std_cap: float = 128.0):
         super().__init__()
         self.img_h = img_h
         self.img_w = img_w
         self.bpp = bits_per_pixel
         self.n_pixels = img_h * img_w
         self.k_payload = self.n_pixels * bits_per_pixel
+        # [Approx C — real Tweedie 2nd moment].  When enabled, the per-pixel
+        # projected-posterior std used in the pixel→bit read-out is computed from
+        # the denoiser Jacobian diagonal (Tweedie: Var[s|x̃]=σ²·∂D/∂x̃), estimated
+        # by Hutchinson finite differences (NO backprop).  Uncertain pixels get a
+        # large std ⇒ a weak bit-LLR site — the honest fix for the overconfident
+        # fixed ``sigma_post``.  Default off preserves the fixed-variance path.
+        self.tweedie_precision = bool(tweedie_precision)
+        self.tweedie_probes = int(tweedie_probes)
+        self.tweedie_eps = float(tweedie_eps)
+        self.tweedie_std_floor = float(tweedie_std_floor)   # 0..255 units
+        self.tweedie_std_cap = float(tweedie_std_cap)
         # EP 2nd-moment (precision) approximation [Approx C].  ``sigma_post`` is
         # the FIXED std (in 0..255 pixel-value units) of the projected posterior
         # over each pixel's discrete level; it converts the denoised pixel MEAN
@@ -221,6 +237,38 @@ class SourcePriorDenoiser(nn.Module):
         return posterior_logits - input_llr
 
     # ------------------------------------------------------------------
+    # Tweedie 2nd moment  (real per-pixel precision, Approx C)
+    # ------------------------------------------------------------------
+
+    def _tweedie_pixel_std(self, mu_cavity, mu_proj, sigma):
+        """Per-pixel projected-posterior std via the Tweedie 2nd moment.
+
+        Tweedie:  Var[s | x̃] = σ² · ∂D/∂x̃   (diagonal, per pixel).
+        We estimate the Jacobian diagonal diag(∂D/∂x̃) with **Hutchinson
+        finite-difference** probes — no autograd/backprop:
+
+            diag ≈ mean_m  v_m ⊙ (D(x̃ + ε v_m) − D(x̃)) / ε ,   v_m ~ Rademacher.
+
+        A pixel where D tracks its input (∂D/∂x̃ large) is *uncertain* ⇒ large
+        variance ⇒ weak bit-LLR site; a pixel D denoises confidently
+        (∂D/∂x̃ small) ⇒ small variance ⇒ strong site.
+
+        Returns per-pixel std in 0..255 units, shape [B, n_pixels].
+        """
+        B = mu_cavity.shape[0]
+        sig4 = sigma.reshape(B, 1, 1, 1)
+        diag = torch.zeros_like(mu_cavity)
+        for _ in range(self.tweedie_probes):
+            v = (torch.randint(0, 2, mu_cavity.shape, device=mu_cavity.device,
+                               dtype=mu_cavity.dtype) * 2.0 - 1.0)   # ±1 Rademacher
+            Dv = self.net(mu_cavity + self.tweedie_eps * v, sigma).clamp(0.0, 1.0)
+            diag = diag + v * (Dv - mu_proj) / self.tweedie_eps
+        diag = (diag / self.tweedie_probes).clamp(0.0, 1.0)   # ∂D/∂x̃ ∈ [0,1]
+        v_proj = (sig4 ** 2) * diag                            # normalized-unit variance
+        std_pix = (255.0 * torch.sqrt(v_proj.clamp(min=1e-12))).reshape(B, self.n_pixels)
+        return std_pix.clamp(self.tweedie_std_floor, self.tweedie_std_cap)
+
+    # ------------------------------------------------------------------
     # Forward  (one EP source-factor projection)
     # ------------------------------------------------------------------
 
@@ -271,9 +319,13 @@ class SourcePriorDenoiser(nn.Module):
         mu_proj = self.net(mu_cavity, sigma)
         mu_proj = mu_proj.clamp(0.0, 1.0)
 
-        # (3b) projection, 2nd moment: APPROXIMATED.  Spread the projected mean
-        #      into a soft per-level distribution using a FIXED projected pixel
-        #      std, then read off bit marginals.  [Approx C — fixed 2nd moment.]
+        # (3b) projection, 2nd moment.  If Tweedie precision is enabled (and no
+        #      explicit override), compute the per-pixel std from the denoiser
+        #      Jacobian diagonal [Approx C — real 2nd moment]; otherwise use the
+        #      fixed/overridden ``posterior_pixel_std``.
+        if self.tweedie_precision and posterior_pixel_std is None:
+            posterior_pixel_std = self._tweedie_pixel_std(mu_cavity, mu_proj, sigma)
+
         proj_llr = self.soft_field_to_posterior_logits(
             mu_proj, posterior_pixel_std=posterior_pixel_std)
 

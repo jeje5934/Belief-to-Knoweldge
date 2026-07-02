@@ -75,7 +75,7 @@ in `EP_SYSTEM_BLOCK.md` §5):
 | tag | statement |
 |---|---|
 | **A** (mean-field cavity) | The bit→pixel map (`llr_to_soft_field`) propagates only the cavity's **first** moment `E[pixel]`; the cavity variance is not derived from the per-bit LLRs but supplied as the denoiser noise `σ`. |
-| **C** (2nd-moment calibration) | Projected posterior **variance** is a fixed `sigma_post` on this branch (over-confident); the site carries the mean only. The principled diagonal Tweedie `σ²·diag(∂D/∂x̃)` is the drop-in candidate (precision slot ready) — implemented on the sibling branch and shown **insufficient** (the miscalibration is inter-pixel *correlated*, not diagonal; §A.6.4). |
+| **C** (2nd-moment calibration) | Projected posterior **variance**: default fixed `sigma_post` (over-confident), or the real diagonal Tweedie `σ²·diag(∂D/∂x̃)` (`_tweedie_pixel_std`, Hutchinson finite-diff, no backprop). The diagonal Tweedie is principled but **insufficient** — it misses the denoiser's globally-correlated over-confidence (§A.6.4, `EP_SCHEDULING_EXPERIMENT.md` §5.2). |
 | **D** (σ not from cavity variance) | The denoiser `σ` is scheduler-chosen (syndrome ratio = cheap proxy for the cavity's global per-image uncertainty), not the cavity std. Diagonal Tweedie (Approx C) is the drop-in alternative; trade-off: syndrome drops per-pixel detail, diagonal Tweedie drops inter-pixel correlation (§A.6.3). |
 | **E** (fractional code evidence) | In `fractional_ep`, the code factor's fresh evidence enters the source cavity at power `β_ep` (`cavity_source = channel_site + β_ep·code_added`). |
 | **F** (factorized normalizer) | The recorded source normalizer `source_logZ` factorizes over bits (`∏_bit Z_bit`) instead of the joint `Z_src`. |
@@ -293,27 +293,24 @@ moment** — the amortization that makes EP tractable here.
 Var[s | x̃] = σ²( I + σ² ∇² log p_σ(x̃) ) = σ² · ∂D/∂x̃.           (A.6.3)
 ```
 So the *exact* projected variance is `v^{proj} = σ²·∂D/∂x̃` (the denoiser
-Jacobian). **This branch does not compute it** — the pixel→bit read-out uses the
-fixed `sigma_post` (Approx C), so the site carries the mean (LLR) only. The code
-exposes the correct *shape* (`SourcePriorDenoiser.projected_pixel_precision`
-returns a per-pixel `[B,n_pix]` precision; `forward(return_precision=True)`
-returns `(site, precision)`), so the diagonal Tweedie `√(σ²·diag ∂D/∂x̃)` is a
-drop-in. The sibling branch `pure-EP_tweedie-2nd-diagonal-precision` implements
-exactly that (Hutchinson finite-diff, no backprop) and finds it **insufficient**
-to rescue full EP — see below.
+Jacobian). The real diagonal 2nd moment **is now implemented** —
+`SourcePriorDenoiser._tweedie_pixel_std` estimates `diag(∂D/∂x̃)` by Hutchinson
+finite differences (no backprop) and feeds `√(σ²·diag)` as the per-pixel std into
+the pixel→bit read-out (`tweedie_precision=True`; the fixed `sigma_post` path
+remains the default). **It does not rescue full EP** (see below and
+`EP_SCHEDULING_EXPERIMENT.md` §5.2).
 
 **A.6.3 Which approximations entered.** Summarizing this section against A.2:
 
 * **Exact**: the first-moment projection (A.6.1)/(A.6.2) — the denoiser is the
   Bayes posterior-mean estimator for the assumed Gaussian observation.
 * **Approx A**: the cavity is summarized by its pixel *mean* only (`llr_to_soft_field`).
-* **Approx C**: the projected 2nd moment is a fixed `sigma_post` on this branch
-  (over-confident); the site carries the mean only. The principled diagonal
-  Tweedie `σ²·diag(∂D/∂x̃)` is the drop-in candidate (precision slot ready), and
-  the sibling branch shows it is **empirically insufficient** — it captures
-  per-pixel *local* sensitivity, while the denoiser's error is a *globally
-  correlated* over-confidence (a wrong garment hallucinated from noise) that only
-  the full off-diagonal covariance would see.
+* **Approx C**: the projected 2nd moment. Two paths: a fixed `sigma_post`
+  (default, over-confident), or the diagonal Tweedie `σ²·diag(∂D/∂x̃)`
+  (`_tweedie_pixel_std`). The diagonal Tweedie is the principled form but is
+  **empirically insufficient** — it captures per-pixel *local* sensitivity, while
+  the denoiser's error is a *globally correlated* over-confidence (a wrong garment
+  hallucinated from noise) that only the full off-diagonal covariance would see.
 * **Approx D**: the denoiser `σ` is chosen by the **syndrome-ratio scheduler**,
   not set to the cavity std. Framed honestly: exact EP wants the cavity variance;
   the syndrome ratio (fraction of unsatisfied parity checks) is a cheap proxy for
@@ -332,17 +329,31 @@ to rescue full EP — see below.
 But it **decodes at BLER 1.0**: the learned denoiser is an over-confident,
 un-calibrated factor, and full site trust corrupts the belief from the first
 round (`EP_SCHEDULING_EXPERIMENT.md` §5.1). The principled fix (Approx C diagonal
-Tweedie precision) does **not** rescue it — the miscalibration is correlated, not
-diagonal (implemented and shown on the sibling branch
-`pure-EP_tweedie-2nd-diagonal-precision`). What works is **fractional EP (a damped source site)**
-with `ep_source_power` small enough that the accumulated site stays ≈ 20–30 % of
-the denoiser's full belief (BLER ≈ 0.004, matching the best turbo). The damping
-weight is an **implicit precision discount** on the miscalibrated factor — the
-same thing the legacy turbo α≈0.1 does non-accumulatively. This is the concrete
-form of the project's *EP-fidelity vs performance* tension: the fully faithful
-update (`full_ep`) cannot decode this factor graph, and a principled precision
-correction is insufficient, so a damped (approximate-EP) update is a practical
-necessity, stated openly rather than hidden.
+Tweedie precision, **implemented on this branch**) does **not** rescue it (§5.2) —
+the miscalibration is correlated, not diagonal.
+
+**Why a *diagonal* precision cannot suffice — and why pure EP is out of reach.**
+The denoiser's error is a *joint* one: from a noisy input it commits to the
+wrong garment, so the wrong pixels are strongly **correlated**. Capturing that
+would require the **full projected covariance** `Cov[s | x̃] = σ²·∂D/∂x̃`, a dense
+`d×d` matrix with `d = n_pix = 784` — i.e. `d² ≈ 6.1·10⁵` entries per image
+(and its inverse/product for the EP update), which is neither exposed by a
+score/EDM denoiser nor tractable to estimate/propagate per chunk. The Gaussian
+EP source site can only carry a diagonal (mean + per-pixel precision); the very
+statistic that would calibrate this factor is the off-diagonal covariance that
+the approximating family **cannot represent**. So *exact* EP for this
+learned-denoiser factor is not merely unimplemented — it is **computationally and
+representationally out of reach**. That is the fundamental justification for
+**fractional EP**: since the site cannot be correctly *shaped* (no tractable
+covariance), it must instead be *down-weighted*. What works is a damped source
+site (`ep_source_power` small enough that the accumulated site stays ≈ 20–30 % of
+the denoiser's full belief → BLER ≈ 0.004, matching the best turbo); the damping
+is an **implicit precision discount** on the miscalibrated factor — the same
+thing the legacy turbo α≈0.1 does non-accumulatively. This is the concrete form
+of the project's *EP-fidelity vs performance* tension, stated openly rather than
+hidden. (The sibling branch `pure-EP_ada-sigma` omits the Tweedie computation and
+uses a fixed `sigma_post` with the syndrome-ratio σ; it reaches the same
+conclusion without the diagonal-Tweedie machinery.)
 
 ---
 
