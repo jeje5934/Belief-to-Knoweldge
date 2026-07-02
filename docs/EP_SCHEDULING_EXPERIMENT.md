@@ -1,14 +1,17 @@
 # EP_SCHEDULING_EXPERIMENT — factor refinement scheduling & SNR sweep
 
-> **Status**: experiment log + confirmed configuration. Supports
-> [`EP_THEORY.md`](EP_THEORY.md) §4.5–4.6 (BP iterations are a *schedule*, not an
-> approximation) and records the two experiments that fixed the decoder's default
-> configuration.
+> **Status**: experiment log. Supports [`EP_THEORY.md`](EP_THEORY.md) §4.5–4.6
+> (BP iterations are a *schedule*, not an approximation) and records the
+> scheduling + **decode-quality** experiments.
 >
-> **Confirmed decision (see §3):** the aligned decoder uses **`bp_schedule=[2]*15`,
-> `ep_mode=True`, `ep_update="full_ep"` (α_ep=β_ep=1), adaptive syndrome-ratio σ**.
-> Legacy turbo α/β are removed from the aligned path (kept only as the
-> `ep_mode=False` comparison baseline).
+> **⚠ Corrected conclusion (see §3, §5).** An earlier draft "confirmed"
+> `bp_schedule=[2]*15` with `ep_update="full_ep"` (α_ep=β_ep=1). That was based on
+> convergence *dynamics* (Δsite/logZ) only. A later decode-quality test
+> (§5) shows **`full_ep` decodes at BLER 1.0** — its "stable orbit" is a stably
+> *wrong* image. The working configuration is **`[2]*15` with damped source
+> sites** (`fractional_ep`, small `ep_source_power`, or the legacy turbo path),
+> which reaches BLER ≈ 0.004 at 0.8 dB. `[2]*15` remains the right *schedule*;
+> only the *update weight* had to change.
 
 ---
 
@@ -103,34 +106,115 @@ frequent enough source updates to let the two factors co-adapt. Here that is
 
 ---
 
-## 3. Confirmed configuration
+## 3. Confirmed configuration (decode-quality corrected)
 
-* **Schedule `[2]×15`** — the sweet spot of §2.4.
-* **`full_ep`, α_ep = β_ep = 1** — pure EP site replacement (`EP_THEORY.md` §4.4);
-  **legacy turbo α/β are removed** from the aligned decoder (the `ep_mode=False`
-  turbo path with α/β is retained *only* as a comparison baseline).
-* **Adaptive syndrome-ratio σ** — retained; framed honestly as a cheap proxy for
-  the cavity's global uncertainty (`EP_APPENDIX.md` §A.6, Approx D).
-* **No damping.** The `[2]×15` terminus is **not** a true fixed point
-  (`Δsite → 0`) but a **small-amplitude stable orbit** (~250 band). This is the
-  natural terminus of *pure* EP with a non-linear factor: the denoiser is not in
-  the Bernoulli/Gaussian approximating family, so the moment-matching fixed-point
-  conditions (Minka 2001 §3.3) cannot be met exactly and the site settles into a
-  bounded orbit rather than a point. We report this honestly rather than forcing
-  `Δsite → 0` with damping — damping would trade EP fidelity for a cosmetically
-  stationary site.
+The §2 experiment fixed the **schedule** (`[2]×15`) by convergence dynamics. A
+separate **decode-quality** test (§5) then fixed the **update weight**:
+
+* **Schedule `[2]×15`** — the sweet spot of §2.4. Unchanged.
+* **Source weight — NOT `full_ep`.** `full_ep` (α_ep=1) decodes at **BLER 1.0**
+  (§5): the denoiser is an over-confident, un-calibrated factor and full site
+  trust corrupts the belief from the first round. The working weight is a
+  **damped source site**: `fractional_ep` with a small `ep_source_power` chosen
+  so the *accumulated* site stays ≈ 20–30 % of the denoiser's full belief
+  (e.g. `[2]×15` → `ep_source_power ≈ 0.02` → BLER ≈ 0.004 at 0.8 dB), or
+  equivalently the legacy turbo path (`ep_mode=False`, α≈0.1).
+* **Adaptive syndrome-ratio σ** — retained; cheap proxy for the cavity's global
+  uncertainty (`EP_APPENDIX.md` §A.6, Approx D).
+* **On the "stable orbit".** `full_ep`'s `Δsite`/`logZ` plateau (§2.2) is a
+  *stably wrong* image, not a good decode — a caution that convergence-dynamics
+  metrics do **not** imply decode quality. Damping is not a cosmetic choice here;
+  it is required for the decoder to work, and is the honest statement of the
+  EP-fidelity vs performance tension (§5, `EP_APPENDIX.md` §A.6).
 
 ---
 
 ## 4. SNR sweep (Pure EP vs Baseline BP)
 
-*(Populated by `ep_snr_sweep.py`; outputs in `results/ep_snr_sweep.{csv,png,json}`.)*
+*(Harness: `ep_snr_sweep.py`; outputs in `results/ep_snr_sweep.{csv,png,json}`.
+The EP curve must use a **working** config — `fractional_ep`, small
+`ep_source_power` — not `full_ep`, which is BLER 1.0 (§5). Re-run pending.)*
 
 Curves: **bp30** (baseline BP, 30 iters, no prior — same BP budget as `[2]×15`),
 **bp100** (baseline BP, 100 iters — BP-limit reference), **ep** (`[2]×15`,
-`full_ep`, adaptive σ). Two subplots (BER, BLER; log-y) vs Eb/N0 over the
+damped source, adaptive σ). Two subplots (BER, BLER; log-y) vs Eb/N0 over the
 waterfall 0.4–1.2 dB.
 
 <!-- SNR_SWEEP_RESULTS -->
+
+---
+
+## 5. Decode quality: full EP fails; damping is required
+
+Convergence dynamics (§2) do not measure decoding. Measuring BLER/BER at 0.8 dB
+(CRC-checked; harness validated by turbo α=0.1 reproducing the README) exposes a
+sharp result.
+
+### 5.1 `full_ep` decodes catastrophically — diagnosis (contamination, not landing)
+
+| config | BLER | BER |
+|---|---|---|
+| baseline BP 30 it (no prior) | 0.50 | 3.5e-3 |
+| baseline BP 100 it | 0.008 | 6.6e-4 |
+| turbo α=.1 β=.1 `[10]×3` (README repro) | 0.016 | 3.7e-6 |
+| turbo α=.1 β=.1 `[2]×15` | **0.004** | 0.0 |
+| **`full_ep` `[2]×15`** | **1.000** | **0.45** |
+| **`full_ep` `[10]×3`** | 1.000 | 0.45 |
+
+Two decisive follow-ups pinned the mechanism to **per-round contamination**
+(not "insufficient final BP"):
+
+* **Per-round BER** (denoiser ON vs OFF, one batch): ON jumps `0.13 → 0.46` at
+  the *first* source update and stays there; OFF (pure BP) decays `0.13 → 0.006`.
+  The denoiser corrupts the belief immediately, every round.
+* **Final-cleanup BP**: appending BP-100 *with the source kept* recovers nothing
+  (BLER 1.0); *dropping the source* + BP-100 recovers full baseline (BLER 0.008).
+  So the channel/code state is intact — the **source site is the corruption**.
+
+Mechanism: a 2-iter BP cavity (BER 0.13) fed to the denoiser yields an
+over-confident *wrong* image; `full_ep` (α_ep=1) trusts that site fully and the
+belief is corrupted. `full_ep` is EP-*aligned* (`full_ep == turbo α=1,β=0`,
+verified) but α=1 is empirically catastrophic — turbo α=1 also gives BLER 1.0.
+
+### 5.2 A principled per-pixel precision correction — candidate
+
+The over-confidence is a *2nd-moment* (precision) miscalibration: this branch
+uses a **fixed** `sigma_post`, which is uniformly over-confident. The principled
+fix is to fill the source site's precision with the real per-pixel projected
+variance — the diagonal Tweedie 2nd moment `v_proj = σ²·∂D/∂x̃` — for which the
+precision slot already has the right shape (`source_prior.py`:
+`projected_pixel_precision`, `forward(return_precision=)`). **This branch does not
+implement it** (see the sibling branch `pure-EP_tweedie-2nd-diagonal-precision`,
+which does — and finds the *diagonal* insufficient because the denoiser's error
+is inter-pixel *correlated*, not diagonal; see that branch's `EP_APPENDIX.md`
+§A.6 / §5.2). The trade-off is named in `EP_APPENDIX.md` §A.6.
+
+### 5.3 Fractional EP (damped site) is necessary **and** sufficient
+
+Damping the source site so its *accumulated* magnitude stays small decodes well:
+
+| config | BLER |
+|---|---|
+| `fractional_ep` α=.1 `[10]×3` | 0.027 |
+| `fractional_ep` α=.05 `[2]×15` | 0.48 (accumulates to ~0.5 of full) |
+| **`fractional_ep` α=.02 `[2]×15`** | **0.004** |
+| `fractional_ep` α=.01 `[2]×15` | 0.016 |
+
+`ep_source_power` must scale with the number of source updates so the EMA-
+accumulated site stays ≈ 20–30 % of the full denoiser belief (`[2]×15` → ≈0.02;
+`[10]×3` → ≈0.1). This down-weighting is an **implicit precision discount** on
+the over-confident denoiser factor — exactly what turbo's α≈0.1 does
+non-accumulatively (`EP_APPENDIX.md` §A.6).
+
+### 5.4 Verdict
+
+**Honest failure of *pure* EP; damping required.** Full EP integration of this
+learned denoiser fails because the denoiser is fundamentally miscalibrated
+(globally over-confident); a per-pixel precision correction is the natural
+candidate (§5.2, implemented on the sibling branch and found insufficient because
+the error is correlated, not diagonal). **Fractional EP — a damped source site —
+is practically necessary and, with the accumulated site kept small, matches the
+best turbo (BLER ≈ 0.004).** This is the sharpest statement of the project's
+EP-fidelity-vs-performance tension.
 _Results table, waterfall-shift (dB), and the low-SNR schedule-adequacy diagnostic
 are inserted here once the sweep completes._

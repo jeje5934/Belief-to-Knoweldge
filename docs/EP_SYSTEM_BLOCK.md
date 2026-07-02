@@ -235,8 +235,8 @@ logged (`EP_DIAGNOSTICS.md` §4).
 | tag | where | what is approximated |
 |---|---|---|
 | **A** | `llr_to_soft_field` | mean-field cavity: only the cavity's 1st moment reaches the pixel domain. |
-| **C** | `soft_field_to_posterior_logits`, `sigma_post` | fixed projected-posterior variance instead of Tweedie `v_proj = σ²·∂D/∂x`; site carries mean only. Precision **slot** exists, not yet propagated across chunks. |
-| **D** | denoiser `σ` from scheduler | σ is the syndrome-scheduler value, not the cavity std. |
+| **C** | `soft_field_to_posterior_logits` (`sigma_post`) | 2nd-moment std: fixed `sigma_post` (over-confident) on this branch; the diagonal Tweedie `σ²·diag(∂D/∂x̃)` is the drop-in candidate (precision slot ready) — implemented on the sibling branch and shown **insufficient** (correlated, not diagonal). |
+| **D** | denoiser `σ` from scheduler | σ is the syndrome-ratio value (proxy for global per-image cavity uncertainty), not the cavity std; diagonal-Tweedie is the drop-in alternative (§A.6.3 trade-off). |
 | **E** | `cavity_source = channel_site + β_ep·code_added` | `fractional_ep` tempers the code factor's evidence in the source cavity. |
 | **F** | `_ep_diagnostics` `source_logZ` | factorized (per-bit) source normalizer instead of the joint `Z_src`. |
 | **damped-EP** | `fractional_ep` | the "fractional" path is damped EP (full-EP fixed points), **not** tempered-factor power EP. |

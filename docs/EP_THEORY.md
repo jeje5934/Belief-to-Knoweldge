@@ -411,14 +411,20 @@ steps avoids; the confirmed default `bp_schedule=[2]*15` is the measured sweet
 spot. Full setup, trajectories, the oscillation reframing, and the SNR sweep are
 in [`EP_SCHEDULING_EXPERIMENT.md`](EP_SCHEDULING_EXPERIMENT.md).
 
-> **Pure EP's natural terminus (Minka 2001 §3.3).** With `[2]*15` the site does
-> not reach a true fixed point (`Δsite → 0`) but a **small-amplitude stable
-> orbit**. This is expected of *pure* EP with a non-exponential-family factor:
-> the denoiser lies outside the Bernoulli/Gaussian approximating family, so the
-> moment-matching stationarity conditions cannot be met exactly and the site
-> settles into a bounded orbit rather than a point. We report this honestly and
-> do **not** damp it — damping would trade EP fidelity for a cosmetically
-> stationary site.
+> **Pure EP's terminus is a *stably wrong* decode (Minka 2001 §3.3).** With
+> `[2]*15` and `full_ep` the site does not reach a true fixed point
+> (`Δsite → 0`) but a small-amplitude stable orbit — and, critically, that orbit
+> is a **stably wrong image**: `full_ep` decodes at **BLER 1.0**
+> (`EP_SCHEDULING_EXPERIMENT.md` §5). Convergence-dynamics metrics (Δsite, logZ)
+> do **not** imply decode quality. The cause is that the denoiser lies outside
+> the Bernoulli/Gaussian family *and is globally over-confident*; full site trust
+> corrupts the belief every round. A damped source site (`fractional_ep`, small
+> `ep_source_power`) is **required** to decode — not a cosmetic choice. See §5 of
+> the experiment report and `EP_APPENDIX.md` §A.6 for the decisive tests. (A
+> principled per-pixel precision correction is the natural candidate; the sibling
+> branch `pure-EP_tweedie-2nd-diagonal-precision` implements the diagonal Tweedie
+> 2nd moment and finds it insufficient — the miscalibration is correlated, not
+> diagonal.)
 
 ---
 

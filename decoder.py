@@ -47,9 +47,15 @@ LDPC5GDecoder_soft — BP + source-extrinsic denoiser.
     src_site     = (1-α_ep)*src_site + α_ep*src_full       # damped source site (§4.4)
 
     * ep_update="full_ep"       (default): α_ep=β_ep=1 ⇒ pure site replacement,
-      cavity = BP_post - src_site exactly (§4.1).  Alignment target.
-    * ep_update="fractional_ep": damped EP (§4.4) for the non-linear denoiser;
-      source power α_ep=ep_source_power, code power β_ep=ep_code_power (Approx E).
+      cavity = BP_post - src_site exactly (§4.1).  EP-fidelity ALIGNMENT TARGET,
+      but it DECODES AT BLER 1.0 — the denoiser is an over-confident, un-calibrated
+      factor and full site trust corrupts the belief every round
+      (docs/EP_SCHEDULING_EXPERIMENT.md §5).  Use fractional_ep to actually decode.
+    * ep_update="fractional_ep": damped EP (§4.4) for the non-linear/over-confident
+      denoiser; source power α_ep=ep_source_power (choose small enough that the
+      accumulated site stays ~20-30% of the full belief, e.g. [2]*15 → ~0.02),
+      code power β_ep=ep_code_power (Approx E).  This is the WORKING configuration
+      (BLER ≈ 0.004, matching turbo).
 
   ``alpha``/``beta`` are IGNORED in EP mode (their EP re-interpretation is
   ep_source_power / ep_code_power).  Divergence of full_ep (src_site LLR blow-up)
@@ -61,13 +67,17 @@ LDPC5GDecoder_soft — BP + source-extrinsic denoiser.
     ep_code_power    — β_ep, code fractional-EP power (Approx E).
     ep_divergence_llr— |src_site| LLR threshold for the divergence warning.
 
-  Deferred approximations (annotated inline; fixed in later tasks):
-    * Approx C (mean-only site): src_site carries first-order LLR only; the
-      pixel-domain precision slot exists in source_prior.py (Task 4) but is not
-      yet propagated across chunks here (Task 6+).
-    * Approx D (sigma not from cavity variance): the denoiser sigma is still
-      chosen by the syndrome scheduler, not the cavity std
-      (EP_THEORY.md §4.1 step 3).
+  Named approximations (see docs/EP_APPENDIX.md §A.6):
+    * Approx C (2nd-moment calibration): the projected-posterior variance is a
+      FIXED sigma_post on this branch (over-confident); src_site carries the mean
+      (LLR) only.  A per-pixel precision slot exists (source_prior.py::
+      projected_pixel_precision); the diagonal Tweedie σ²·diag(∂D/∂x̃) is the
+      drop-in candidate, implemented on the sibling branch
+      pure-EP_tweedie-2nd-diagonal-precision and shown insufficient (correlated,
+      not diagonal).
+    * Approx D (sigma not from cavity variance): the denoiser sigma is chosen by
+      the syndrome scheduler (a proxy for global per-image cavity uncertainty),
+      not the cavity std (EP_THEORY.md §4.1 step 3).
 
   Adaptive denoiser sigma
   -----------------------
