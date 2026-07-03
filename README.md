@@ -12,11 +12,16 @@ shows, honestly, that it is *not enough* to make pure EP decode.
 > EP-fidelity *reference point* — but it does NOT decode (BLER 1.0).** The
 > denoiser is an over-confident, un-calibrated factor, and trusting its site
 > fully corrupts the belief every round. The **working configuration is
-> fractional EP** — a damped source site (`ep_source_power ≈ 0.02` on the
+> damped EP** — a damped source site (`ep_source_power ≈ 0.02` on the
 > `[2]×15` schedule → BLER ≈ 0.004 at 0.8 dB). The legacy turbo `α≈0.1` is, in
-> hindsight, exactly this fractional EP (an implicit precision discount on the
+> hindsight, exactly this damped EP (an implicit precision discount on the
 > denoiser). Do not read "EP" here as "it just works": the honest result is that
-> *pure* EP is a reference point and *fractional* EP is the practical decoder.
+> *pure* EP is a reference point and *damped* EP is the practical decoder.
+>
+> Terminology: the α<1 path is **damped EP** (`ep_update="damped_ep"`; the site
+> update is EMA-blended). It is **not** true power/fractional EP (which tempers the
+> factor by `f^η` in the projection — a distinct, unimplemented method). The old
+> `"fractional_ep"` flag name was a misnomer, kept only as a deprecated alias.
 >
 > **This branch adds diagonal Tweedie precision — and it does not save pure EP.**
 > Filling the source site's per-pixel precision with the real diagonal Tweedie
@@ -24,7 +29,7 @@ shows, honestly, that it is *not enough* to make pure EP decode.
 > denoiser's error is *inter-pixel correlated*, so a *diagonal* precision cannot
 > catch it, and the full `d×d` covariance (`d=784`→`d²≈6.1·10⁵`) is intractable
 > and unrepresentable by the Gaussian EP site. So the site cannot be correctly
-> *shaped*, only *down-weighted* → fractional EP. (Sibling branch
+> *shaped*, only *down-weighted* → damped EP. (Sibling branch
 > `pure-EP_ada-sigma` uses a fixed `sigma_post` instead.)
 > See `docs/EP_SCHEDULING_EXPERIMENT.md` §5 and `docs/EP_APPENDIX.md` §A.6.
 
@@ -82,8 +87,8 @@ results):
 | baseline BP, 30 it (no prior) | 0.50 | same BP budget as `[2]×15` |
 | baseline BP, 100 it | 0.008 | BP-limit reference |
 | **`full_ep` `[2]×15`** | **1.00** | pure EP — corrupts from round 1 |
-| **fractional EP, α≈0.02 `[2]×15`** | **0.004** | working decoder |
-| turbo α=0.1 β=0.1 `[10]×3` (legacy) | 0.016 | = fractional EP, non-accumulating |
+| **damped EP, α≈0.02 `[2]×15`** | **0.004** | working decoder |
+| turbo α=0.1 β=0.1 `[10]×3` (legacy) | 0.016 | = damped EP, non-accumulating |
 
 Mechanism: a partly-converged BP cavity fed to the denoiser yields an
 over-confident *wrong* image; `full_ep` trusts that site fully and the belief is
@@ -119,7 +124,7 @@ matrix (`d = n_pix = 784` → `d² ≈ 6.1·10⁵` entries) that is intractable 
 estimate/propagate and, crucially, **not representable** by the diagonal Gaussian
 EP site. So *exact* EP for this factor is out of reach: the site cannot be
 correctly **shaped**, only **down-weighted** — which is the fundamental
-justification for **fractional EP** (§3). Details:
+justification for **damped EP** (§3). Details:
 `docs/EP_SCHEDULING_EXPERIMENT.md` §5.2, `docs/EP_APPENDIX.md` §A.6.4. The sibling
 branch `pure-EP_ada-sigma` omits this computation and uses a fixed `sigma_post`.
 
@@ -127,11 +132,11 @@ branch `pure-EP_ada-sigma` omits this computation and uses a fixed `sigma_post`.
 
 | file | role |
 |---|---|
-| `EP_THEORY.md` | factor graph, per-factor EP cycle, LLR algebra, fractional/damped EP, scheduling |
+| `EP_THEORY.md` | factor graph, per-factor EP cycle, LLR algebra, damped EP (vs true power EP), scheduling |
 | `EP_MIGRATION_PLAN.md` | the double-count fix (turbo → EP), line-level |
 | `EP_SYSTEM_BLOCK.md` | corrected block diagram + before/after |
 | `EP_DIAGNOSTICS.md` | convergence/evidence metrics (Z_i, Δsite), syndrome↔EP mapping |
-| `EP_SCHEDULING_EXPERIMENT.md` | schedule sweep + **decode-quality** experiments (§5: full EP fails, fractional needed) |
+| `EP_SCHEDULING_EXPERIMENT.md` | schedule sweep + **decode-quality** experiments (§5: full EP fails, damping needed) |
 | `EP_APPENDIX.md` | full probabilistic derivation (A.1–A.6), all approximations named |
 
 ## 6. Running
@@ -140,7 +145,7 @@ Smoke-sized runs (the host has had GPU lockups on large sweeps — prefer CPU or
 cap GPU memory; see `safe_sweep.sh`):
 
 ```bash
-# α sweep (turbo / fractional-EP weighting) at β=0
+# α sweep (turbo / damped-EP weighting) at β=0
 CUDA_VISIBLE_DEVICES=0 python3 experiment.py --alpha 0.1 --ebno 0.8 --batch 16 --rounds 1
 
 # baseline vs adaptive-σ comparison
@@ -148,12 +153,12 @@ python3 plot_comparison.py --alpha 0.1 --beta 0.1 --sigma 0.3 --ebno 0.8 \
     --batch 16 --rounds 1 --compare-adaptive --no-save-plot
 
 # Pure-EP vs baseline-BP Eb/N0 sweep (set the EP curve to a WORKING config —
-# fractional_ep, small ep_source_power — not full_ep, which is BLER 1.0)
+# damped_ep, small ep_source_power — not full_ep, which is BLER 1.0)
 python3 ep_snr_sweep.py --batch 32 --rounds 24
 ```
 
 The EP decoder (`decoder.py::LDPC5GDecoder_soft`) is driven by kwargs:
-`ep_mode=True`, `ep_update="full_ep" | "fractional_ep"`, `ep_source_power`,
+`ep_mode=True`, `ep_update="full_ep" | "damped_ep"`, `ep_source_power`,
 `bp_schedule=[2]*15`, `adaptive_sigma=True`. `ep_mode=False` selects the legacy
 turbo path.
 
@@ -165,5 +170,5 @@ runs in PyTorch; `denoiser.py` bridges via NumPy.
 
 The original turbo update `new_input = channel + β·bp_ext + α·src_ext` is kept
 as `ep_mode=False` (knobs `alpha`, `beta`). It is the practical decoder's
-non-accumulating equivalent of fractional EP (best known: `α=β=0.1`, `σ=0.3`).
+non-accumulating equivalent of damped EP (best known: `α=β=0.1`, `σ=0.3`).
 Design notes: `adaptive_sigma_review.md`; context handoff: `HANDOFF.md`.

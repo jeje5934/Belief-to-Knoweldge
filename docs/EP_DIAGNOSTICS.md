@@ -126,13 +126,13 @@ occurrence (requirements 2, 4):
 
 | condition | meaning | action |
 |---|---|---|
-| `src_site_max_abs > ep_divergence_llr` (default 1e4) | site LLR blow-up | `ep_diverged=True`; if `ep_update=="full_ep"` also `ep_recommend_fractional=True` and a `[EP] WARNING …` line recommending `fractional_ep` with a smaller `ep_source_power`. |
+| `src_site_max_abs > ep_divergence_llr` (default 1e4) | site LLR blow-up | `ep_diverged=True`; if `ep_update=="full_ep"` also `ep_recommend_fractional=True` and a `[EP] WARNING …` line recommending `damped_ep` with a smaller `ep_source_power`. |
 | `src_site_delta_l2 > 1.5·(prev round)` and `> 1.0` | site-change **growing** ⇒ oscillation / non-convergence | same flags + warning. |
 
-This connects the divergence detection directly to the **full_ep → fractional_ep
+This connects the divergence detection directly to the **full_ep → damped_ep
 switch criterion** of §4.4: `full_ep` (pure replacement) can oscillate/diverge
 because the denoiser is non-linear; when it does, the diagnostics say so and
-point at the damped `fractional_ep` fix. Because EP energy is not monotone
+point at the damped `damped_ep` fix. Because EP energy is not monotone
 (§1 caveat), we do **not** flag on "energy increased" alone — the robust signals
 are site blow-up and site-change growth.
 

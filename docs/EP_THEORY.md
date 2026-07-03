@@ -335,20 +335,24 @@ post   :  θ ← (1−ρ)·θ + ρ·θ_proj
 The cavity and tilted are the *full-EP* ones; only the site step is a convex
 combination. Consequently **damped EP has exactly the full-EP fixed points**
 (`θ_f^{full} = θ_f ⇔ θ_proj = θ`), and `ρ` affects only the convergence path /
-stability. This is the sense in which "fractional" here shares EP's solutions.
+stability. This is the sense in which the *damped* update shares EP's solutions.
 
-> **What the code calls `full_ep` / `fractional_ep`.** Both are the damped-EP
-> form (B), with a per-factor split of the damping:
-> - **source power `α_ep`** damps the source site step (`ρ = α_ep`);
-> - **code power `β_ep`** tempers how much of BP's freshly-added code evidence
->   enters the *source cavity* this round (a fractional treatment of the code
+> **What the code calls `full_ep` / `damped_ep`.** Both are the damped-EP
+> form (B), with a per-factor split of the damping.  (The `damped_ep` flag was
+> historically named `fractional_ep` — a misnomer; that name is now a deprecated
+> alias.  The parameter names `ep_source_power`/`ep_code_power` likewise keep the
+> word "power" for history only — they are DAMPING FRACTIONS α_ep/β_ep = ρ, NOT
+> the exponent η of true power EP (A).)
+> - **source damping `α_ep`** damps the source site step (`ρ = α_ep`);
+> - **code damping `β_ep`** tempers how much of BP's freshly-added code evidence
+>   enters the *source cavity* this round (a damped treatment of the code
 >   factor's evidence — **Approx E**), so that the denoiser sees
 >   `cavity = channel_site + β_ep·code_added` instead of the full
 >   `BP_post − src_site`.
 >
 > `full_ep` fixes `α_ep = β_ep = 1` ⇒ pure replacement and the exact §4.1 cavity
 > `BP_post − src_site`; it is the **alignment target** (performance-agnostic).
-> `fractional_ep` allows `α_ep, β_ep < 1` purely to stabilize the non-linear
+> `damped_ep` allows `α_ep, β_ep < 1` purely to stabilize the non-linear
 > denoiser. The exact code equations are:
 > ```
 > channel_site = payload0                               (frozen, §4.2)
@@ -362,7 +366,7 @@ stability. This is the sense in which "fractional" here shares EP's solutions.
 > The code implements these verbatim (`decoder.py`, `ep_mode=True`); it is
 > damped EP (B), **not** the tempered-factor power EP (A). Divergence of the
 > `full_ep` path is detected (site LLR magnitude blow-up) and logged with a
-> recommendation to switch to `fractional_ep`.
+> recommendation to switch to `damped_ep`.
 
 ### 4.5 BP iterations are a refinement schedule, not a projection to converge
 
@@ -418,7 +422,7 @@ in [`EP_SCHEDULING_EXPERIMENT.md`](EP_SCHEDULING_EXPERIMENT.md).
 > (`EP_SCHEDULING_EXPERIMENT.md` §5). Convergence-dynamics metrics (Δsite, logZ)
 > do **not** imply decode quality. The cause is that the denoiser lies outside
 > the Bernoulli/Gaussian family *and is globally over-confident*; full site trust
-> corrupts the belief every round. A damped source site (`fractional_ep`, small
+> corrupts the belief every round. A damped source site (`damped_ep`, small
 > `ep_source_power`) is **required** to decode — not a cosmetic choice. See §5 of
 > the experiment report and `EP_APPENDIX.md` §A.6 for the decisive tests and the
 > failed diagonal-Tweedie calibration.
@@ -526,7 +530,7 @@ Every later task cites the section it implements (order as actually executed):
   precision *slot* with the source site (fixed 2nd moment today; Tweedie
   `v^{proj}` later) ([어긋남 4]; §4.1 step 3).
 * **Task 5** — replace damped *addition* with an EP site *update*: `full_ep`
-  (pure replacement) vs `fractional_ep` (damped EP, §4.4); fold `channel_site`
+  (pure replacement) vs `damped_ep` (damped EP, §4.4); fold `channel_site`
   into the site product ([어긋남 2]; §3, §4.1 step 4, §4.4).
 * **Task 6** — end-to-end CLI wiring / diagnostics.
 * **Task 7** — documentation finalization (`docs/EP_SYSTEM_BLOCK.md`,

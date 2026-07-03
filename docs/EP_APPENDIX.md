@@ -77,9 +77,9 @@ in `EP_SYSTEM_BLOCK.md` §5):
 | **A** (mean-field cavity) | The bit→pixel map (`llr_to_soft_field`) propagates only the cavity's **first** moment `E[pixel]`; the cavity variance is not derived from the per-bit LLRs but supplied as the denoiser noise `σ`. |
 | **C** (2nd-moment calibration) | Projected posterior **variance**: default fixed `sigma_post` (over-confident), or the real diagonal Tweedie `σ²·diag(∂D/∂x̃)` (`_tweedie_pixel_std`, Hutchinson finite-diff, no backprop). The diagonal Tweedie is principled but **insufficient** — it misses the denoiser's globally-correlated over-confidence (§A.6.4, `EP_SCHEDULING_EXPERIMENT.md` §5.2). |
 | **D** (σ not from cavity variance) | The denoiser `σ` is scheduler-chosen (syndrome ratio = cheap proxy for the cavity's global per-image uncertainty), not the cavity std. Diagonal Tweedie (Approx C) is the drop-in alternative; trade-off: syndrome drops per-pixel detail, diagonal Tweedie drops inter-pixel correlation (§A.6.3). |
-| **E** (fractional code evidence) | In `fractional_ep`, the code factor's fresh evidence enters the source cavity at power `β_ep` (`cavity_source = channel_site + β_ep·code_added`). |
+| **E** (damped code evidence) | In `damped_ep`, the code factor's fresh evidence enters the source cavity scaled by the damping fraction `β_ep` (`cavity_source = channel_site + β_ep·code_added`). |
 | **F** (factorized normalizer) | The recorded source normalizer `source_logZ` factorizes over bits (`∏_bit Z_bit`) instead of the joint `Z_src`. |
-| **damped-EP** | The `fractional_ep` update is **damped EP** (shares full-EP fixed points), not the tempered-factor power EP of Minka 2004; the denoiser is not tempered. |
+| **damped-EP** | The `damped_ep` update is **damped EP** (shares full-EP fixed points), not the tempered-factor power EP of Minka 2004; the denoiser is not tempered. |
 
 *(Not listed: the inner-BP iteration count is a refinement **schedule**, not an
 approximation — each BP step is the EP refinement of the individual check factors
@@ -90,7 +90,7 @@ and has been removed.)*
 would be textbook EP with the code factor handled by exact BP. As built, it is
 **EP-structured**: the message *topology*, cavity, and site algebra are exact;
 the residual gaps are the amortization approximations A/C/D and, in
-`fractional_ep`, the deliberate damping (E, damped-EP). The channel factor
+`damped_ep`, the deliberate damping (E, damped-EP). The channel factor
 (A.3.1) and the code factor (A.4) are exact.
 
 ---
@@ -206,7 +206,7 @@ i.e. "everything the channel and code believe about the payload, with the
 source's own previous message removed." **This is the input the denoiser must
 see** — not the full `BP_post`. Feeding `BP_post` (which already contains
 `src_site`) is the source double-count the migration removed. In code
-(`decoder.py::call`), with the `fractional_ep` code-temper `β_ep` (Approx E):
+(`decoder.py::call`), with the `damped_ep` code-temper `β_ep` (Approx E):
 ```
 cavity_source = channel_site + b_ep * code_added         # = BP_post − src_site  when b_ep = 1
 ```
@@ -233,7 +233,7 @@ fixed pixel std** `sigma_post` in the bit read-out
 projected pixel distribution back to bit marginals gives the projected bit-LLRs
 `λ^{proj}` (same routine).
 
-**(4) Site update — replacement (`full_ep`) or damped (`fractional_ep`).**
+**(4) Site update — replacement (`full_ep`) or damped (`damped_ep`).**
 The full-EP source site is
 ```
 src_full = λ^{proj} − λ^{\src} = src_post − cavity_src.          (A.5.5)
@@ -244,11 +244,11 @@ yields `src_full` directly** — no separate subtraction. The site is then appli
 (`decoder.py::call`, `EP_THEORY.md` §4.4):
 ```
 full_ep      (α_ep=1):  src_site ← src_full                       (pure replacement)
-fractional_ep(α_ep<1):  src_site ← (1−α_ep)·src_site + α_ep·src_full   (damped EP)
+damped_ep(α_ep<1):  src_site ← (1−α_ep)·src_site + α_ep·src_full   (damped EP)
 ```
 and the posterior is reassembled as `payload_intr = channel_site + src_site`
 (cavity ⊗ new site), which becomes the next BP prior. `full_ep` is the exact EP
-replacement ([어긋남 2] fixed) and the alignment target; `fractional_ep` is
+replacement ([어긋남 2] fixed) and the alignment target; `damped_ep` is
 damped EP (A.2 damped-EP tag), sharing the full-EP fixed points and used only to
 stabilize the non-linear projection.
 
@@ -320,11 +320,11 @@ remains the default). **It does not rescue full EP** (see below and
   the syndrome ratio discards per-pixel differences (one global scalar); diagonal
   Tweedie discards inter-pixel correlations — and the decisive error lives in
   those correlations (§5.2), so neither is a complete calibration.
-* **Approx E / damped-EP**: in `fractional_ep`, code evidence enters the cavity
+* **Approx E / damped-EP**: in `damped_ep`, code evidence enters the cavity
   at power `β_ep` and the site step is damped by `α_ep` — damped EP (Minka 2004
   power EP is *not* implemented; the denoiser is not tempered).
 
-**A.6.4 Full EP does not decode; fractional EP is required.** `full_ep`
+**A.6.4 Full EP does not decode; damped EP is required.** `full_ep`
 (α_ep=β_ep=1) is the *aligned* configuration — exact EP site replacement (A.5.5).
 But it **decodes at BLER 1.0**: the learned denoiser is an over-confident,
 un-calibrated factor, and full site trust corrupts the belief from the first
@@ -344,7 +344,7 @@ statistic that would calibrate this factor is the off-diagonal covariance that
 the approximating family **cannot represent**. So *exact* EP for this
 learned-denoiser factor is not merely unimplemented — it is **computationally and
 representationally out of reach**. That is the fundamental justification for
-**fractional EP**: since the site cannot be correctly *shaped* (no tractable
+**damped EP**: since the site cannot be correctly *shaped* (no tractable
 covariance), it must instead be *down-weighted*. What works is a damped source
 site (`ep_source_power` small enough that the accumulated site stays ≈ 20–30 % of
 the denoiser's full belief → BLER ≈ 0.004, matching the best turbo); the damping
