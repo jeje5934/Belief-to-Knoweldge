@@ -144,7 +144,7 @@ Code anchors for each labelled arrow:
      std (`soft_field_to_posterior_logits`, **Approx C**); σ from the syndrome
      scheduler, not the cavity std (**Approx D**).
   4. **site** `src_full = src_post − cavity_src`, applied as
-     `full_ep` (replacement) or `fractional_ep` (damped, §4.4).
+     `full_ep` (replacement) or `damped_ep` (damped, §4.4).
 - **EP status**: EP-structured; approximations A/C/D/E named (see §5 / appendix).
 
 ### 2.4 The scheduling loop
@@ -212,7 +212,7 @@ output the **exact EP site update** `src_full = src_post − cavity`. See
 |---|---|---|
 | 2-chunk, `full_ep`, α=1,β=0 | **identical** (`max|Δ|=0`) | round 0 has `src_site=0` ⇒ cavity = BP_post; the two coincide (§4.1 anchor). |
 | ≥3-chunk, `full_ep` | **diverge** (`max|Δ|≈50+`) | from round 1 the cavity subtracts `src_site` ⇒ the double-count is actually gone. |
-| `fractional_ep(α=1,β=1)` | == `full_ep` | damped form reduces to pure replacement. |
+| `damped_ep(α=1,β=1)` | == `full_ep` | damped form reduces to pure replacement. |
 
 (All three are asserted by the Task-3/5 smoke tests.)
 
@@ -222,10 +222,10 @@ output the **exact EP site update** `src_full = src_post − cavity`. See
 
 ```
 ep_update = "full_ep"        →  α_ep = β_ep = 1  →  src_site = src_full        (pure replacement; ALIGNMENT TARGET)
-ep_update = "fractional_ep"  →  α_ep, β_ep < 1   →  damped EP (same fixed points; stabilizes the non-linear denoiser)
+ep_update = "damped_ep"  →  α_ep, β_ep < 1   →  damped EP (same fixed points; stabilizes the non-linear denoiser)
 ```
 `full_ep` is the default and the alignment target (performance-agnostic).
-`fractional_ep` is a stability option; its divergence is auto-detected and
+`damped_ep` is a stability option; its divergence is auto-detected and
 logged (`EP_DIAGNOSTICS.md` §4).
 
 ---
@@ -237,9 +237,9 @@ logged (`EP_DIAGNOSTICS.md` §4).
 | **A** | `llr_to_soft_field` | mean-field cavity: only the cavity's 1st moment reaches the pixel domain. |
 | **C** | `soft_field_to_posterior_logits` (`sigma_post`) | 2nd-moment std: fixed `sigma_post` (over-confident) on this branch; the diagonal Tweedie `σ²·diag(∂D/∂x̃)` is the drop-in candidate (precision slot ready) — implemented on the sibling branch and shown **insufficient** (correlated, not diagonal). |
 | **D** | denoiser `σ` from scheduler | σ is the syndrome-ratio value (proxy for global per-image cavity uncertainty), not the cavity std; diagonal-Tweedie is the drop-in alternative (§A.6.3 trade-off). |
-| **E** | `cavity_source = channel_site + β_ep·code_added` | `fractional_ep` tempers the code factor's evidence in the source cavity. |
+| **E** | `cavity_source = channel_site + β_ep·code_added` | `damped_ep` tempers the code factor's evidence in the source cavity. |
 | **F** | `_ep_diagnostics` `source_logZ` | factorized (per-bit) source normalizer instead of the joint `Z_src`. |
-| **damped-EP** | `fractional_ep` | the "fractional" path is damped EP (full-EP fixed points), **not** tempered-factor power EP. |
+| **damped-EP** | `damped_ep` | the α<1 path is **damped EP** (full-EP fixed points), **not** tempered-factor power EP; the old `fractional_ep` name was a misnomer (kept as a deprecated alias). |
 
 > **Not an approximation:** the number of inner BP iterations per chunk
 > (`bp_schedule`, `bp_convergence`) is a **refinement schedule**, not an

@@ -50,21 +50,25 @@ LDPC5GDecoder_soft — BP + source-extrinsic denoiser.
       cavity = BP_post - src_site exactly (§4.1).  EP-fidelity ALIGNMENT TARGET,
       but it DECODES AT BLER 1.0 — the denoiser is an over-confident, un-calibrated
       factor and full site trust corrupts the belief every round
-      (docs/EP_SCHEDULING_EXPERIMENT.md §5).  Use fractional_ep to actually decode.
-    * ep_update="fractional_ep": damped EP (§4.4) for the non-linear/over-confident
-      denoiser; source power α_ep=ep_source_power (choose small enough that the
-      accumulated site stays ~20-30% of the full belief, e.g. [2]*15 → ~0.02),
-      code power β_ep=ep_code_power (Approx E).  This is the WORKING configuration
-      (BLER ≈ 0.004, matching turbo).
+      (docs/EP_SCHEDULING_EXPERIMENT.md §5).  Use damped_ep to actually decode.
+    * ep_update="damped_ep": DAMPED EP (§4.4) for the non-linear/over-confident
+      denoiser — the site update is EMA-blended by the fraction α_ep=ep_source_power
+      (choose small enough that the accumulated site stays ~20-30% of the full
+      belief, e.g. [2]*15 → ~0.02), code damping β_ep=ep_code_power (Approx E).
+      This is the WORKING configuration (BLER ≈ 0.004, matching turbo).
+      NOTE: this is *damped* EP, NOT true power/fractional EP (which tempers the
+      factor by f^η in the projection; a distinct, unimplemented method — §4.4).
+      "fractional_ep" is accepted as a deprecated alias of "damped_ep".
 
   ``alpha``/``beta`` are IGNORED in EP mode (their EP re-interpretation is
   ep_source_power / ep_code_power).  Divergence of full_ep (src_site LLR blow-up)
-  is detected and logged with a recommendation to use fractional_ep.
+  is detected and logged with a recommendation to use damped_ep.
 
   Knobs (EP mode):
-    ep_update        — "full_ep" | "fractional_ep".
-    ep_source_power  — α_ep, source fractional-EP power (deprecated alias ep_damping).
-    ep_code_power    — β_ep, code fractional-EP power (Approx E).
+    ep_update        — "full_ep" | "damped_ep"  ("fractional_ep" = deprecated alias).
+    ep_source_power  — α_ep, source DAMPING FRACTION (ρ), not a power-EP exponent;
+                       aliases ep_source_damping / ep_damping.
+    ep_code_power    — β_ep, code DAMPING FRACTION (Approx E); alias ep_code_damping.
     ep_divergence_llr— |src_site| LLR threshold for the divergence warning.
 
   Named approximations (see docs/EP_APPENDIX.md §A.6):
@@ -155,18 +159,24 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         # See docs/EP_THEORY.md (§4.1, §4.4) and docs/EP_MIGRATION_PLAN.md.
         self._ep_mode = bool(ep_mode)
         # EP site-update law (EP_THEORY.md §4.4):
-        #   "full_ep"       — pure site replacement (α_ep=β_ep=1); alignment target.
-        #   "fractional_ep" — damped EP; source power α_ep, code power β_ep.
-        self._ep_update = str(ep_update)
-        # Fractional-EP powers (reinterpret the turbo α/β as EP powers, §4.4).
-        # ep_source_power defaults to ep_damping for backward compatibility with
-        # the Task-3 `ep_damping` knob (which was the source damping ρ).
+        #   "full_ep"   — pure site replacement (α_ep=β_ep=1); alignment target.
+        #   "damped_ep" — DAMPED EP; the site update is EMA-blended by the fraction
+        #                 α_ep (and code by β_ep).  NOTE: this is *damped* EP, NOT
+        #                 true power/fractional EP (which tempers the factor by f^η
+        #                 in the projection — a distinct, unimplemented method, §4.4).
+        #   "fractional_ep" is accepted as a DEPRECATED alias of "damped_ep"
+        #                 (the old name was a misnomer).
+        self._ep_update = self._normalize_ep_update(ep_update)
+        # Damped-EP site fractions (α_ep, β_ep = ρ).  The parameter names contain
+        # "power" for historical reasons ONLY — they are DAMPING FRACTIONS, not the
+        # exponent η of power EP (§4.4).  ep_source_power defaults to the Task-3
+        # `ep_damping` knob (the source damping ρ) for backward compatibility.
         self._ep_source_power = float(
             ep_source_power if ep_source_power is not None else ep_damping)
         self._ep_code_power = float(ep_code_power)
-        self._ep_damping = float(ep_damping)   # deprecated alias of ep_source_power
+        self._ep_damping = float(ep_damping)   # alias of ep_source_power (damping ρ)
         # Divergence monitor: |src_site| LLR above this ⇒ log & flag (full_ep may
-        # diverge because the denoiser is non-linear; suggest fractional_ep).
+        # diverge because the denoiser is non-linear; suggest damped_ep).
         self._ep_divergence_llr = float(ep_divergence_llr)
         self._ep_config_logged = False
         # Inner-BP refinement SCHEDULE (EP_THEORY.md §4.3, §4.5, §4.6).  BP
@@ -262,37 +272,72 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
     def ep_mode(self, value):
         self._ep_mode = bool(value)
 
+    @staticmethod
+    def _normalize_ep_update(value):
+        """Canonicalize the update-law name.  'fractional_ep' is a DEPRECATED
+        alias of 'damped_ep' — the old name was a misnomer (the code implements
+        damped EP, not true power/fractional EP; EP_THEORY.md §4.4)."""
+        v = str(value)
+        return "damped_ep" if v == "fractional_ep" else v
+
     @property
     def ep_update(self):
-        """EP site-update law: 'full_ep' (pure replacement) | 'fractional_ep'."""
+        """EP site-update law: 'full_ep' (pure replacement) | 'damped_ep' (site
+        EMA-blended by the fraction α_ep).  'damped_ep' is DAMPED EP, NOT true
+        power/fractional EP (§4.4).  'fractional_ep' is a deprecated alias."""
         return self._ep_update
 
     @ep_update.setter
     def ep_update(self, value):
-        self._ep_update = str(value)
+        self._ep_update = self._normalize_ep_update(value)
 
     @property
     def ep_source_power(self):
-        """Fractional-EP source power α_ep (EP_THEORY.md §4.4); 1.0 = full step."""
+        """Damped-EP source site-damping fraction α_ep (= ρ; EP_THEORY.md §4.4);
+        1.0 = full step.  NOTE: "power" in the name is HISTORICAL — this is a
+        DAMPING FRACTION, not the exponent η of power EP.  Alias: ep_source_damping."""
         return self._ep_source_power
 
     @ep_source_power.setter
     def ep_source_power(self, value):
         self._ep_source_power = float(value)
-        self._ep_damping = float(value)   # keep the deprecated alias in sync
+        self._ep_damping = float(value)   # keep the alias in sync
 
     @property
     def ep_code_power(self):
-        """Fractional-EP code power β_ep (EP_THEORY.md §4.4, Approx E); 1.0 = full."""
+        """Damped-EP code site-damping fraction β_ep (EP_THEORY.md §4.4, Approx E);
+        1.0 = full.  "power" is historical — a damping fraction, not power-EP η.
+        Alias: ep_code_damping."""
         return self._ep_code_power
 
     @ep_code_power.setter
     def ep_code_power(self, value):
         self._ep_code_power = float(value)
 
+    # Clearer aliases (the canonical params keep the historical "power" name for
+    # API stability); these make the damping-fraction meaning explicit (§4.4).
+    @property
+    def ep_source_damping(self):
+        """Alias of :attr:`ep_source_power` — source damping fraction α_ep (ρ)."""
+        return self._ep_source_power
+
+    @ep_source_damping.setter
+    def ep_source_damping(self, value):
+        self._ep_source_power = float(value)
+        self._ep_damping = float(value)
+
+    @property
+    def ep_code_damping(self):
+        """Alias of :attr:`ep_code_power` — code damping fraction β_ep."""
+        return self._ep_code_power
+
+    @ep_code_damping.setter
+    def ep_code_damping(self, value):
+        self._ep_code_power = float(value)
+
     @property
     def ep_damping(self):
-        """DEPRECATED alias of :attr:`ep_source_power` (the source power α_ep)."""
+        """Alias of :attr:`ep_source_power` — the source damping fraction α_ep (ρ)."""
         return self._ep_source_power
 
     @ep_damping.setter
@@ -540,11 +585,11 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         # Warm-started across chunks so the source cavity can be formed
         # (fixes [어긋남 3]).
         src_site = tf.zeros_like(payload0)
-        # Fractional-EP powers (EP_THEORY.md §4.4).  full_ep ⇒ α_ep=β_ep=1
-        # (pure replacement); fractional_ep ⇒ user powers.
+        # Damped-EP site fractions (EP_THEORY.md §4.4).  full_ep ⇒ α_ep=β_ep=1
+        # (pure replacement); damped_ep ⇒ user damping fractions.
         if ep_update == "full_ep":
-            a_ep = tf.cast(1.0, self.rdtype)      # source power α_ep
-            b_ep = tf.cast(1.0, self.rdtype)      # code power β_ep
+            a_ep = tf.cast(1.0, self.rdtype)      # source damping fraction α_ep
+            b_ep = tf.cast(1.0, self.rdtype)      # code damping fraction β_ep
         else:
             a_ep = tf.cast(self._ep_source_power, self.rdtype)
             b_ep = tf.cast(self._ep_code_power, self.rdtype)
@@ -557,8 +602,8 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                 print("[EP] update=full_ep (pure site replacement, α_ep=β_ep=1; "
                       "alignment target).")
             else:
-                print(f"[EP] update=fractional_ep (damped EP; source power "
-                      f"α_ep={self._ep_source_power}, code power "
+                print(f"[EP] update=damped_ep (damped EP; source damping "
+                      f"α_ep={self._ep_source_power}, code damping "
                       f"β_ep={self._ep_code_power}; stabilizes non-linear denoiser).")
             self._ep_config_logged = True
 
@@ -645,7 +690,7 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                     code_added = post_payload - payload_intr        # = BP_post − A_bp
                     # (1) CAVITY = posterior − source site.  In full_ep (β_ep=1)
                     #     this is exactly BP_post − src_site (removes the source
-                    #     self-message → fixes [어긋남 1]).  In fractional_ep,
+                    #     self-message → fixes [어긋남 1]).  In damped_ep,
                     #     β_ep tempers the code evidence entering the cavity
                     #     (Approx E, §4.4).  Feeding the CAVITY (not BP_post) is
                     #     the EP division = LLR subtraction (§3).
@@ -661,7 +706,8 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                     # Site update (EP_THEORY.md §4.4):
                     #   full_ep    (α_ep=1): src_site = src_full  → pure replacement,
                     #                        fixes [어긋남 2] (no damped addition).
-                    #   fractional (α_ep<1): damped EP; same fixed points as full EP.
+                    #   damped_ep  (α_ep<1): EMA-damped site; same fixed points as
+                    #                        full EP (damped EP, NOT power EP).
                     src_site_old = src_site
                     one = tf.cast(1.0, self.rdtype)
                     src_site = (one - a_ep) * src_site_old + a_ep * src_full
@@ -688,7 +734,7 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                     ep_prev_delta = delta_l2
                     if site_blowup or delta_growing:
                         ep_diverged = True
-                    # full_ep divergence → recommend switching to fractional_ep.
+                    # full_ep divergence → recommend switching to damped_ep.
                     recommend_fractional = (
                         ep_update == "full_ep" and (site_blowup or delta_growing))
                     if (site_blowup or delta_growing) and not ep_div_logged:
@@ -697,7 +743,7 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                                f"(max|src_site|={site_max:.3g}, "
                                f"Δsite_l2={delta_l2:.3g}, ep_update={ep_update}).")
                         if recommend_fractional:
-                            msg += (" Consider ep_update='fractional_ep' with a "
+                            msg += (" Consider ep_update='damped_ep' with a "
                                     "smaller ep_source_power for stability.")
                         print(msg)
                         ep_div_logged = True

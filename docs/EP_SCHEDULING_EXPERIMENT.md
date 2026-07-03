@@ -9,7 +9,7 @@
 > convergence *dynamics* (Δsite/logZ) only. A later decode-quality test
 > (§5) shows **`full_ep` decodes at BLER 1.0** — its "stable orbit" is a stably
 > *wrong* image. The working configuration is **`[2]*15` with damped source
-> sites** (`fractional_ep`, small `ep_source_power`, or the legacy turbo path),
+> sites** (`damped_ep`, small `ep_source_power`, or the legacy turbo path),
 > which reaches BLER ≈ 0.004 at 0.8 dB. `[2]*15` remains the right *schedule*;
 > only the *update weight* had to change.
 
@@ -115,7 +115,7 @@ separate **decode-quality** test (§5) then fixed the **update weight**:
 * **Source weight — NOT `full_ep`.** `full_ep` (α_ep=1) decodes at **BLER 1.0**
   (§5): the denoiser is an over-confident, un-calibrated factor and full site
   trust corrupts the belief from the first round. The working weight is a
-  **damped source site**: `fractional_ep` with a small `ep_source_power` chosen
+  **damped source site**: `damped_ep` with a small `ep_source_power` chosen
   so the *accumulated* site stays ≈ 20–30 % of the denoiser's full belief
   (e.g. `[2]×15` → `ep_source_power ≈ 0.02` → BLER ≈ 0.004 at 0.8 dB), or
   equivalently the legacy turbo path (`ep_mode=False`, α≈0.1).
@@ -132,7 +132,7 @@ separate **decode-quality** test (§5) then fixed the **update weight**:
 ## 4. SNR sweep (Pure EP vs Baseline BP)
 
 *(Harness: `ep_snr_sweep.py`; outputs in `results/ep_snr_sweep.{csv,png,json}`.
-The EP curve must use a **working** config — `fractional_ep`, small
+The EP curve must use a **working** config — `damped_ep`, small
 `ep_source_power` — not `full_ep`, which is BLER 1.0 (§5). Re-run pending.)*
 
 Curves: **bp30** (baseline BP, 30 iters, no prior — same BP budget as `[2]×15`),
@@ -195,10 +195,10 @@ Damping the source site so its *accumulated* magnitude stays small decodes well:
 
 | config | BLER |
 |---|---|
-| `fractional_ep` α=.1 `[10]×3` | 0.027 |
-| `fractional_ep` α=.05 `[2]×15` | 0.48 (accumulates to ~0.5 of full) |
-| **`fractional_ep` α=.02 `[2]×15`** | **0.004** |
-| `fractional_ep` α=.01 `[2]×15` | 0.016 |
+| `damped_ep` α=.1 `[10]×3` | 0.027 |
+| `damped_ep` α=.05 `[2]×15` | 0.48 (accumulates to ~0.5 of full) |
+| **`damped_ep` α=.02 `[2]×15`** | **0.004** |
+| `damped_ep` α=.01 `[2]×15` | 0.016 |
 
 `ep_source_power` must scale with the number of source updates so the EMA-
 accumulated site stays ≈ 20–30 % of the full denoiser belief (`[2]×15` → ≈0.02;
