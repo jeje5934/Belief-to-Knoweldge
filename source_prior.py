@@ -76,6 +76,12 @@ class SourcePriorDenoiser(nn.Module):
         # Tweedie 2nd moment  v_proj = sigma^2 · ∂D/∂x.  Smaller ⇒ higher-precision
         # (sharper) bit-domain source site.  It is the fixed-variance path
         # required by Task 4; ``posterior_pixel_std`` overrides it per-call.
+        # [Prompt C] Setting sigma_post to the denoiser's measured error scale
+        # ε = 255·√(test MSE) (see denoiser.SoftDenoiser.set_posterior_std_from_mse,
+        # "auto_mse") replaces the tuned 3.0 with a statistically honest global
+        # 2nd moment: it auto-stratifies confidence by bit place-value (MSB stay
+        # sharp, LSB→0).  Global ε cannot capture correlated error → not a full-EP
+        # fix; it targets the damped-EP path.
         self.sigma_post = sigma_post
         # [Part D] Cavity per-pixel variance options (Approx A candidate).  The
         # mean-only bit→pixel collapse (`llr_to_soft_field`) makes uncertain

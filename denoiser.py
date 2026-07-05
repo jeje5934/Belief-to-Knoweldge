@@ -60,6 +60,28 @@ class SoftDenoiser(tf.keras.layers.Layer):
         return self._prior
 
     @property
+    def sigma_post(self):
+        """[Prompt C] Pixel→bit read-out std (EP 2nd moment) in 0..255 units.
+        Default 3.0 (tuned, very sharp).  Set to the denoiser's measured error
+        scale ε for a statistically honest per-bit posterior LLR."""
+        return self._prior.sigma_post
+
+    @sigma_post.setter
+    def sigma_post(self, value):
+        self._prior.sigma_post = float(value)
+
+    def set_posterior_std_from_mse(self, mse_unit_interval):
+        """[Prompt C, "auto_mse"] Set sigma_post to the denoiser error scale
+        ε = 255·√(test MSE), converting a [0,1]-scale MSE to the 0..255 pixel
+        units of ``sigma_post``.  This replaces the tuned 3.0 with the empirical
+        posterior error; bits with place-value w_m ≲ ε then collapse to LLR→0
+        (honest) while w_m ≫ ε (MSBs) stay sharp.  Returns ε.  Preserves the
+        3.0 path unless called."""
+        eps = 255.0 * float(mse_unit_interval) ** 0.5
+        self._prior.sigma_post = eps
+        return eps
+
+    @property
     def cavity_var_readout(self):
         """[Part D] use per-pixel cavity std √v_j as the pixel→bit read-out std."""
         return self._prior.cavity_var_readout
