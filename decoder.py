@@ -135,6 +135,7 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                  bp_max_iter=200, bp_conv_verbose=False,
                  bp_track_delta=False,
                  bp_reset_each_chunk=False,
+                 ep_track_payload_hist=False,
                  k_payload=None, img_h=28, img_w=28, bits_per_pixel=8,
                  denoiser_kwargs=None,
                  # Adaptive sigma — either pass a scheduler or legacy params.
@@ -199,6 +200,11 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         # starts cold from the current prior.  Used to test whether the warm-start
         # state hides a source double-count.  Default False preserves warm-start.
         self._bp_reset_each_chunk = bool(bp_reset_each_chunk)
+        # DIAGNOSTIC (per-round BER probe): when True, record the BP-posterior
+        # payload logits at every chunk into last_payload_hist so the per-round
+        # BER trajectory can be computed outside.  Default False preserves.
+        self._ep_track_payload_hist = bool(ep_track_payload_hist)
+        self._last_payload_hist = []
         self._last_bp_stats = []
         self._last_src_site = None       # final source site of the latest decode
         self._k_payload_custom = int(k_payload) if k_payload is not None else None
@@ -435,6 +441,21 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         any decode.  Diagnostic for scheduling/convergence studies (§4.6)."""
         return self._last_src_site
 
+    @property
+    def ep_track_payload_hist(self):
+        return self._ep_track_payload_hist
+
+    @ep_track_payload_hist.setter
+    def ep_track_payload_hist(self, value):
+        self._ep_track_payload_hist = bool(value)
+
+    @property
+    def last_payload_hist(self):
+        """Per-chunk BP-posterior payload LLR tensors [B, k_payload] (one per BP
+        chunk, incl. final) when ep_track_payload_hist=True; else empty.  Chunk r
+        = BP posterior after r source injections (r=0 = pure BP)."""
+        return list(self._last_payload_hist)
+
     # ────── EP convergence / evidence diagnostics (Task 6) ──────
 
     def _run_bp_chunk(self, llr_bp, iters, msg_v2c, idx):
@@ -619,6 +640,7 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
             self._last_chunk_diagnostics = []
             self._last_chunk_summary = []
             self._last_bp_stats = []
+            self._last_payload_hist = []
 
             for idx, iters in enumerate(schedule):
                 # ── BP chunk: ``iters`` EP refinement steps of the parity-check
@@ -646,6 +668,11 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                         print(f"[EP-BP] chunk {idx}: NOT converged in {bp_used} "
                               f"iters (max|Δmsg_v2c|={bp_delta:.2e} ≥ "
                               f"{self._bp_conv_tol:g}); capped at bp_max_iter")
+
+                # DIAGNOSTIC (per-round BER probe): record BP-posterior payload
+                # at every chunk (incl. final) for the per-round BER trajectory.
+                if self._ep_track_payload_hist:
+                    self._last_payload_hist.append(x_hat[:, :k_payload])
 
                 # Final chunk: no denoiser feedback, channel stays frozen.
                 if idx >= len(schedule) - 1:

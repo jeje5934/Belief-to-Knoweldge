@@ -128,6 +128,30 @@ justification for **damped EP** (§3). Details:
 `docs/EP_SCHEDULING_EXPERIMENT.md` §5.2, `docs/EP_APPENDIX.md` §A.6.4. The sibling
 branch `pure-EP_ada-sigma` omits this computation and uses a fixed `sigma_post`.
 
+## 4b. Prompt D — unimodal domain × diagonal Tweedie (exclusion completed)
+
+Branch `pure-EP_tweedie_practical` (from this branch). Testing whether a
+**unimodal source** (single FashionMNIST category, Trouser) makes the *diagonal*
+Tweedie sufficient for pure EP (scripts `practical_promptD_*.py`, Trouser denoiser
+`denoiser_trouser.pt`):
+
+- **Full EP still explodes with diagonal Tweedie** on Trouser (per-round BER
+  0.14→0.49, ratio 3.76×→3.54×, BLER 1.0). This completes the **2×2 exclusion**
+  (multi / Trouser × `sigma_post=3.0` / diagonal Tweedie — **all four BLER 1.0**).
+- **Diagonal variance is genuinely smaller/concentrated on Trouser** (mean
+  8.8 < 13.0, 54.6% of pixels at the floor) — yet full EP fails. So the failure
+  is **not** diagonal inaccuracy but the **diagonal form missing the off-diagonal
+  correlated components**.
+- **Damped comparison** (α=0.02, Wilson CI, 1024 cw): diagonal Tweedie is
+  **worse** than fixed `sigma_post=3.0` (BLER 0.474 vs 0.342, CI-disjoint) —
+  input-adaptive precision **over-sharpens confident pixels**, amplifying the
+  correlated poison.
+
+Combined with Prompt C (global `ε` softening → source inert → worse): **read-out
+precision is not a useful lever on either axis; damping is the sole effective
+calibration** within the per-bit interface. **Root cause = inter-pixel correlated
+error, removable by neither diagonalization nor category restriction.**
+
 ## 5. Documentation (`docs/`)
 
 | file | role |
