@@ -103,6 +103,45 @@ but is not filled here. (The sibling branch
 `pure-EP_tweedie-2nd-diagonal-precision` fills it with a real diagonal Tweedie
 2nd moment; see there.)
 
+## 4b. Practical branch (`pure-EP_practical`) — low-SNR optimization
+
+This branch optimizes the working **damped-EP** decoder in the SNR region where
+BP struggles, to measure and maximize the **source-knowledge gain** over BP.
+(High SNR ≥0.8 dB is uninformative — BP-100 alone reaches BLER≈0.008 there.)
+
+**Low-SNR baseline** (`practical_lowsnr_baseline.py`, 3200 codewords/point,
+batch 64 × rounds 50, EP = `damped_ep, α_ep=0.02, [2]×15, adaptive σ`; baselines
+share the EP BP budget K=30, ceiling = BP-100):
+
+| Eb/N0 | BP-30 (same budget) | **EP (α=0.02)** | BP-100 (ceiling) | source gain vs BP-30 | EP below ceiling |
+|---|---|---|---|---|---|
+| 0.4 | 1.000 | 0.619 | 0.859 | +0.381 | yes (0.72×) |
+| 0.5 | 0.999 | 0.352 | 0.557 | +0.647 | yes (0.63×) |
+| 0.6 | 0.983 | **0.129** | 0.249 | **+0.854** | **yes (0.52×)** |
+| 0.7 | 0.864 | 0.037 | 0.050 | +0.827 | yes (0.73×) |
+
+EP (source prior) beats the **BP-100 ceiling at every low SNR** — source
+knowledge reaches BLER that BP cannot at any iteration count. Focus SNR for
+subsequent steps = **0.6 dB** (max absolute + relative gain, stable statistics,
+visible headroom). Numbers are Wilson-95%-CI stable.
+
+**Denoiser training-state probe** (`denoiser_training_probe.py`): the active
+`checkpoints/denoiser.pt` is **well trained, not under-trained**. Held-out
+FashionMNIST test:
+
+* **unweighted per-pixel denoising MSE = 0.0105** (already ~10× below the "0.1"
+  figure, which is actually the *weighted DSM objective* ≈ 0.125, not pixel MSE).
+* A fresh run plateaus by **epoch ~10–20**: test MSE 0.0106 (ep5) → 0.0096
+  (ep45), i.e. training 40 more epochs buys <10% — this is a **data /
+  EDM-DSM difficulty floor, not under-training or capacity** (~7M params suffice).
+* Locating `denoiser.pt` by its test MSE puts it at **~epoch 5–8** (consistent
+  with the README default `--epochs 5`).
+
+**Consequence:** the decode-quality failures (correlated hallucination §Part C,
+gray-mush OOD input §Part D) are **not** a denoiser-training problem — "train the
+denoiser longer" is not a performance lever. See `docs/COMPUTE_LESSONS.md` for
+the CPU/GPU run notes from these experiments.
+
 ## 5. Documentation (`docs/`)
 
 | file | role |
@@ -113,6 +152,7 @@ but is not filled here. (The sibling branch
 | `EP_DIAGNOSTICS.md` | convergence/evidence metrics (Z_i, Δsite), syndrome↔EP mapping |
 | `EP_SCHEDULING_EXPERIMENT.md` | schedule sweep + **decode-quality** experiments (§5: full EP fails, damping needed) |
 | `EP_APPENDIX.md` | full probabilistic derivation (A.1–A.6), all approximations named |
+| `COMPUTE_LESSONS.md` | CPU vs GPU run notes: bridge is CPU-bound, GPU gain is small, long GPU training is crash-prone (checkpoint/resume) |
 
 ## 6. Running
 
