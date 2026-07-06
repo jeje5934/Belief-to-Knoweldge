@@ -166,10 +166,23 @@ anchor (0.6 dB, 3200 cw, Wilson CI; `practical_promptOpt{1,2}_*.py`):
   (BLER/CRC)**: damping trades average accuracy for block-level cleanliness, and
   α=0.02 constant is the robust BLER optimum.
 
+### 4b.2 Research conclusion
+
+The experimental arc is complete. Pure EP (`full_ep`, α=1) fails by an
+**inter-pixel correlated hallucination** in the source projection. Every attempt
+to remove it is excluded — BP warm-start double-count, denoiser under-training,
+read-out precision (both diagonal Tweedie and global ε), single-category domain,
+α damping schedules (decreasing and increasing), and pure-BP code cleanup. The
+clump is invisible to BER, catastrophic to BLER/CRC, and unfixable post-hoc, so
+the **necessary** strategy is gentle constant damping (α≈0.02) that never forms
+it — and that decoder beats the BP-100 ceiling at low SNR (0.5–0.7 dB). Full
+narrative with per-experiment numbers: **`docs/EP_RESEARCH_SUMMARY.md`**.
+
 ## 5. Documentation (`docs/`)
 
 | file | role |
 |---|---|
+| `EP_RESEARCH_SUMMARY.md` | **whole-study narrative** (paper skeleton): EP formalisation → full-EP failure → exclusion chain → BER/BLER dissociation → damping necessity → performance → future work |
 | `EP_THEORY.md` | factor graph, per-factor EP cycle, LLR algebra, damped EP (vs true power EP), scheduling |
 | `EP_MIGRATION_PLAN.md` | the double-count fix (turbo → EP), line-level |
 | `EP_SYSTEM_BLOCK.md` | corrected block diagram + before/after |
