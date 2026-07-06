@@ -142,6 +142,30 @@ gray-mush OOD input §Part D) are **not** a denoiser-training problem — "train
 denoiser longer" is not a performance lever. See `docs/COMPUTE_LESSONS.md` for
 the CPU/GPU run notes from these experiments.
 
+### 4b.1 Chunk-wise α_ep schedule (Opt-1/Opt-2) — not a BLER lever
+
+`ep_source_power` (α_ep, the source site damping rate) can be scheduled per chunk
+via `ep_source_power_schedule` (list), and the last M chunks can be truly
+source-off via `ep_source_off_tail=M` (both options, default off). Sweeping
+decreasing (Opt-1) and increasing (Opt-2) schedules against the constant α=0.02
+anchor (0.6 dB, 3200 cw, Wilson CI; `practical_promptOpt{1,2}_*.py`):
+
+- **Neither decreasing nor increasing α beats constant α=0.02 on BLER.** The α
+  magnitude sweet spot is 0.02 (const 0.03 → 0.194, const 0.05 → 0.537); schedule
+  shaping is not an effective BLER lever. True source-off tails and α=0 freeze
+  tails give at most a marginal, CI-overlapping change.
+- **Key finding — BER/BLER dissociation.** An increasing schedule (low early,
+  high late) **cuts BER 3×** (0.0064 → 0.0018) via late-cavity source gain — the
+  per-round trajectory confirms the theory (mid-chunk BER stays higher under low
+  early-α, then late high-α drives the final BER below constant-α). But it
+  **worsens BLER** (0.124 → 0.489). Mechanism: strong late source fixes a residual
+  handful of **correlated** wrong bits per block — killing CRC while most bits are
+  clean; constant 0.02's gentle accumulation keeps more blocks *fully* clean.
+- This is the direct experimental confirmation that **correlated errors are
+  invisible to average metrics (BER) but catastrophic to block metrics
+  (BLER/CRC)**: damping trades average accuracy for block-level cleanliness, and
+  α=0.02 constant is the robust BLER optimum.
+
 ## 5. Documentation (`docs/`)
 
 | file | role |

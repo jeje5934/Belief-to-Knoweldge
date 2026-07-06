@@ -131,6 +131,7 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                  ep_mode=False, ep_damping=1.0,
                  ep_update="full_ep",
                  ep_source_power=None, ep_code_power=1.0,
+                 ep_source_power_schedule=None, ep_source_off_tail=0,
                  ep_divergence_llr=1.0e4,
                  bp_convergence=False, bp_conv_tol=1.0e-3,
                  bp_max_iter=200, bp_conv_verbose=False,
@@ -176,6 +177,19 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
             ep_source_power if ep_source_power is not None else ep_damping)
         self._ep_code_power = float(ep_code_power)
         self._ep_damping = float(ep_damping)   # alias of ep_source_power (damping ρ)
+        # [Guide-α schedule] Per-chunk source damping rate α_ep.  If a list is
+        # given it OVERRIDES the scalar ep_source_power per source-injection chunk
+        # (chunk idx uses schedule[min(idx, len-1)]).  Lowering α late gradually
+        # slows source accumulation; α=0 FREEZES the site (EMA: no new source
+        # absorbed, accumulated site retained).  Default None → constant scalar.
+        self._ep_source_power_schedule = (
+            [float(x) for x in ep_source_power_schedule]
+            if ep_source_power_schedule is not None else None)
+        # [Source-off tail] For the last M source-injection chunks, REMOVE the
+        # source site (src_site←0 ⇒ payload_intr = channel_site only ⇒ pure-BP
+        # tail).  This is TRUE source-off (site removed), distinct from an α=0
+        # tail (site frozen).  Default 0 preserves behaviour.
+        self._ep_source_off_tail = int(ep_source_off_tail)
         # Divergence monitor: |src_site| LLR above this ⇒ log & flag (full_ep may
         # diverge because the denoiser is non-linear; suggest damped_ep).
         self._ep_divergence_llr = float(ep_divergence_llr)
@@ -309,6 +323,28 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
     @ep_source_power.setter
     def ep_source_power(self, value):
         self._ep_source_power = float(value)
+
+    @property
+    def ep_source_power_schedule(self):
+        """Per-chunk source damping rate α_ep (list) overriding the scalar, or
+        None for constant.  chunk idx → schedule[min(idx, len-1)]."""
+        return (list(self._ep_source_power_schedule)
+                if self._ep_source_power_schedule is not None else None)
+
+    @ep_source_power_schedule.setter
+    def ep_source_power_schedule(self, value):
+        self._ep_source_power_schedule = (
+            [float(x) for x in value] if value is not None else None)
+
+    @property
+    def ep_source_off_tail(self):
+        """Number of trailing source-injection chunks with the source site
+        REMOVED (true source-off / pure-BP tail).  0 = off."""
+        return self._ep_source_off_tail
+
+    @ep_source_off_tail.setter
+    def ep_source_off_tail(self, value):
+        self._ep_source_off_tail = int(value)
         self._ep_damping = float(value)   # keep the alias in sync
 
     @property
@@ -617,6 +653,10 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         else:
             a_ep = tf.cast(self._ep_source_power, self.rdtype)
             b_ep = tf.cast(self._ep_code_power, self.rdtype)
+        # [Guide-α schedule / source-off tail] per-chunk α_ep + pure-BP tail.
+        ep_alpha_sched = self._ep_source_power_schedule
+        n_src_chunks = max(len(schedule) - 1, 1)   # source injected on chunks 0..n-1
+        ep_off_tail = int(self._ep_source_off_tail)
         ep_diverged = False
         ep_div_logged = False
         ep_prev_delta = None                       # previous chunk Δsite_l2 (growth check)
@@ -740,7 +780,18 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                     #                        full EP (damped EP, NOT power EP).
                     src_site_old = src_site
                     one = tf.cast(1.0, self.rdtype)
+                    # [Guide-α schedule] per-chunk source damping rate: override
+                    # a_ep for THIS source-injection chunk (idx) if a schedule is
+                    # set.  α=0 ⇒ freeze site (no new source absorbed this round).
+                    if ep_alpha_sched is not None:
+                        a_ep = tf.cast(
+                            ep_alpha_sched[min(idx, len(ep_alpha_sched) - 1)],
+                            self.rdtype)
                     src_site = (one - a_ep) * src_site_old + a_ep * src_full
+                    # [Source-off tail] TRUE source-off for the last M chunks:
+                    # remove the site (pure-BP tail).  Distinct from α=0 (freeze).
+                    if ep_off_tail > 0 and idx >= n_src_chunks - ep_off_tail:
+                        src_site = tf.zeros_like(src_site)
                     # Finiteness guard: the source site must stay finite.
                     tf.debugging.assert_all_finite(
                         src_site, "EP source site (src_site) became non-finite")
