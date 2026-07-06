@@ -129,6 +129,8 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
     def __init__(self, encoder, *, bp_schedule=None,
                  alpha=0.0, beta=0.0,
                  ep_mode=False, ep_damping=1.0,
+                 true_turbo=False,
+                 source_input_mode="bp_post",
                  ep_update="full_ep",
                  ep_source_power=None, ep_code_power=1.0,
                  ep_source_power_schedule=None, ep_source_off_tail=0,
@@ -160,6 +162,33 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         # EP mode: Expectation Propagation source-factor cycle.
         # See docs/EP_THEORY.md (§4.1, §4.4) and docs/EP_MIGRATION_PLAN.md.
         self._ep_mode = bool(ep_mode)
+        # ── TRUE TURBO mode (mathematically exact turbo extrinsic exchange) ──
+        # Distinct from the legacy turbo-like path (ep_mode=False) and EP
+        # (ep_mode=True); takes precedence over both when set.  Per chunk t
+        # (docs/EP_RESEARCH_SUMMARY §A, and the spec below):
+        #   a^(t)     = alpha_t · e_src^(t-1)            (source a priori)
+        #   l_in^(t)  = L_ch + Pi(a^(t))                 (BP input; payload += a)
+        #   P^(t)     = BP_{k_t}(l_in^(t))   from a FRESH state (NO warm-start)
+        #   c^(t)     = P^(t)|payload − a^(t)            (source-free cavity)
+        #   s^(t)     = D(c^(t)) ;  e_src^(t) = s^(t) − c^(t)
+        # The ONLY carried state is e_src (last extrinsic) — no BP state, no site
+        # accumulation, no EMA.  Excludes (guaranteed in call()): (1) denoiser
+        # input is c not P (subtract a^(t)); (2) BP reset every chunk (msg_v2c
+        # forced None); (3) no EMA on e_src; (4) no beta·bp_ext feedback term.
+        # alpha_t = ep_source_power_schedule[t] if set, else the scalar `alpha`.
+        self._true_turbo = bool(true_turbo)
+        # [source_input_mode] Legacy-turbo denoiser input purity (warm-start ALWAYS
+        # kept):
+        #   "bp_post"               — P_t|payload (legacy; contains this chunk's
+        #                             explicit injected source feedback).
+        #   "minus_source_feedback" — P_t|payload − src_feedback, subtracting the
+        #                             EXACT α·src_ext tensor injected into this
+        #                             chunk's BP prior (removes the explicit
+        #                             source self-message; the implicit residue in
+        #                             warm-started msg_v2c is unremovable — an
+        #                             acknowledged honest limit).  bp_ext unchanged.
+        assert source_input_mode in ("bp_post", "minus_source_feedback")
+        self._source_input_mode = source_input_mode
         # EP site-update law (EP_THEORY.md §4.4):
         #   "full_ep"   — pure site replacement (α_ep=β_ep=1); alignment target.
         #   "damped_ep" — DAMPED EP; the site update is EMA-blended by the fraction
@@ -222,6 +251,14 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         # False preserves behaviour (nothing stored).
         self._ep_track_payload_hist = bool(ep_track_payload_hist)
         self._last_payload_hist = []
+        # DIAGNOSTIC: per-chunk mean|src_ext| (legacy turbo), recorded when
+        # ep_track_payload_hist is on.  Used to test whether "minus_source_feedback"
+        # weakens the source output (H2 input-shift) vs. only redirects it (H1).
+        self._last_src_ext_mag = []
+        # DIAGNOSTIC: per-chunk src_ext VECTORS (legacy turbo), recorded only when
+        # ep_track_src_ext is on (heavier; for the mode-locking cosine probe).
+        self._ep_track_src_ext = False
+        self._last_src_ext = []
         self._last_bp_stats = []
         self._last_src_site = None       # final source site of the latest decode
         self._k_payload_custom = int(k_payload) if k_payload is not None else None
@@ -293,6 +330,28 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
     @ep_mode.setter
     def ep_mode(self, value):
         self._ep_mode = bool(value)
+
+    @property
+    def true_turbo(self):
+        """True → mathematically exact turbo (fresh BP each chunk, source-free
+        cavity, single carried extrinsic, no EMA, no β).  Takes precedence over
+        ep_mode."""
+        return self._true_turbo
+
+    @true_turbo.setter
+    def true_turbo(self, value):
+        self._true_turbo = bool(value)
+
+    @property
+    def source_input_mode(self):
+        """Legacy-turbo denoiser input: 'bp_post' (P_t) or
+        'minus_source_feedback' (P_t − src_feedback)."""
+        return self._source_input_mode
+
+    @source_input_mode.setter
+    def source_input_mode(self, value):
+        assert value in ("bp_post", "minus_source_feedback")
+        self._source_input_mode = value
 
     @staticmethod
     def _normalize_ep_update(value):
@@ -496,6 +555,27 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         (r=0 is pure BP, no source yet) → per-round BER trajectory."""
         return list(self._last_payload_hist)
 
+    @property
+    def last_src_ext_mag(self):
+        """Per-chunk mean|src_ext| (legacy turbo) of the latest decode when
+        ep_track_payload_hist=True; empty otherwise."""
+        return list(self._last_src_ext_mag)
+
+    @property
+    def ep_track_src_ext(self):
+        return self._ep_track_src_ext
+
+    @ep_track_src_ext.setter
+    def ep_track_src_ext(self, value):
+        self._ep_track_src_ext = bool(value)
+
+    @property
+    def last_src_ext(self):
+        """Per-chunk src_ext [B, K] tensors (legacy turbo) when
+        ep_track_src_ext=True; empty otherwise.  For the mode-locking cosine
+        probe."""
+        return list(self._last_src_ext)
+
     # ────── EP convergence / evidence diagnostics (Task 6) ──────
 
     def _run_bp_chunk(self, llr_bp, iters, msg_v2c, idx):
@@ -637,8 +717,21 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         payload_intr = payload0                   # a-priori payload LLR fed to BP (A_bp)
         curr_msg_v2c = msg_v2c                    # warm-start preserved (t̃_code)
 
+        # ── TRUE TURBO state (mathematically exact turbo) ───────────
+        true_turbo = self._true_turbo
+        # e_src^(t): the ONLY carried state in true turbo (last source
+        # extrinsic, payload domain).  e_src^(0) = 0.  No BP state, no EMA.
+        e_src = tf.zeros_like(payload0)
+        tt_alpha_sched = self._ep_source_power_schedule   # per-chunk α_t (reused)
+
+        # [source_input_mode] separated legacy-turbo feedback state.  Invariant:
+        # payload_intr = payload0 + bp_feedback + src_feedback.  src_feedback is
+        # the EXACT α·src_ext tensor injected this chunk (kept for exact removal).
+        src_feedback = tf.zeros_like(payload0)
+        bp_feedback = tf.zeros_like(payload0)
+
         # ── EP state (EP_THEORY.md §2, §4.4) ────────────────────────
-        ep_mode = self._ep_mode
+        ep_mode = self._ep_mode and not true_turbo        # true_turbo wins
         ep_update = self._ep_update
         # Source site t̃_src: bit-LLR domain, initialised to 0 (Bernoulli site
         # "1" = no information, EP_THEORY.md §2 / EP_MIGRATION_PLAN.md §2).
@@ -660,7 +753,12 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         ep_diverged = False
         ep_div_logged = False
         ep_prev_delta = None                       # previous chunk Δsite_l2 (growth check)
-        # Log the chosen EP update law once per instance (requirement 4).
+        # Log the chosen update law once per instance.
+        if true_turbo and not self._ep_config_logged:
+            print("[TRUE-TURBO] exact turbo: fresh BP each chunk (no warm-start), "
+                  "source-free cavity c=P|payload−a, single carried extrinsic "
+                  "(no EMA, no β).")
+            self._ep_config_logged = True
         if ep_mode and not self._ep_config_logged:
             if ep_update == "full_ep":
                 print("[EP] update=full_ep (pure site replacement, α_ep=β_ep=1; "
@@ -685,8 +783,18 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
             self._last_chunk_summary = []
             self._last_bp_stats = []
             self._last_payload_hist = []
+            self._last_src_ext_mag = []
+            self._last_src_ext = []
 
             for idx, iters in enumerate(schedule):
+                # [TRUE TURBO] a priori a^(t) = alpha_t · e_src^(t-1); BP input
+                # l_in^(t) = L_ch + Pi(a^(t)) (payload += a, rest = channel).
+                if true_turbo:
+                    alpha_t = (tt_alpha_sched[min(idx, len(tt_alpha_sched) - 1)]
+                               if tt_alpha_sched is not None else self._alpha)
+                    a_prior = tf.cast(alpha_t, self.rdtype) * e_src
+                    payload_intr = payload0 + a_prior
+                    curr_msg_v2c = None    # exclusion (2): FRESH BP every chunk
                 # ── BP chunk: ``iters`` EP refinement steps of the parity-check
                 #    factors (EP_THEORY.md §4.3, §4.5, §4.6).  Iteration count is
                 #    a refinement SCHEDULE, not an approximation.
@@ -752,7 +860,31 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                     use_sched_sigma = False
 
                 ep_diag = None      # filled in EP mode; stays None in legacy mode
-                if ep_mode:
+                if true_turbo:
+                    # ═══ TRUE TURBO source-factor extrinsic exchange ═══
+                    # (1) source-free CAVITY: subtract EXACTLY the a priori
+                    #     injected this chunk so the source decoder never sees
+                    #     its own information — c^(t) = P^(t)|payload − a^(t).
+                    c_cav = post_payload - a_prior
+                    # verification (spec §5.3): c^(t) + a^(t) = P^(t)|payload
+                    # holds by construction (the cavity removes exactly the a
+                    # priori injected this chunk).
+                    tf.debugging.assert_near(
+                        c_cav + a_prior, post_payload, rtol=1e-5, atol=1e-5,
+                        message="true-turbo cavity check c+a != P|payload failed")
+                    # (2) source posterior s = D(c); the denoiser returns
+                    #     (posterior − input), so this IS e_src = s − c directly.
+                    if use_sched_sigma:
+                        e_src = self._denoiser(c_cav, sigma=batch_sigma)
+                    else:
+                        e_src = self._denoiser(c_cav)
+                    # exclusion (3): no EMA — e_src is REPLACED, only the last
+                    # extrinsic is carried.  exclusion (4): no β·bp_ext term.
+                    tf.debugging.assert_all_finite(
+                        e_src, "true-turbo e_src became non-finite")
+                    # payload_intr for the next chunk is rebuilt at the loop top
+                    # from e_src (= L_ch + Pi(alpha·e_src)); nothing to do here.
+                elif ep_mode:
                     # ═══ EP source-factor cycle (EP_THEORY.md §4.1, §4.4) ═══
                     # Sites compose as a product: posterior = channel_site +
                     # code_site + src_site (LLR addition, §3).  channel_site is
@@ -841,15 +973,37 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                     # alpha/beta are UNUSED in EP mode (see ep_source/code_power).
                     payload_intr = channel_site + src_site
                 else:
-                    # ═══ Legacy turbo path (UNCHANGED; [어긋남 1-2] present) ═══
-                    if use_sched_sigma:
-                        src_ext = self._denoiser(post_payload, sigma=batch_sigma)
+                    # ═══ Legacy turbo path (warm-start ALWAYS preserved) ═══
+                    # [source_input_mode] denoiser input purity.  In
+                    # "minus_source_feedback" we subtract the EXACT src_feedback
+                    # tensor that was injected into THIS chunk's BP prior (not a
+                    # recomputed α·src_ext — avoids index drift).  At chunk 0
+                    # src_feedback=0 so both modes feed P_t|payload (bit-exact).
+                    if self._source_input_mode == "minus_source_feedback":
+                        source_in = post_payload - src_feedback
+                        # verification: source_in + src_feedback = P_t|payload
+                        tf.debugging.assert_near(
+                            source_in + src_feedback, post_payload,
+                            rtol=1e-5, atol=1e-5,
+                            message="turbo source_in + src_feedback != P|payload")
                     else:
-                        src_ext = self._denoiser(post_payload)
-                    # Turbo-style extrinsics.
-                    bp_ext = post_payload - payload_intr   # subtract a priori IN
-                    # Update payload intrinsic (channel frozen).
-                    payload_intr = payload0 + b * bp_ext + a * src_ext
+                        source_in = post_payload
+                    if use_sched_sigma:
+                        src_ext = self._denoiser(source_in, sigma=batch_sigma)
+                    else:
+                        src_ext = self._denoiser(source_in)
+                    if self._ep_track_payload_hist:
+                        self._last_src_ext_mag.append(
+                            float(tf.reduce_mean(tf.abs(src_ext))))
+                    if self._ep_track_src_ext:
+                        self._last_src_ext.append(src_ext)
+                    # bp_ext definition UNCHANGED.
+                    bp_ext = post_payload - payload_intr
+                    # Separated feedback state; payload_intr = payload0 +
+                    # bp_feedback + src_feedback (invariant by construction).
+                    bp_feedback = b * bp_ext
+                    src_feedback = a * src_ext
+                    payload_intr = payload0 + bp_feedback + src_feedback
 
                 # Finiteness guard shared by both paths.
                 tf.debugging.assert_all_finite(
