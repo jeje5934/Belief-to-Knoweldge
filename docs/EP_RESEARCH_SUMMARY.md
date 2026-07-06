@@ -160,20 +160,29 @@ coarser-per-chunk schedule `[5]×20`:
 
 | Eb/N0 | BP-100 (ceiling) | legacy `[2]×15` (bud-30) | **legacy `[5]×20` (bud-100)** | EP `[2]×15` (bud-30) | **EP `[5]×20` (bud-100)** | true_turbo | minus |
 |---|---|---|---|---|---|---|---|
-| 0.6 | 0.217 | 0.0141 | **0.0000** [0,.0012] | 0.120 | **0.0006** [.0002,.0023] | 0.554 | 0.109 |
+| 0.6 | 0.217 | 0.0141 | **0/3200** (CI ≤ .0012) | 0.120 | **0.0006** [.0002,.0023] | 0.554 | 0.109 |
 | 0.5 | 0.565 | 0.065 | **0.0009** [.0003,.0028] | — | **0.0106** [.0076,.0148] | — | — |
-| 0.7 | 0.055 | 0.0044 | **0.0000** [0,.0012] | — | **0.0006** [.0002,.0023] | — | — |
+| 0.7 | 0.055 | 0.0044 | **0/3200** (CI ≤ .0012) | — | **0.0006** [.0002,.0023] | — | — |
+
+(`0/3200` is an **upper bound** — Wilson 95% CI ≤ 0.0012 — not a point estimate;
+at 3200 cw it does not separate legacy from EP.)
 
 Reading it:
 - **Both** legacy and EP, at budget-100 `[5]×20`, reach **~10⁻³–10⁻⁴** — far below
   the BP-100 ceiling (0.217/0.565/0.055). Source knowledge decodes where BP cannot
   at any iteration count.
-- **At matched budget + schedule, legacy ≈ EP**, legacy a slight edge (clear only
-  at 0.5 dB: 0.0009 vs 0.0106). EP's earlier apparent inferiority (0.12 vs 0.014 at
-  `[2]×15`) was a **schedule artefact** — `[2]×15`'s 2-iter chunks under-refine the
-  cavity; give EP `[5]×20` and it is essentially as good as the heuristic.
+- **At matched budget + schedule, legacy ≈ EP.** At 0.6 and 0.7 dB the two are
+  **not separable** at 3200 cw — legacy scores 0/3200 (CI ≤ 0.0012), which only
+  bounds it above and overlaps EP's 0.0006 [.0002,.0023]; calling one better there
+  is unsupported. The **only** SNR where they separate is **0.5 dB**, where legacy
+  (0.0009 [.0003,.0028]) is below EP (0.0106 [.0076,.0148]) with disjoint CIs — so
+  the heuristic keeps a small edge **at 0.5 dB only**. EP's earlier apparent
+  inferiority (0.12 vs 0.014 at `[2]×15`) was a **schedule artefact** — `[2]×15`'s
+  2-iter chunks under-refine the cavity; give EP `[5]×20` and it matches the
+  heuristic (equivalent at 0.6/0.7 dB).
 - So the honest verdict is **not** "the heuristic beats the principled method." At
-  matched conditions they are close; the heuristic keeps only a small low-SNR edge
+  matched conditions they are close (conditionally equivalent); the heuristic keeps
+  only a small 0.5-dB edge
   whose mechanism (requirement b) is unresolved.
 
 ### Revision history (honest record of interpretation updates)
