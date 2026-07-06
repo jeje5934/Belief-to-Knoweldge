@@ -168,15 +168,21 @@ anchor (0.6 dB, 3200 cw, Wilson CI; `practical_promptOpt{1,2}_*.py`):
 
 ### 4b.2 Research conclusion
 
-The experimental arc is complete. Pure EP (`full_ep`, α=1) fails by an
-**inter-pixel correlated hallucination** in the source projection. Every attempt
-to remove it is excluded — BP warm-start double-count, denoiser under-training,
-read-out precision (both diagonal Tweedie and global ε), single-category domain,
-α damping schedules (decreasing and increasing), and pure-BP code cleanup. The
-clump is invisible to BER, catastrophic to BLER/CRC, and unfixable post-hoc, so
-the **necessary** strategy is gentle constant damping (α≈0.02) that never forms
-it — and that decoder beats the BP-100 ceiling at low SNR (0.5–0.7 dB). Full
-narrative with per-experiment numbers: **`docs/EP_RESEARCH_SUMMARY.md`**.
+Pure EP (`full_ep`, α=1) fails by an **inter-pixel correlated hallucination** in
+the source projection; every attempt to remove it post-hoc is excluded (§C), so
+the working strategy is **gentle damping** that never forms the clump. Two
+requirements make source injection stable (§F): **(a)** gentle steps over a
+**warm-started** fine-grained schedule (the mathematically exact `true_turbo`,
+which drops warm-start, fails at BLER 0.55); **(b)** keeping the source consistent
+across chunks — purifying the denoiser input *hurts* (0.114 vs 0.055) for a reason
+that is **still open** (magnitude and mode-locking hypotheses both refuted).
+
+**Given a matched BP budget and schedule (`[5]×20`, budget 100), the principled
+EP and the heuristic turbo are close** — both reach BLER ~10⁻³–10⁻⁴ at 0.6/0.7 dB,
+far below the BP-100 ceiling; legacy keeps a small edge, clear only at 0.5 dB. The
+earlier large "heuristic ≫ principled" gap was a **schedule artefact** (`[2]×15`'s
+2-iter chunks under-refine EP). Full narrative, final table, and the honest
+interpretation-update history: **`docs/EP_RESEARCH_SUMMARY.md` §F**.
 
 ## 5. Documentation (`docs/`)
 

@@ -122,44 +122,86 @@ invisible on the per-bit axis (§C 3), survives category restriction (§C 4), an
 schedule (§C 5), and code cleanup (§C 6); it is a block-level object (§D).
 
 Therefore the only working strategy is to **never form the clump**: a gentle
-constant damping α ≈ 0.02 on the `[2]×15` schedule keeps the accumulated source
-site at ~20–30 % of the belief, so the over-confident source can *guide* BP
-without *dictating* a wrong codeword. **"If you cannot fix the correlated clump,
-don't create it."** Damped EP is thus not a heuristic patch but the necessary
-consequence of the exclusion chain.
+damping α (small enough that the accumulated source site stays a fraction of the
+belief) lets the over-confident source *guide* BP without *dictating* a wrong
+codeword. **"If you cannot fix the correlated clump, don't create it."** Damped EP
+is thus not a heuristic patch but the necessary consequence of the exclusion
+chain. (The specific *best* `(schedule, α)` is budget-dependent — `[2]×15`, α≈0.02
+at budget 30; **`[5]×20`, α≈0.01 at budget 100 → BLER ~10⁻³–10⁻⁴**; see §F.)
 
-## F. Performance — damped EP beats the BP ceiling at low SNR
+## F. Performance — two requirements for stable decoding, and where each decoder meets them
 
-Where BP struggles (0.5–0.7 dB), damped EP (α=0.02, `[2]×15`, `sigma_post=3.0`,
-adaptive σ) is measured against BP-30 (the *same* 30-iteration BP budget) and
-BP-100 (the BP-limit ceiling). `practical_lowsnr_baseline.py`, 3200 cw, Wilson CI:
+Source knowledge is a large win over BP at low SNR, but *only* when injected the
+right way. Two requirements emerged; the final comparison shows which decoders
+meet them. (`practical_final_table.py`, 3200 cw, Wilson CI, 0.6/0.5/0.7 dB; EP
+uses adaptive σ, the turbo family fixed σ=0.3 — each at its own best.)
 
-| Eb/N0 | BP-30 (same budget) | **damped EP** | BP-100 (ceiling) | EP vs ceiling |
-|---|---|---|---|---|
-| 0.5 | 0.999 | **0.348** [.331,.364] | 0.574 | below (0.61×) |
-| 0.6 | 0.983 | **0.115** [.105,.127] | 0.234 | below (**0.49×**) |
-| 0.7 | 0.862 | **0.036** [.030,.043] | 0.051 | below (0.71×) |
+**Requirement (a): gentle injection over a warm-started, fine-grained schedule.**
+A small per-chunk step with the code state *carried across chunks* (warm-start).
+Evidence: `true_turbo` (mathematically exact — fresh BP each chunk, no warm-start)
+**fails**, best BLER **0.55** (`practical_true_turbo_search.py`): fresh short BP
+under-refines and the source exchange explodes at the first injection. Warm-start
+is not an impurity to remove; it is load-bearing.
 
-At **every** low SNR damped EP decodes below the BP-100 ceiling: source knowledge
-reaches block-error rates that BP cannot at *any* iteration count. The gain over
-the same-budget BP-30 is large (e.g. 0.6 dB: 0.983 → 0.115). The legacy turbo
-`α≈0.1` is, in hindsight, exactly this damped EP (a non-accumulating equivalent) —
-so EP *explains* the turbo heuristic.
+**Requirement (b): keep the source consistent across chunks (mechanism OPEN).**
+Removing the explicit injected source feedback from the denoiser input (a "more
+correct" cavity) **hurts** — legacy turbo β=0: `bp_post` C=0.055 vs purified
+`minus` D=0.114, CIs disjoint (`practical_source_purity.py`). *Why* is unresolved:
+the magnitude hypothesis is refuted (|src_ext| ratio 0.98; larger α *explodes*
+`minus`, 0.1→0.108→0.2→0.919, not compensates —
+`practical_purity_discriminate.py`), and the direction-consistency ("mode-locking")
+hypothesis is **also refuted** (`bp_post` chunk-to-chunk cosine 0.906 is *not*
+higher than `minus` 0.929 — `practical_direction_diag.py`). So input-level source
+retention helps for a reason not yet pinned down. Recorded honestly as open.
+
+**Schedule/budget is a large lever, and it reconciles the earlier "heuristic beats
+principled" result.** Giving every decoder the same BP budget (100) and a
+coarser-per-chunk schedule `[5]×20`:
+
+| Eb/N0 | BP-100 (ceiling) | legacy `[2]×15` (bud-30) | **legacy `[5]×20` (bud-100)** | EP `[2]×15` (bud-30) | **EP `[5]×20` (bud-100)** | true_turbo | minus |
+|---|---|---|---|---|---|---|---|
+| 0.6 | 0.217 | 0.0141 | **0.0000** [0,.0012] | 0.120 | **0.0006** [.0002,.0023] | 0.554 | 0.109 |
+| 0.5 | 0.565 | 0.065 | **0.0009** [.0003,.0028] | — | **0.0106** [.0076,.0148] | — | — |
+| 0.7 | 0.055 | 0.0044 | **0.0000** [0,.0012] | — | **0.0006** [.0002,.0023] | — | — |
+
+Reading it:
+- **Both** legacy and EP, at budget-100 `[5]×20`, reach **~10⁻³–10⁻⁴** — far below
+  the BP-100 ceiling (0.217/0.565/0.055). Source knowledge decodes where BP cannot
+  at any iteration count.
+- **At matched budget + schedule, legacy ≈ EP**, legacy a slight edge (clear only
+  at 0.5 dB: 0.0009 vs 0.0106). EP's earlier apparent inferiority (0.12 vs 0.014 at
+  `[2]×15`) was a **schedule artefact** — `[2]×15`'s 2-iter chunks under-refine the
+  cavity; give EP `[5]×20` and it is essentially as good as the heuristic.
+- So the honest verdict is **not** "the heuristic beats the principled method." At
+  matched conditions they are close; the heuristic keeps only a small low-SNR edge
+  whose mechanism (requirement b) is unresolved.
+
+### Revision history (honest record of interpretation updates)
+
+Each update was forced by a specific experiment — this trail is part of the result.
+- ~~"turbo α≈0.1 *is* damped EP (equivalent)"~~ (old §F) → refuted: at `[2]×15`
+  legacy ≫ EP (`practical_turbo_vs_ep.py`), then re-refined: the gap is a schedule
+  artefact, at `[5]×20` legacy ≈ EP (final table).
+- ~~"incomplete cavity = protective self-**damping** (magnitude)"~~ → refuted:
+  |src_ext| magnitude is equal (H1/H2 discriminate).
+- ~~"the impurity implements **mode-locking** (higher direction consistency)"~~ →
+  refuted: consecutive cosine is not higher for `bp_post` (direction diag). The
+  D<C fact stands; its mechanism is **open**.
 
 ## G. Future work
 
 - **Correlated error needs a richer per-bit interface.** The exclusion chain
-  *proves* the limitation is the diagonal-Gaussian EP site: it cannot represent
-  the off-diagonal correlated component. Catching it requires extending the
-  interface beyond independent per-bit marginals — e.g. a **mixture / list**
-  source site (carry a few candidate garments and let the code factor select),
-  which the block-metric view of §D motivates.
+  (§C) shows the diagonal-Gaussian EP site cannot represent the off-diagonal
+  correlated component. A **mixture / list** source site (carry a few candidate
+  garments; let the code factor select) is the principled candidate — and it is
+  also the natural explicit form of **requirement (b)** in §F, whose implicit
+  mechanism in the heuristic remains unresolved. Making mode-consistency explicit
+  (rather than purifying the cavity) is the right direction for a principled gain.
 - **Same-resource comparison vs neural-compression-then-transmit.** Our decoder
   *exploits* the payload's redundancy (a learned image prior) at decode time;
   the orthogonal design *removes* redundancy first (compress) then transmits.
   A matched-rate comparison would quantify redundancy-exploit vs
-  redundancy-removal.
-- **Turbo ↔ EP equivalence check** (optional, below).
+  redundancy-removal. (A `compression_baseline/` scaffold exists for this.)
 
 ---
 
@@ -175,7 +217,10 @@ so EP *explains* the turbo heuristic.
 | C-2 (Trouser) | `train_denoiser_trouser.py` → `checkpoints/denoiser_trouser.pt` | `results/denoiser_trouser.*` | `pure-EP_practical` |
 | C-5, D | `practical_promptOpt1_alphasched.py`, `practical_promptOpt2_incalpha.py` | `results/promptOpt{1,2}_*` | `pure-EP_practical` |
 | C-6 | `practical_promptOpt3_hybrid.py` | `results/promptOpt3_hybrid.*` | `pure-EP_practical` |
-| F | `practical_lowsnr_baseline.py` | `results/promptOpt0_baseline.*` | `pure-EP_practical` |
+| F (a) | `practical_true_turbo_verify.py`, `practical_true_turbo_search.py` | `results/true_turbo_search.*` | `pure-EP_practical` |
+| F (b) | `practical_source_purity.py`, `practical_purity_discriminate.py`, `practical_direction_diag.py` | `results/source_purity.*`, `results/purity_discriminate.*`, `results/direction_diag.*` | `pure-EP_practical` |
+| F (turbo↔EP) | `practical_turbo_vs_ep.py` | `results/turbo_vs_ep.*` | `pure-EP_practical` |
+| F (table) | `practical_ep100_search.py`, `practical_final_table.py`, `practical_lowsnr_baseline.py` | `results/ep100_search.*`, `results/final_table.*`, `results/promptOpt0_baseline.*` | `pure-EP_practical` |
 
 Companion docs: `EP_THEORY.md`, `EP_MIGRATION_PLAN.md`, `EP_SYSTEM_BLOCK.md`,
 `EP_DIAGNOSTICS.md`, `EP_APPENDIX.md`, `EP_SCHEDULING_EXPERIMENT.md`,
