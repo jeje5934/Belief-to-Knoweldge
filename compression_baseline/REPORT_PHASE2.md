@@ -158,7 +158,75 @@ waterfall resolves it — and **overturns it**:
 
 ---
 
+## 6. Commercial-codec (gzip) control — was the ~1 dB a *learned*-compressor effect?
+
+The neural baseline's advantage assumed a compressor with the **same source
+knowledge and capacity** as the denoiser (PixelCNN 7.3M, learned on FMNIST). To
+isolate that, we run the *identical* separation pipeline with a general codec
+that has **no source knowledge**: gzip (DEFLATE, level 9). No new training.
+
+**[1] gzip B_g distribution** (test[:2500], `results/gzip_stats.json`): mean
+**3740.6 bits** (= Phase-1 gzip ref exactly), median 3824, p10 2551, p90 4848,
+p99 5456, max 6088, min 1168 → **4.8 bpp** (vs PixelCNN 3.03 bpp). Roundtrip
+bit-exact 20/20.
+
+**[2] Containers** (channel set 3200; k=B_g+24; both feasible, no gap adjust):
+
+| container | k | rate | vs neural MAX 0.389 | vs raw 0.500 | overflow |
+|---|---|---|---|---|---|
+| gzip-MAX | 6112 | **0.4851** | +0.096 | **−0.015 (≈ raw!)** | 0 |
+| gzip-P99 | 5545 | 0.4401 | +0.051 | −0.060 | 32/3200 (1.0%) |
+
+gzip frees almost no rate — gzip-MAX (0.485) is within 3 % of the raw rate 0.5,
+so the separation has **almost no coding gain to spend**. Eb/N0 = Es/N0 −
+10log10(rate): gzip-MAX +3.14, gzip-P99 +3.56 (vs ours +3.01).
+
+**[3] Waterfall** (same grid, 3200 cw, Wilson CI; unified figure
+`results/channel_waterfall.png`, the paper's representative figure — 6 curves,
+legend = compressor/rate/info-bits). Knees (Es/N0 @ BLER = 0.1):
+
+| system | compressor (bpp) | rate | k bits | knee Es/N0 | vs ours legacy |
+|---|---|---|---|---|---|
+| base MAX | PixelCNN (3.03) | 0.389 | 4896 | **−3.79** | **+0.93 dB** |
+| base BG1LEAN | PixelCNN (3.03) | 0.333 | 4200 | < −4.0 (floor 0.0091) | — |
+| gzip-P99 | gzip (4.8) | 0.440 | 5545 | −3.04 (floor 0.0100) | +0.18 dB* |
+| **ours legacy** | raw (source in decoder) | 0.500 | 6296 | **−2.86** | — |
+| ours EP | raw (source in decoder) | 0.500 | 6296 | −2.59 | −0.27 dB |
+| **gzip-MAX** | gzip (4.8) | 0.485 | 6112 | **−2.53** | **−0.33 dB** |
+
+*gzip-P99's deeper LDPC knee is bought by a 1.0 % overflow floor + catastrophic
+failure (below), so it is dominated. Decomposition: gzip-MAX BLER is pure LDPC
+failure (0 overflow); gzip-P99 sits on its overflow floor until its LDPC knee.
+
+**[4] gzip failure mode** (`gzip_fail.py`): DEFLATE has a CRC32 trailer, so **a
+single surviving bit error makes gzip.decompress raise — 20/20 total loss, no
+image at all** (worse than PixelCNN's garbage-image; strictly no graceful path).
+
+### Verdict — the coding gain scales with the source knowledge invested in compression
+
+Measured, same pipeline / same pure-BP decoder, delivering the same image at
+equal energy:
+
+- **Learned compression (PixelCNN, 3.03 bpp) → base MAX knee −3.79 = +0.93 dB**
+  over the joint denoiser system.
+- **Commercial compression (gzip, 4.8 bpp) → gzip-MAX knee −2.53 = −0.33 dB**
+  (i.e. *worse* than the joint system): gzip frees almost no rate, so separation
+  has no gain to give.
+- **Learned vs commercial, identical pipeline: −3.79 vs −2.53 = 1.26 dB** — the
+  pure effect of compression strength (3.03 vs 4.8 bpp), nothing else changed.
+- Investing the **same source knowledge in the decoder** (ours legacy, rate 0.5)
+  lands **between** the two separation baselines (−2.86) and **uniquely fails
+  gracefully** (PSNR ~20 dB) where both separation codecs are catastrophic
+  (PixelCNN ~8 dB garbage; gzip: no image).
+
+So the neural baseline's ~1 dB was **contingent on the learned compressor**: it is
+the compression the source knowledge bought, not a property of "separation" per
+se. Strip the source knowledge (gzip) and separation loses to the joint decoder.
+
+---
+
 ## Files (`compression_baseline/`)
+gzip baseline: `gzip_encode.py`, `gzip_channel.py`, `gzip_fail.py`. 
 Stage A `channel_encode.py` (torch/GPU) · stage B `channel_experiment.py`
 (TF/Sionna, baseline waterfall) · `channel_our_waterfall.py` (ours, read-only
 worktree import) · stage C `channel_verify_ac.py` (lossless, 200/200 bit-exact) ·
