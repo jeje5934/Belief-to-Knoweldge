@@ -225,8 +225,84 @@ se. Strip the source knowledge (gzip) and separation loses to the joint decoder.
 
 ---
 
+## 7. Image-specific lossless codecs (PNG, WebP) — the fair "commercial" tier
+
+**Why gzip alone is insufficient.** gzip is a general-purpose *byte* compressor,
+blind to 2-D image structure — it is the "no knowledge" extreme, not a fair
+representative of commercial lossless *image* coding. A fair middle tier is a
+codec that knows image structure but is not trained on this source: **PNG**
+(per-row predictive filters + zlib) and **WebP-lossless** (spatial prediction +
+entropy). This is the "general image-structure knowledge" tier, between the
+learned PixelCNN and gzip. (JPEG-LS was intended too but is unavailable here:
+`pyjpegls` requires numpy≥2.0, incompatible with this env's sionna/TF numpy<2.0
+— installing it breaks the stack; WebP-lossless stands in.)
+
+**[1] bpp** (test[:2500], `results/png_stats.json`; roundtrip PNG 20/20, WebP
+20/20):
+
+| compressor | bpp | note |
+|---|---|---|
+| PixelCNN (learned) | **3.03** | source knowledge |
+| WebP-lossless | **4.53** | best image codec here |
+| PNG, IDAT-only (b) | 4.59 | fixed overhead removed |
+| gzip | 4.77 | general |
+| PNG, full file (a) | **5.17** | +57 B fixed chunk/header overhead **> gzip** at 28×28 |
+
+At 28×28 the image codecs barely beat gzip — the tile is too small for row/spatial
+prediction to pay off, and PNG's fixed overhead actually makes the whole file
+*worse* than gzip. Container design uses the full file (a), conservatively.
+
+**[2] containers** (channel set 3200; k=B+24; feasibility-checked, no gap hit):
+
+| container | k | rate | vs raw 0.500 | overflow |
+|---|---|---|---|---|
+| WebP-MAX | 5832 | 0.4629 | −0.037 | 0 |
+| gzip-MAX | 6112 | 0.4851 | −0.015 | 0 |
+| PNG-MAX | 6584 | **0.5225** | **+0.023 (above raw!)** | 0 |
+| (p99: WebP 0.417, gzip 0.440, PNG 0.469 — floored variants, tabulated only) |
+
+PNG-MAX rate 0.523 is *above* the raw 0.5 — its overhead means the "compressed"
+container carries **more** info bits than the raw image, so separation has
+negative rate budget. All three rates differ from gzip-MAX by ≥0.02, so all were
+measured (same grid, 3200 cw, Wilson CI).
+
+**[3] the 3-tier spectrum** (MAX container, 0 overflow — `channel_waterfall.png`,
+the paper's representative figure; knee = Es/N0 @ BLER 0.1):
+
+| tier | system | compressor bpp | rate | k bits | knee | vs ours legacy |
+|---|---|---|---|---|---|---|
+| **learned source knowledge** | base MAX | PixelCNN 3.03 | 0.389 | 4896 | **−3.79** | **+0.93 dB** |
+| source in the DECODER | ours legacy | raw | 0.500 | 6296 | −2.86 | — |
+| general image structure | WebP-MAX | WebP 4.53 | 0.463 | 5832 | −2.80 | −0.06 dB |
+| source in the DECODER | ours EP | raw | 0.500 | 6296 | −2.59 | −0.27 dB |
+| no knowledge | gzip-MAX | gzip 4.77 | 0.485 | 6112 | −2.53 | −0.33 dB |
+| general image structure | PNG-MAX | PNG 5.17 | 0.523 | 6584 | −2.03 | −0.83 dB |
+
+The knee tracks compression strength almost monotonically: **~0.82 dB of coding
+gain per bpp** of compression (−3.79 at 3.03 bpp → −2.03 at 5.17 bpp). Only the
+**learned** compressor (3.03 bpp) buys a real margin over the joint decoder
+(+0.93 dB). The best **image codec** (WebP, 4.53 bpp) merely **ties** it
+(−0.06 dB); gzip and PNG are worse.
+
+**Failure mode:** a single surviving bit error destroys every non-learned
+container too — PNG 0/20 usable (16/20 decode-error, 4/20 garbage), WebP 0/20
+(7/20 error, 13/20 garbage), gzip 0/20 (all decode-error). All separation codecs
+are catastrophic; only the joint decoder degrades gracefully (PSNR ~20 dB).
+
+**Verdict (measured, full spectrum).** The separation coding gain scales with the
+source knowledge invested in compression: learned (PixelCNN) **+0.93 dB**, image
+codecs **−0.06 to −0.83 dB**, general (gzip) **−0.33 dB** vs the joint decoder.
+Put differently, the joint denoiser system (source in the *decoder*, rate 0.5) is
+**Pareto-dominant over every non-learned separation baseline** — equal-or-better
+BLER-vs-energy (only the learned PixelCNN beats it) *and* uniquely graceful
+failure. General image-structure knowledge (PNG/WebP) is not enough at 28×28 to
+change that; it takes a *learned* source model to make separation pay.
+
+---
+
 ## Files (`compression_baseline/`)
-gzip baseline: `gzip_encode.py`, `gzip_channel.py`, `gzip_fail.py`. 
+gzip baseline: `gzip_encode.py`, `gzip_channel.py`, `gzip_fail.py`.
+image codecs: `png_encode.py`, `png_channel.py` (PNG + WebP-lossless). 
 Stage A `channel_encode.py` (torch/GPU) · stage B `channel_experiment.py`
 (TF/Sionna, baseline waterfall) · `channel_our_waterfall.py` (ours, read-only
 worktree import) · stage C `channel_verify_ac.py` (lossless, 200/200 bit-exact) ·
