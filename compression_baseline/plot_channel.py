@@ -1,106 +1,102 @@
 """
-Build the head-to-head table + waterfall curve from channel_bler.json.
+Four-curve waterfall + head-to-head table on the shared Es/N0 axis.
 
-Reference (our best, denoiser-in-the-loop, rate 0.4997, budget-100) is quoted
-verbatim from the pure-EP_practical final table (docs/EP_RESEARCH_SUMMARY §F),
-mapped to Es/N0 = Eb/N0 + 10log10(0.4997) = Eb/N0 - 3.011 dB.
+Curves: ours legacy [5]x20, ours EP [5]x20 (from our_waterfall.json), baseline
+MAX and BG1LEAN (from channel_bler.json).  Baseline overflow floors drawn as
+dashed lines (the SNR-independent structural BLER = overflow/N).
+
+Per task 3(a): the table annotates each system's info-bit count k and its Eb/N0
+at the shared Es/N0, so a deeper baseline knee is read as the *rate cost* (fewer
+info bits carried for the same energy), not a free lunch.
 """
-import json
-import os
-
+import json, math, os
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-HERE = os.path.dirname(__file__)
-RESULTS = os.path.join(HERE, "results")
-
-RAW_RATE = 6296 / 12600
-ES_SHIFT = 10 * np.log10(RAW_RATE)      # Eb/N0 -> Es/N0, = -3.011 dB
-
-# our-best reference: raw Eb/N0 -> (Es/N0, legacy BLER+CI, EP BLER+CI, BP100 ceiling)
-# 0/3200 shown as point 0 with CI upper 0.0012.
-REF = {
-    0.5: dict(legacy=(0.0009, 0.0003, 0.0028), ep=(0.0106, 0.0076, 0.0148), bp100=0.565),
-    0.6: dict(legacy=(0.0, 0.0, 0.0012),        ep=(0.0006, 0.0002, 0.0023), bp100=0.217),
-    0.7: dict(legacy=(0.0, 0.0, 0.0012),        ep=(0.0006, 0.0002, 0.0023), bp100=0.055),
-}
+RESULTS = os.path.dirname(__file__) + "/results"
+GRID = [-2.5, -2.75, -3.0, -3.25, -3.5, -3.75, -4.0]
+OURS_K = 6296          # 6272 payload + 24 CRC
+OURS_RATE = OURS_K / 12600
 
 
-def load():
-    with open(os.path.join(RESULTS, "channel_bler.json")) as f:
-        return json.load(f)
+def eb(esno, rate):
+    return esno - 10 * math.log10(rate)
 
 
-def fmt(pt):
-    return (f"{pt['bler']:.4f}[{pt['bler_ci'][0]:.4f},{pt['bler_ci'][1]:.4f}]"
-            if pt else "-")
+def base_at(cfg, esno):
+    """find a baseline point matching esno_db within 1e-2."""
+    for pt in cfg["points"].values():
+        if abs(pt["esno_db"] - esno) < 1e-2:
+            return pt
+    return None
 
 
-def table(d):
-    cfgs = d["configs"]
-    rates = {k: cfgs[k]["rate"] for k in cfgs}
-    lines = []
-    lines.append("Same-Es/N0 (same total energy, same N=12600) head-to-head BLER")
-    lines.append(f"LDPC infeasible gap: {d.get('ldpc_infeasible_gap','')}")
-    lines.append(f"baseline rates: MAX={rates['MAX']:.4f}(ovf {cfgs['MAX']['overflow']}) "
-                 f"BG1LEAN={rates['BG1LEAN']:.4f}(ovf {cfgs['BG1LEAN']['overflow']}) "
-                 f"BG2LEAN={rates['BG2LEAN']:.4f}(ovf {cfgs['BG2LEAN']['overflow']})  "
-                 f"| ours rate=0.4997\n")
-    hdr = (f"{'Es/N0':>7} {'rawEb':>5} | {'ours:legacy':>19} {'ours:EP':>19} "
-           f"{'BP100ceil':>9} | {'base MAX':>16} {'base BG1LEAN':>16} {'base BG2LEAN':>16}")
-    lines.append(hdr)
-    for eb in [0.5, 0.6, 0.7]:
-        es = eb + ES_SHIFT
-        r = REF[eb]
-        lg = f"{r['legacy'][0]:.4f}[{r['legacy'][1]:.4f},{r['legacy'][2]:.4f}]"
-        ep = f"{r['ep'][0]:.4f}[{r['ep'][1]:.4f},{r['ep'][2]:.4f}]"
-        mx = cfgs["MAX"]["points"].get(f"raw{eb}")
-        b1 = cfgs["BG1LEAN"]["points"].get(f"raw{eb}")
-        b2 = cfgs["BG2LEAN"]["points"].get(f"raw{eb}")
-        lines.append(f"{es:>7.3f} {eb:>5} | {lg:>19} {ep:>19} {r['bp100']:>9.3f} | "
-                     f"{fmt(mx):>16} {fmt(b1):>16} {fmt(b2):>16}")
-    txt = "\n".join(lines)
+def main():
+    ours = json.load(open(os.path.join(RESULTS, "our_waterfall.json")))
+    ch = json.load(open(os.path.join(RESULTS, "channel_bler.json")))
+    MAX, B1 = ch["configs"]["MAX"], ch["configs"]["BG1LEAN"]
+
+    def our(mode, esno):
+        return ours.get(f"{mode}@{esno}")
+
+    # ---- table ----
+    L = []
+    L.append("Four-way waterfall on shared Es/N0 (same total energy, N=12600, 3200 cw, Wilson CI)")
+    L.append(f"info bits k:  ours=6296 (rate {OURS_RATE:.4f})  |  base MAX k={MAX['k_ldpc']} "
+             f"(rate {MAX['rate']:.4f})  base BG1LEAN k={B1['k_ldpc']} (rate {B1['rate']:.4f})")
+    L.append(f"baseline overflow floors: MAX={MAX['overflow']}/3200={MAX['overflow']/3200:.4f}  "
+             f"BG1LEAN={B1['overflow']}/3200={B1['overflow']/3200:.4f}")
+    L.append("")
+    L.append(f"{'Es/N0':>6} | {'ours legacy':>20} {'ours EP':>20} | "
+             f"{'base MAX':>20} {'base BG1LEAN':>20} | ebN0: ours/MAX/BG1")
+    def f(pt, key="bler"):
+        if not pt: return "-"
+        lo, hi = pt.get("bler_ci") or [pt["ci_lo"], pt["ci_hi"]]
+        return f"{pt[key]:.4f}[{lo:.4f},{hi:.4f}]"
+    for es in GRID:
+        lg, ep = our("legacy_[5]x20", es), our("EP_[5]x20", es)
+        mx, b1 = base_at(MAX, es), base_at(B1, es)
+        ebs = f"{eb(es,OURS_RATE):.2f}/{eb(es,MAX['rate']):.2f}/{eb(es,B1['rate']):.2f}"
+        L.append(f"{es:>6.2f} | {f(lg):>20} {f(ep):>20} | {f(mx):>20} {f(b1):>20} | {ebs}")
+    txt = "\n".join(L)
     print(txt)
-    with open(os.path.join(RESULTS, "channel_table.txt"), "w") as f:
-        f.write(txt + "\n")
+    open(os.path.join(RESULTS, "channel_table.txt"), "w").write(txt + "\n")
 
-
-def curve(d):
-    fig, ax = plt.subplots(figsize=(8, 5.5))
-    for cfg, color, mk in [("MAX", "tab:green", "o"), ("BG1LEAN", "tab:orange", "s"),
-                           ("BG2LEAN", "tab:red", "D")]:
-        pts = d["configs"][cfg]["points"]
-        xs, ys, los, his = [], [], [], []
-        for lab, pt in sorted(pts.items(), key=lambda kv: kv[1]["esno_db"]):
-            xs.append(pt["esno_db"]); ys.append(max(pt["bler"], 1e-4))
-            los.append(max(pt["bler_ci"][0], 1e-5)); his.append(max(pt["bler_ci"][1], 1e-4))
-        rate = d["configs"][cfg]["rate"]
-        ax.plot(xs, ys, mk + "-", color=color, label=f"baseline {cfg} (r={rate:.3f})")
-        ax.fill_between(xs, los, his, color=color, alpha=0.15)
-    # our-best reference points
-    for eb in [0.5, 0.6, 0.7]:
-        es = eb + ES_SHIFT
-        ax.plot(es, max(REF[eb]["legacy"][0], 1e-4), "kv",
-                label="ours legacy [5]x20" if eb == 0.5 else None)
-        ax.plot(es, REF[eb]["ep"][0], "k^",
-                label="ours EP [5]x20" if eb == 0.5 else None)
-        ax.plot(es, REF[eb]["bp100"], "kx",
-                label="BP-100 ceiling (no source)" if eb == 0.5 else None)
-    ax.set_yscale("log")
-    ax.set_xlabel("Es/N0 (dB)  — same total energy / same N")
-    ax.set_ylabel("BLER")
-    ax.set_title("Separation baseline vs denoiser-in-the-loop (same Es/N0)")
-    ax.grid(True, which="both", alpha=0.3)
-    ax.legend(fontsize=8)
+    # ---- curve ----
+    fig, ax = plt.subplots(figsize=(8.5, 6))
+    def series(getter, key):
+        xs, ys, lo, hi = [], [], [], []
+        for es in GRID:
+            pt = getter(es)
+            if not pt: continue
+            b = pt[key]; c = pt.get("bler_ci") or [pt["ci_lo"], pt["ci_hi"]]
+            xs.append(es); ys.append(max(b, 8e-5))
+            lo.append(max(c[0], 4e-5)); hi.append(max(c[1], 8e-5))
+        return xs, ys, lo, hi
+    for label, getter, color, mk in [
+        ("ours legacy [5]x20 (r0.500)", lambda e: our("legacy_[5]x20", e), "tab:blue", "v"),
+        ("ours EP [5]x20 (r0.500)",     lambda e: our("EP_[5]x20", e),     "tab:cyan", "^"),
+        ("base MAX (r0.389)",           lambda e: base_at(MAX, e),         "tab:green", "o"),
+        ("base BG1LEAN (r0.333)",       lambda e: base_at(B1, e),          "tab:orange", "s"),
+    ]:
+        xs, ys, lo, hi = series(getter, "bler")
+        ax.plot(xs, ys, mk + "-", color=color, label=label)
+        ax.fill_between(xs, lo, hi, color=color, alpha=0.12)
+    # overflow floors (structural, SNR-independent)
+    ax.axhline(max(MAX["overflow"] / 3200, 8e-5), ls=":", color="tab:green", lw=1,
+               label="MAX overflow floor (0)")
+    ax.axhline(B1["overflow"] / 3200, ls=":", color="tab:orange", lw=1,
+               label="BG1LEAN overflow floor")
+    ax.set_yscale("log"); ax.set_xlabel("Es/N0 (dB) — same total energy / same N=12600")
+    ax.set_ylabel("BLER"); ax.invert_xaxis()
+    ax.set_title("Separation baseline vs denoiser-in-the-loop — full waterfall")
+    ax.grid(True, which="both", alpha=0.3); ax.legend(fontsize=8, loc="lower left")
     fig.tight_layout()
     out = os.path.join(RESULTS, "channel_waterfall.png")
-    fig.savefig(out, dpi=120)
-    print("saved", out)
+    fig.savefig(out, dpi=120); print("saved", out)
 
 
 if __name__ == "__main__":
-    d = load()
-    table(d)
-    curve(d)
+    main()
