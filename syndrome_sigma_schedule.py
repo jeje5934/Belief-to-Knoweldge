@@ -405,6 +405,54 @@ class CalibratedLookupScheduler(_SchedulerBase):
         )
 
 
+class AnnealingSigmaScheduler(_SchedulerBase):
+    """Open-loop denoiser-σ annealing: σ is a deterministic function of the BP
+    chunk index t (0..T-1), independent of the syndrome/cavity state.
+
+    Motivation (practical_sigma [A]): start at a LARGE σ so the denoiser
+    posterior is smoothed and several image modes stay on the table, then DECAY
+    to a small σ so the modes separate and the late chunks commit.  This is the
+    dual of the failed *increasing-α* schedule: lowering σ actually splits the
+    modes (so committing is meaningful), whereas increasing α injected hard
+    before the modes were separable.
+
+        linear : σ_t = σ_s − (σ_s − σ_e)·t/(T−1)
+        geom   : σ_t = σ_s·(σ_e/σ_s)^{t/(T−1)}
+
+    Only ``chunk_idx`` is used; ``ratios`` is ignored (open-loop).  ``T`` is the
+    number of denoiser chunks (schedule length − 1 in EP, since the final chunk
+    has no denoiser); indices ≥ T−1 clamp to σ_e.
+    """
+
+    name = "annealing"
+    is_adaptive = True     # varies per chunk → decoder must call select_sigma
+
+    def __init__(self, sigma_start: float, sigma_end: float, n_chunks: int,
+                 mode: str = "linear"):
+        if mode not in ("linear", "geom"):
+            raise ValueError("mode must be 'linear' or 'geom'")
+        if mode == "geom" and (sigma_start <= 0 or sigma_end <= 0):
+            raise ValueError("geom annealing needs positive sigmas")
+        self.sigma_start = float(sigma_start)
+        self.sigma_end = float(sigma_end)
+        self.n_chunks = max(int(n_chunks), 1)
+        self.mode = mode
+        self.path = tuple(self._sigma_at(t) for t in range(self.n_chunks))
+
+    def _sigma_at(self, t: int) -> float:
+        if self.n_chunks == 1:
+            return self.sigma_end
+        f = min(max(t, 0), self.n_chunks - 1) / (self.n_chunks - 1)
+        if self.mode == "linear":
+            return self.sigma_start - (self.sigma_start - self.sigma_end) * f
+        return self.sigma_start * (self.sigma_end / self.sigma_start) ** f
+
+    def select_sigma(self, chunk_idx: int, ratios: tf.Tensor) -> tf.Tensor:
+        s = self._sigma_at(int(chunk_idx))
+        B = tf.shape(ratios)[0]
+        return tf.fill([B], tf.cast(s, tf.float32))
+
+
 # ──────────────────────────────────────────────────────────────────────
 # JSON loading (v1 + v2 aware)
 # ──────────────────────────────────────────────────────────────────────
