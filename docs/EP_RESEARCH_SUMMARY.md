@@ -185,6 +185,29 @@ Reading it:
   only a small 0.5-dB edge
   whose mechanism (requirement b) is unresolved.
 
+**σ-configuration correction + the σ axis (branch `practical_sigma`).** The EP
+`[5]×20` numbers above used **syndrome-adaptive** denoiser σ (the handcrafted
+default lookup), so "EP best" implicitly credited the adaptive-σ machinery. A
+dedicated σ-strategy study (3200 cw, Wilson CI) revises this: at **0.5 dB fixed
+σ=0.3 scores 0.0066 [.0043,.0100]**, *better* than the handcrafted adaptive
+(0.0106–0.0112) — the adaptive σ was not helping. So EP's own best σ is **fixed**.
+This does **not** change the legacy-vs-EP verdict: legacy (0.0009 [.0003,.0028])
+still separates from EP-fixed (0.0066 [.0043,.0100]) at 0.5 dB with disjoint CIs;
+both floor at 0.6/0.7. Neither open-loop annealing nor a principled two-stage
+syndrome→SNR→σ* LUT beats fixed σ with CI separation — **σ is not a BLER lever**,
+and closed-loop adaptive ≈ open-loop annealing (σ-trajectory corr 0.86–1.0,
+because the syndrome decays predictably so the state carries no extra info).
+
+Critically, a **large initial σ** — the ICDM "smear the modes, then sharpen"
+device ported to the chunk axis — is **catastrophic and monotone** (anneal σ_s
+0.6→0.022, 1.2→0.105, 2.4→0.320 BLER): a single-shot Tweedie call at large σ
+yields a **grey over-smoothed mean** (denoised-vs-true PSNR 15.9→6.2 dB as σ
+0.15→2.4), *not* a wide-but-coherent unimodal, and the damage does not reverse
+when σ later drops (per-round BER plateaus). This **extends the exclusion chain to
+the σ axis**: ICDM-style mode devices need the diffusion *trajectory*; our
+single-shot projection cannot separate modes by σ alone → they require
+**sampler-level intervention**. (`SIGMA_REPORT.md`, `sigma_denoise_viz.png`.)
+
 ### Revision history (honest record of interpretation updates)
 
 Each update was forced by a specific experiment — this trail is part of the result.
@@ -196,6 +219,10 @@ Each update was forced by a specific experiment — this trail is part of the re
 - ~~"the impurity implements **mode-locking** (higher direction consistency)"~~ →
   refuted: consecutive cosine is not higher for `bp_post` (direction diag). The
   D<C fact stands; its mechanism is **open**.
+- ~~"EP `[5]×20` best uses adaptive σ (final table 0.0106 @0.5, 0.0006 @0.6)"~~ →
+  corrected: the adaptive σ (handcrafted lookup) was **not** an improvement;
+  **fixed σ=0.3 is EP's best** (0.0066 < 0.0106 at 0.5 dB). σ is not a BLER lever
+  (`practical_sigma`; see §F σ-axis note). Legacy-vs-EP verdict unchanged.
 
 ## G. Future work
 
@@ -206,6 +233,11 @@ Each update was forced by a specific experiment — this trail is part of the re
   also the natural explicit form of **requirement (b)** in §F, whose implicit
   mechanism in the heuristic remains unresolved. Making mode-consistency explicit
   (rather than purifying the cavity) is the right direction for a principled gain.
+  The σ-axis result (`practical_sigma`) sharpens this: a single-shot Tweedie
+  projection **cannot** separate modes by raising σ (it smears to the grey mean),
+  so mode-consistency must be made **explicit** (mixture/list) rather than coaxed
+  from one projection — and any diffusion-style mode device needs the sampler
+  *trajectory*, not a single call.
 - **Same-resource comparison vs neural-compression-then-transmit.** Our decoder
   *exploits* the payload's redundancy (a learned image prior) at decode time;
   the orthogonal design *removes* redundancy first (compress) then transmits.
@@ -230,6 +262,7 @@ Each update was forced by a specific experiment — this trail is part of the re
 | F (b) | `practical_source_purity.py`, `practical_purity_discriminate.py`, `practical_direction_diag.py` | `results/source_purity.*`, `results/purity_discriminate.*`, `results/direction_diag.*` | `pure-EP_practical` |
 | F (turbo↔EP) | `practical_turbo_vs_ep.py` | `results/turbo_vs_ep.*` | `pure-EP_practical` |
 | F (table) | `practical_ep100_search.py`, `practical_final_table.py`, `practical_lowsnr_baseline.py` | `results/ep100_search.*`, `results/final_table.*`, `results/promptOpt0_baseline.*` | `pure-EP_practical` |
+| F (σ axis) | `sigma_experiment.py`, `calibrate_sigma_2stage.py`, `sigma_compare.py`, `sigma_denoise_viz.py`; `AnnealingSigmaScheduler` | `results/sigma_compare.*`, `sigma_2stage*.*`, `sigma_denoise_viz.png`, `SIGMA_REPORT.md` | `practical_sigma` |
 
 Companion docs: `EP_THEORY.md`, `EP_MIGRATION_PLAN.md`, `EP_SYSTEM_BLOCK.md`,
 `EP_DIAGNOSTICS.md`, `EP_APPENDIX.md`, `EP_SCHEDULING_EXPERIMENT.md`,
