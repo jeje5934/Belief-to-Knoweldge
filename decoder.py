@@ -130,6 +130,11 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                  alpha=0.0, beta=0.0,
                  ep_mode=False, ep_damping=1.0,
                  true_turbo=False,
+                 altproj=False, altproj_delta=0.1, altproj_rho=1.0,
+                 altproj_sigma_den=0.3, altproj_warm_start=True,
+                 altproj_early_stop=False, altproj_es_patience=3,
+                 altproj_crc_check=None,
+                 altproj_delta_schedule=None, altproj_rho_schedule=None,
                  source_input_mode="bp_post",
                  ep_update="full_ep",
                  ep_source_power=None, ep_code_power=1.0,
@@ -189,6 +194,76 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         #                             acknowledged honest limit).  bp_ext unchanged.
         assert source_input_mode in ("bp_post", "minus_source_feedback")
         self._source_input_mode = source_input_mode
+        # ── ALTPROJ mode (channel-anchored alternating projection) ──────────
+        # A DISTINCT decoding path (decoder.py, `_decode_altproj`).  Interpretation
+        # 1 (channel anchor + accumulated correction): the two beliefs travel on
+        # SEPARATE channels — code info flows through BP's internal msg_v2c (its
+        # double-count-free machinery), source info enters ONLY as an additive,
+        # code-FREE correction term C_t on the intrinsic.  The posterior is NEVER
+        # fed back into the intrinsic (that was interpretation 2 — replacing the
+        # code-free intrinsic slot with the code-bearing posterior compounds the
+        # code evidence; its ±30 saturation was the symptom).  Per spec ([1]):
+        #   C_0 = 0                                         (correction; payload LLR)
+        #   code:   P_t = BP_{k_t}(payload_intr = L_ch + C_t, parity = L_ch)
+        #                 → intrinsic is ALWAYS the channel LLR plus the code-free
+        #                   correction; L_ch is the anchor.
+        #   source: C_{t+1} = ρ·C_t + δ·D(P_t|payload ; σ_den)
+        #                 D(·) is the denoiser call as-is (returns the extrinsic =
+        #                 source_posterior − input, i.e. the source-manifold pull
+        #                 vector — used DIRECTLY, no posterior reconstruction).
+        #   final:  hard-decide the LAST code step's P_T → CRC (same as legacy).
+        # C is a STAIRCASE ACCUMULATION of the source pull.  δ is the source step
+        # size, ρ the correction memory (1.0 = pure accumulation, <1 = leaky).
+        # Safety: ±25 clip on C (NOT on L_ch — the channel is never clipped), the
+        # per-round mean|C_t|/mean|D_t|/syndrome monitor, and a NaN guard.  altproj
+        # takes precedence over ep/true_turbo/legacy.
+        self._altproj = bool(altproj)
+        self._altproj_delta = float(altproj_delta)          # δ source step size
+        self._altproj_rho = float(altproj_rho)              # ρ correction memory rate
+        self._altproj_sigma_den = float(altproj_sigma_den)  # σ_den into the denoiser
+        self._altproj_warm_start = bool(altproj_warm_start) # keep msg_v2c across steps
+        # [altproj early-stop] PER-CODEWORD syndrome-gated stop.  The syndrome is
+        # decoder-side observable (no genie).  Per example: track the min-syndrome
+        # state; FREEZE C once the codeword hits syn=0 (solved — later rounds only
+        # self-sustain, so they are wasted compute) or once its syndrome turns UP
+        # past its own best (the collapse onset — later rounds actively destroy the
+        # belief).  The decision returned is the frozen/best-syndrome posterior, i.e.
+        # the "revert to the pre-degradation state" of spec [1].  Whole-batch frozen
+        # ⇒ break the loop.  Codewords resolve at DIFFERENT rounds, so this must be
+        # per-example — a batch-mean stop would be meaningless.  Default False keeps
+        # the plain run-all-rounds path.
+        self._altproj_early_stop = bool(altproj_early_stop)
+        # Consecutive strictly-worse rounds required before the up-turn freeze fires.
+        # The per-codeword syndrome wiggles early on, so patience=1 traps codewords at
+        # a transient high point (measured: it wrecked the sweetspot, 0.0 → 0.56).
+        # 0 disables the up-turn freeze entirely, leaving the syn=0 freeze + the
+        # best-syndrome decision — the strictly-safe subset.
+        self._altproj_es_patience = int(altproj_es_patience)
+        # [early-stop criterion] MEASURED: a zero syndrome does NOT mean the codeword
+        # is right — BP can sit on a VALID BUT WRONG codeword, and the source pull
+        # then migrates it to the correct one.  (Probe, sweetspot [5]x20: at round 6
+        # syn=0 for 32/32 while CRC passed only 27/32; by round 7 CRC passed 32/32.)
+        # So the syndrome is NOT a sufficient stopping statistic and the "post-syn=0
+        # rounds are just self-sustain" premise is false — those rounds are exactly
+        # where the source prior arbitrates among valid codewords, i.e. where this
+        # scheme earns its gain.  `altproj_crc_check` supplies the sufficient one: a
+        # callable u_hat_logits[B, k] -> [B] bool (CRC pass), i.e. standard 5G CRC
+        # early termination.  When set, a codeword is captured+frozen the round its
+        # CRC passes; codewords that never pass fall back to the best-syndrome state.
+        self._altproj_crc_check = altproj_crc_check
+        # [altproj δ/ρ schedules] Per-round overrides of the scalars; round idx uses
+        # sched[min(idx, len-1)].  Motivation: aggressive early (large δ, ρ=1 → fast
+        # resolve) then conservative late (small δ, ρ<1 → hold + forget), so the
+        # staircase takes big steps while the belief is poor and small ones once it
+        # is good.  None → constant scalar (default).
+        self._altproj_delta_schedule = (
+            [float(x) for x in altproj_delta_schedule]
+            if altproj_delta_schedule is not None else None)
+        self._altproj_rho_schedule = (
+            [float(x) for x in altproj_rho_schedule]
+            if altproj_rho_schedule is not None else None)
+        self._last_altproj_diag = []
+        self._last_altproj_stop_round = None
         # EP site-update law (EP_THEORY.md §4.4):
         #   "full_ep"   — pure site replacement (α_ep=β_ep=1); alignment target.
         #   "damped_ep" — DAMPED EP; the site update is EMA-blended by the fraction
@@ -251,6 +326,16 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         # False preserves behaviour (nothing stored).
         self._ep_track_payload_hist = bool(ep_track_payload_hist)
         self._last_payload_hist = []
+        # DIAGNOSTIC (mode-agnostic, recording only — never alters the decode):
+        # when True, append x_hat[:, :encoder.k] (payload + CRC bits, i.e. the full
+        # info block) after EVERY BP chunk, in legacy / EP / true_turbo / altproj
+        # alike.  Lets a harness apply CRC early-stop EXTERNALLY and IDENTICALLY to
+        # every arm — the compute saving of CRC-ES belongs to CRC-ES, not to any one
+        # decoder, so comparing an arm that has it against arms that don't would be
+        # an unfair harness.  Unlike _last_payload_hist (payload only, k_payload) this
+        # keeps the CRC bits, which the CRC check needs.
+        self._track_u_hat = False
+        self._last_u_hat_hist = []
         # DIAGNOSTIC: per-chunk mean|src_ext| (legacy turbo), recorded when
         # ep_track_payload_hist is on.  Used to test whether "minus_source_feedback"
         # weakens the source output (H2 input-shift) vs. only redirects it (H1).
@@ -341,6 +426,142 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
     @true_turbo.setter
     def true_turbo(self, value):
         self._true_turbo = bool(value)
+
+    @property
+    def altproj(self):
+        """True → alternating-projection path (code/source manifold alternation,
+        NO extrinsic; whole posterior exchanged).  Takes precedence over
+        ep_mode/true_turbo/legacy."""
+        return self._altproj
+
+    @altproj.setter
+    def altproj(self, value):
+        self._altproj = bool(value)
+
+    @property
+    def altproj_delta(self):
+        """δ source step size: C_{t+1} = ρ·C_t + δ·D(P_t).  Default 0.1.  Scales how
+        strongly each source pull is added to the code-free correction."""
+        return self._altproj_delta
+
+    @altproj_delta.setter
+    def altproj_delta(self, value):
+        self._altproj_delta = float(value)
+
+    @property
+    def altproj_rho(self):
+        """ρ correction memory rate in C_{t+1} = ρ·C_t + δ·D(P_t).  1.0 = pure
+        accumulation (default); <1.0 = leaky (forgets old correction)."""
+        return self._altproj_rho
+
+    @altproj_rho.setter
+    def altproj_rho(self, value):
+        self._altproj_rho = float(value)
+
+    @property
+    def altproj_sigma_den(self):
+        """σ_den passed to the denoiser (cavity/observation noise level) in the
+        altproj source step.  Distinct from denoiser.sigma_post (read-out temp)."""
+        return self._altproj_sigma_den
+
+    @altproj_sigma_den.setter
+    def altproj_sigma_den(self, value):
+        self._altproj_sigma_den = float(value)
+
+    @property
+    def altproj_early_stop(self):
+        """Per-codeword syndrome-gated early stop: freeze C at syn=0 (solved) or at
+        the first syndrome up-turn past that codeword's best (collapse onset), and
+        return the best-syndrome posterior.  Breaks the loop once all are frozen."""
+        return self._altproj_early_stop
+
+    @altproj_early_stop.setter
+    def altproj_early_stop(self, value):
+        self._altproj_early_stop = bool(value)
+
+    @property
+    def altproj_crc_check(self):
+        """Callable u_hat_logits[B, k] -> [B] bool (CRC pass) used as the early-stop
+        criterion.  None ⇒ fall back to the syndrome, which is NOT sufficient (a zero
+        syndrome can be a valid-but-WRONG codeword; see __init__ notes)."""
+        return self._altproj_crc_check
+
+    @altproj_crc_check.setter
+    def altproj_crc_check(self, value):
+        self._altproj_crc_check = value
+
+    @property
+    def altproj_es_patience(self):
+        """Consecutive strictly-worse rounds before the up-turn freeze fires.
+        0 ⇒ only the syn=0 freeze (plus the best-syndrome decision)."""
+        return self._altproj_es_patience
+
+    @altproj_es_patience.setter
+    def altproj_es_patience(self, value):
+        self._altproj_es_patience = int(value)
+
+    @property
+    def altproj_delta_schedule(self):
+        """Per-round δ list overriding the scalar (idx → sched[min(idx, len-1)]), or
+        None for constant."""
+        return (list(self._altproj_delta_schedule)
+                if self._altproj_delta_schedule is not None else None)
+
+    @altproj_delta_schedule.setter
+    def altproj_delta_schedule(self, value):
+        self._altproj_delta_schedule = (
+            [float(x) for x in value] if value is not None else None)
+
+    @property
+    def altproj_rho_schedule(self):
+        """Per-round ρ list overriding the scalar (idx → sched[min(idx, len-1)]), or
+        None for constant."""
+        return (list(self._altproj_rho_schedule)
+                if self._altproj_rho_schedule is not None else None)
+
+    @altproj_rho_schedule.setter
+    def altproj_rho_schedule(self, value):
+        self._altproj_rho_schedule = (
+            [float(x) for x in value] if value is not None else None)
+
+    @property
+    def track_u_hat(self):
+        """Record x_hat[:, :encoder.k] after every BP chunk, in EVERY mode
+        (diagnostic only).  For applying CRC early-stop externally + uniformly
+        across compared arms."""
+        return self._track_u_hat
+
+    @track_u_hat.setter
+    def track_u_hat(self, value):
+        self._track_u_hat = bool(value)
+
+    @property
+    def last_u_hat_hist(self):
+        """Per-round list of x_hat[:, :encoder.k] from the latest decode (needs
+        track_u_hat=True)."""
+        return list(self._last_u_hat_hist)
+
+    @property
+    def last_altproj_stop_round(self):
+        """Round at which the whole batch became frozen (early-stop), else None."""
+        return self._last_altproj_stop_round
+
+    @property
+    def altproj_warm_start(self):
+        """If True keep BP msg_v2c across alternations; if False reset (cold BP)
+        each code step."""
+        return self._altproj_warm_start
+
+    @altproj_warm_start.setter
+    def altproj_warm_start(self, value):
+        self._altproj_warm_start = bool(value)
+
+    @property
+    def last_altproj_diag(self):
+        """Per-round altproj monitor: list of dicts with round idx, mean|P_t|,
+        mean|C_t| (correction used this round), mean|D_t| (source pull),
+        syndrome_weight (the accumulation stability probe)."""
+        return list(self._last_altproj_diag)
 
     @property
     def source_input_mode(self):
@@ -669,6 +890,239 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
             "source_free_energy": float(-source_logZ),
         }
 
+    # ────── altproj: alternating projection (code ↔ source manifold) ──────
+
+    def _decode_altproj(self, llr_ch_shape, schedule, k_payload, msg_v2c,
+                        payload0, crc_and_rest, z_short, x2_par):
+        """[altproj, spec [1]] Channel-anchored alternating projection.
+
+        Two beliefs, two SEPARATE channels: the code travels through BP's internal
+        messages (msg_v2c — its own double-count-free machinery), the source enters
+        ONLY as an additive, code-FREE correction term C_t on the intrinsic.  The
+        posterior is NEVER fed back into the intrinsic.  C is a STAIRCASE
+        ACCUMULATION of the source pull.
+
+            C_0 = 0                                     (correction; payload LLR)
+            for t = 0 … T-1 (schedule = [k_t] × T):
+              code step   P_t = BP_{k_t}( payload_intr = L_ch + C_t, parity = L_ch )
+                          → the intrinsic is ALWAYS the channel LLR (= payload0, the
+                            anchor) plus the code-free correction; parity/filler stay
+                            at L_ch.
+              source step C_{t+1} = ρ·C_t + δ·D(P_t|payload ; σ_den)
+                            D(·) is the denoiser call as-is — it returns the extrinsic
+                            (source_posterior − input), i.e. the source-manifold pull
+                            vector, used DIRECTLY (no posterior reconstruction).
+            final: hard-decide the LAST code step's P_T → CRC (same return path as
+            legacy).
+
+        δ is the source step size, ρ the correction memory (1.0 = pure accumulation,
+        <1 = leaky).  Because the intrinsic re-anchors on L_ch every round and only a
+        code-free correction is added, the code evidence is NOT compounded (the
+        interpretation-2 defect).  Safety (spec [2]): (a) C_t clipped to ±25 each
+        round — the CHANNEL L_ch is never clipped; (b) per-round
+        mean|C_t|/mean|D_t|/syndrome-weight monitor (accumulation-stability probe);
+        (c) NaN guard on C_t and D_t.
+        """
+        delta = tf.cast(self._altproj_delta, self.rdtype)   # δ source step size
+        rho = tf.cast(self._altproj_rho, self.rdtype)       # ρ correction memory
+        d_sched = self._altproj_delta_schedule              # per-round δ override
+        r_sched = self._altproj_rho_schedule                # per-round ρ override
+        es = self._altproj_early_stop
+        es_pat = int(self._altproj_es_patience)             # 0 ⇒ syn=0 freeze only
+        crc_fn = self._altproj_crc_check                    # sufficient stop statistic
+        sigma_den = float(self._altproj_sigma_den)          # σ_den → denoiser obs level
+        warm = self._altproj_warm_start
+        c_clip = tf.cast(25.0, self.rdtype)                 # spec [2](a): ±25 on C_t
+
+        prev_return_state = getattr(self, "_return_state", False)
+        prev_hard_out = getattr(self, "_hard_out", False)
+        x_hat = None
+        curr_msg_v2c = msg_v2c                               # same seed as legacy chunk-0
+        C = tf.zeros_like(payload0)                          # C_0 = 0 (code-free correction)
+        n_steps = len(schedule)
+        # [early-stop] per-codeword best-syndrome state (see __init__ notes).
+        best_x = None; best_syn = None; frozen = None; bad = None; captured = None
+
+        try:
+            self._return_state = True
+            self._hard_out = False
+            self._last_altproj_diag = []
+            self._last_bp_stats = []
+            self._last_u_hat_hist = []
+            self._last_altproj_stop_round = None
+
+            for idx, iters in enumerate(schedule):
+                # ── code step: payload intrinsic = L_ch + C_t (channel anchor +
+                #    code-free correction), parity/filler = L_ch (always).  The code
+                #    belief propagates through BP's internal msg_v2c, NOT the intrinsic
+                #    — so it is never double-counted. ──
+                payload_intr = payload0 + C
+                x1_stage = tf.concat([payload_intr, crc_and_rest], axis=1)
+                llr_bp = tf.concat([x1_stage, z_short, x2_par], axis=1)
+                x_hat, curr_msg_v2c, bp_used, bp_delta, bp_conv = self._run_bp_chunk(
+                    llr_bp, iters, curr_msg_v2c, idx)
+                self._last_bp_stats.append({
+                    "chunk_idx": idx,
+                    "bp_iters_used": bp_used,
+                    "bp_final_delta": bp_delta,
+                    "bp_converged": bp_conv,
+                    "bp_cap": (self._bp_max_iter if self._bp_convergence
+                               else int(iters)),
+                })
+                post_payload = x_hat[:, :k_payload]      # P_t|payload (posterior)
+                mean_abs_P = float(tf.reduce_mean(tf.abs(post_payload)))
+                mean_abs_C = float(tf.reduce_mean(tf.abs(C)))   # mean|C_t| used this round
+                # DIAGNOSTIC: full info block (payload+CRC) for external CRC early-stop.
+                if self._track_u_hat:
+                    self._last_u_hat_hist.append(x_hat[:, :self.encoder.k])
+
+                # syndrome weight on the full graph-domain hard decision.
+                counts, ratios, _ = compute_syndrome_weight_and_ratio(
+                    x_hat, self._h_sparse,
+                    decision_rule=self._syndrome_hard_decision,
+                    compare_both_signs=self._syndrome_sign_debug,
+                )
+                syn_w = float(tf.reduce_mean(tf.cast(counts, self.rdtype)))
+
+                # ── [early-stop] per-codeword best-syndrome tracking + freeze ──
+                # `worse` / `upd` are compared against the PREVIOUS best, so a
+                # codeword freezes the moment its syndrome turns up past its own
+                # minimum (collapse onset) or reaches 0 (solved).  The returned
+                # decision is the best-syndrome posterior = "revert to the state
+                # before degradation".
+                if es and crc_fn is not None:
+                    # ── CRC-gated stop (the sufficient statistic; 5G-style early
+                    #    termination).  Capture+freeze a codeword the round its CRC
+                    #    passes; never revisit it.  Codewords that never pass keep the
+                    #    best-syndrome fallback so they still return their best try.
+                    counts_f = tf.cast(counts, self.rdtype)
+                    # flatten to rank 1 — CRC helpers often return [B, 1], which would
+                    # broadcast into a rank-3 mess downstream.
+                    passed = tf.reshape(
+                        tf.cast(crc_fn(x_hat[:, :self.encoder.k]), tf.bool), [-1])
+                    if best_x is None:
+                        best_x = x_hat
+                        best_syn = counts_f
+                        captured = passed
+                        frozen = passed
+                    else:
+                        upd = tf.logical_and(counts_f < best_syn,
+                                             tf.logical_not(captured))
+                        best_x = tf.where(upd[:, None], x_hat, best_x)
+                        best_syn = tf.where(upd, counts_f, best_syn)
+                        newly = tf.logical_and(passed, tf.logical_not(captured))
+                        best_x = tf.where(newly[:, None], x_hat, best_x)
+                        captured = tf.logical_or(captured, passed)
+                        frozen = captured
+                elif es:
+                    counts_f = tf.cast(counts, self.rdtype)
+                    solved = tf.equal(counts, 0)
+                    if best_x is None:
+                        best_x = x_hat
+                        best_syn = counts_f
+                        bad = tf.zeros_like(counts, tf.int32)
+                        frozen = solved
+                    else:
+                        # A per-codeword syndrome is NOT monotone — it wiggles for a
+                        # few rounds before settling.  Freezing on the FIRST up-tick
+                        # traps codewords at a transient high point, so degradation
+                        # must be confirmed over `es_patience` CONSECUTIVE strictly-
+                        # worse rounds (a plateau resets the streak).  syn=0 freezes
+                        # at once: the codeword is already valid, nothing to recover.
+                        worse = counts_f > best_syn
+                        upd = tf.logical_and(counts_f < best_syn,
+                                             tf.logical_not(frozen))
+                        best_x = tf.where(upd[:, None], x_hat, best_x)
+                        best_syn = tf.where(upd, counts_f, best_syn)
+                        bad = tf.where(worse, bad + 1, tf.zeros_like(bad))
+                        frozen = tf.logical_or(frozen, solved)
+                        if es_pat > 0:
+                            frozen = tf.logical_or(frozen, bad >= es_pat)
+
+                # Final code step: no source step; P_T is the decision (legacy path).
+                if idx >= n_steps - 1:
+                    self._last_altproj_diag.append({
+                        "round": idx, "mean_abs_P": mean_abs_P,
+                        "mean_abs_C": mean_abs_C, "mean_abs_D": None,
+                        "syndrome_weight": syn_w, "final": True,
+                        "n_frozen": (int(tf.reduce_sum(tf.cast(frozen, tf.int32)))
+                                     if es else None),
+                    })
+                    continue
+
+                # [early-stop] whole batch frozen ⇒ every later round is either
+                # self-sustain (solved) or destructive (degrading): stop.
+                if es and bool(tf.reduce_all(frozen).numpy()):
+                    self._last_altproj_stop_round = idx
+                    self._last_altproj_diag.append({
+                        "round": idx, "mean_abs_P": mean_abs_P,
+                        "mean_abs_C": mean_abs_C, "mean_abs_D": None,
+                        "syndrome_weight": syn_w, "final": True,
+                        "n_frozen": int(tf.reduce_sum(tf.cast(frozen, tf.int32))),
+                    })
+                    break
+
+                # ── source step: D_t = D(P_t|payload ; σ_den).  The denoiser returns
+                #    the extrinsic (source_posterior − input) directly — this IS the
+                #    source-manifold pull vector; no posterior reconstruction. ──
+                D_t = self._denoiser(post_payload, sigma=sigma_den)
+                tf.debugging.assert_all_finite(D_t, "altproj denoiser output D_t non-finite")
+                mean_abs_D = float(tf.reduce_mean(tf.abs(D_t)))
+
+                # Per-round monitor (spec [2]b) — accumulation-stability probe.
+                self._last_altproj_diag.append({
+                    "round": idx, "mean_abs_P": mean_abs_P,
+                    "mean_abs_C": mean_abs_C, "mean_abs_D": mean_abs_D,
+                    "syndrome_weight": syn_w, "final": False,
+                    "n_frozen": (int(tf.reduce_sum(tf.cast(frozen, tf.int32)))
+                                 if es else None),
+                })
+
+                # ── accumulate correction: C_{t+1} = ρ_t·C_t + δ_t·D_t, then clip ±25
+                #    (spec [2]a; only C is clipped — the channel L_ch stays untouched).
+                #    δ_t/ρ_t come from the per-round schedules when set.
+                delta_t = (tf.cast(d_sched[min(idx, len(d_sched) - 1)], self.rdtype)
+                           if d_sched is not None else delta)
+                rho_t = (tf.cast(r_sched[min(idx, len(r_sched) - 1)], self.rdtype)
+                         if r_sched is not None else rho)
+                C_new = rho_t * C + delta_t * D_t
+                C_new = tf.clip_by_value(C_new, -c_clip, c_clip)
+                # [early-stop] frozen codewords keep their reverted C (no further pull).
+                C = tf.where(frozen[:, None], C, C_new) if es else C_new
+                # NaN guard (spec [2]c).
+                tf.debugging.assert_all_finite(C, "altproj correction C_t non-finite")
+
+                # warm_start=False → reset BP state so the next code step starts cold
+                # from the (updated) L_ch + C; True → carry msg_v2c across steps.
+                if not warm:
+                    curr_msg_v2c = None
+
+            # [early-stop] the decision is the per-codeword best-syndrome posterior
+            # (= revert to the pre-degradation state), not the last round's P_T.
+            if es and best_x is not None:
+                x_hat = best_x
+
+        finally:
+            self._return_state = prev_return_state
+            self._hard_out = prev_hard_out
+
+        if self._return_infobits:
+            u_hat_logits = x_hat[:, :self.encoder.k]
+            if self._hard_out:
+                u_hat = tf.cast(u_hat_logits > 0.0, tf.int32)
+            else:
+                u_hat = u_hat_logits
+            out_shape = llr_ch_shape[:-1] + [self.encoder.k]
+            out_shape[0] = -1
+            u_hat = tf.reshape(u_hat, out_shape)
+            if prev_return_state:
+                return u_hat, curr_msg_v2c
+            return u_hat
+
+        if prev_return_state:
+            return x_hat, curr_msg_v2c
+        return x_hat
+
     # ────── core decode ──────
 
     def call(self, llr_ch, num_iter=None, msg_v2c=None):
@@ -716,6 +1170,14 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
 
         payload_intr = payload0                   # a-priori payload LLR fed to BP (A_bp)
         curr_msg_v2c = msg_v2c                    # warm-start preserved (t̃_code)
+
+        # ── [altproj] alternating-projection path (fully separate; no extrinsic).
+        # Dispatched here after the shared graph-domain preamble so its first code
+        # step is bit-identical to legacy chunk-0 (same payload0, same msg_v2c seed).
+        if self._altproj:
+            return self._decode_altproj(
+                llr_ch_shape, schedule, k_payload, msg_v2c,
+                payload0, crc_and_rest, z_short, x2_par)
 
         # ── TRUE TURBO state (mathematically exact turbo) ───────────
         true_turbo = self._true_turbo
@@ -783,6 +1245,7 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
             self._last_chunk_summary = []
             self._last_bp_stats = []
             self._last_payload_hist = []
+            self._last_u_hat_hist = []
             self._last_src_ext_mag = []
             self._last_src_ext = []
 
@@ -825,6 +1288,9 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                 # chunk (incl. final) for the per-round BER trajectory probe.
                 if self._ep_track_payload_hist:
                     self._last_payload_hist.append(x_hat[:, :k_payload])
+                # DIAGNOSTIC: full info block (payload+CRC) for external CRC early-stop.
+                if self._track_u_hat:
+                    self._last_u_hat_hist.append(x_hat[:, :self.encoder.k])
 
                 # Final chunk: no denoiser feedback, channel stays frozen.
                 if idx >= len(schedule) - 1:
