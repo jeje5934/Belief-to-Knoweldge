@@ -61,6 +61,58 @@ interference is deferred to stage 2.
   Eb/N0 10: BP-only 0 vs denoiser 0.057).  This is exactly the rough-channel
   robustness question to quantify next; **not** conclusive at 512–640 cw.
 
+## Paper-scale diagnostic (갈래 A) — legacy ≫ EP under fading; robust legacy
+
+The stage-1 "denoiser neutral-to-worse" read is **superseded**: it looked at EP
+only, at easy SNR.  A 3-way study (BP / legacy warm-start turbo / EP), method B
+(A≡B verified, `channel_ab_compare.py`), same LLR to all three, reverses it.
+
+**Method A ≡ B.** On the same realisation, max|A−B|≈1e-4, corr 1.000, identical
+std at every σ_e² — the Ñ0=N0/|ĥ|² noise-scale concern is refuted (|ĥ|² cancels;
+`|ỹ−x|²/Ñ0 = |y−ĥx|²/N0`).  Miscalibration comes from ĥ≠h in the signal term
+(both A,B).  Method B used throughout.
+
+**LLR calibration** (`fading_llr_calib.py`, 6.4M bits): perfect CSI is calibrated
+(actual/implied-error ratio 1.00); imperfect CSI makes the channel LLR
+**over-confident** — ratio 1.10/1.19/1.35 (σ_e² .05/.1/.2 @ebno3), 1.14/1.28/1.52
+(@ebno5).  Worse at higher SNR (large, confidently-wrong LLRs).
+
+**legacy robust-α** (`fading_legacy_tune.py`, legacy-only minimax over σ_e²):
+larger α *helps* under imperfect CSI (more source weight counters the
+over-confident channel evidence) — the OPPOSITE of EP, which diverges for
+α_ep ≥ 0.05.  Balanced robust value **α=β=0.15** (near-best at perfect CSI 0.010,
+best at σ_e² .05/.1); strict minimax incl. σ_e²=0.2 → α=0.2.  **α=β=0.15 is the
+갈래-B representative legacy config.**
+
+**Waterfall grid** (`fading_3way_grid.csv`, `fading_waterfall.png`; legacy@0.15,
+EP@α_ep 0.01; 512 cw overview, 3200 cw at knees below).  BLER (BP / legacy / EP):
+
+| σ_e² | knee Eb/N0 | BP | **legacy** | EP |
+|---|---|---|---|---|
+| 0.0 | 2.0 | 0.994 | **0.010** | 0.209 |
+| 0.05 | 2.5 | 0.998 | **0.020** | 0.307 |
+| 0.10 | 3.0 | 1.000 | **0.084** | 0.629 |
+| 0.20 | 6.0 | 0.758 | **0.008** | **0.820** |
+
+- **legacy ≫ EP at every σ_e², and the gap WIDENS with σ_e²** (~0.5 dB at
+  perfect → ~1 dB at 0.1 → enormous at 0.2: legacy 0.008 vs EP 0.820 @ebno6).
+- **Both beat BP-only at moderate σ_e²** (the denoiser is NOT useless under
+  fading).  But at **σ_e²=0.2 EP falls BELOW BP** (0.820 vs 0.758) — the accurate
+  cavity + denoiser *actively harms* under harsh over-confident CSI.
+- **EP develops a high-SNR error floor** at σ_e²=0.05/0.1 (0.002–0.012, never
+  reaching 0) while legacy and BP reach ~0 — EP faithfully propagates the
+  over-confident CSI errors; legacy's self-anchoring and BP (no source) do not.
+
+<!-- KNEE_MINUS -->
+
+### Verdict (갈래 A)
+- **§F AWGN legacy≈EP tie is BROKEN by fading — a new finding.** The
+  accurate-vs-incomplete cavity distinction, invisible at AWGN, is decisive for
+  channel robustness.  legacy (incomplete cavity, self-anchoring) is robust and
+  tunable (α↑ helps CSI error); EP (exact cavity) is fundamentally fragile
+  (re-tuning fails, α_ep↑ diverges) and can drop below BP under harsh CSI.
+- **legacy @ α=β=0.15, σ=0.3 is the robust representative for 갈래 B.**
+
 ## CSV schema
 `channel, num_bps, sigma_e2, perfect_csi, ebno_db, bler_baseline, ber_baseline,
 bler_fixed, ber_fixed, baseline_ci_lo, baseline_ci_hi, fixed_ci_lo, fixed_ci_hi,
