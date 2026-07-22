@@ -81,6 +81,34 @@ class SoftDenoiser(tf.keras.layers.Layer):
         self._prior.sigma_post = eps
         return eps
 
+    # ── [2a] multistep sampler pass-throughs (see source_prior.py) ──
+    @property
+    def sampler(self):
+        """'single_shot' (Tweedie mean) | 'multistep' (EDM cavity-conditioned
+        sampler)."""
+        return self._prior.sampler
+
+    @sampler.setter
+    def sampler(self, value):
+        assert value in ("single_shot", "multistep")
+        self._prior.sampler = value
+
+    def configure_multistep(self, **kw):
+        """Set multistep knobs on the prior: ms_steps, ms_sigma_max, ms_sigma_min,
+        ms_guidance, ms_guidance_const, ms_use_confidence, ms_stochastic, ms_churn."""
+        allowed = {"ms_steps", "ms_sigma_max", "ms_sigma_min", "ms_guidance",
+                   "ms_guidance_const", "ms_use_confidence", "ms_stochastic",
+                   "ms_churn"}
+        for k, v in kw.items():
+            if k not in allowed:
+                raise KeyError(f"unknown multistep knob: {k}")
+            setattr(self._prior, k, v)
+
+    @property
+    def last_ms_trace(self):
+        """Per-step diagnostics of the latest multistep sample (or None)."""
+        return self._prior.last_ms_trace
+
     @property
     def cavity_var_readout(self):
         """[Part D] use per-pixel cavity std √v_j as the pixel→bit read-out std."""

@@ -92,6 +92,28 @@ class SourcePriorDenoiser(nn.Module):
         self.cavity_var_readout = False       # use √v_j as posterior_pixel_std
         self.cavity_var_sigma = None          # None | "median" | "mean"
 
+        # ── [2a] Multistep diffusion posterior sampler (cavity-conditioned) ──
+        # The single-shot projection  mu_proj = D(μ_cav; σ)  returns the Tweedie
+        # posterior MEAN, which at large σ AVERAGES the modes → a gray blur (the
+        # σ-experiment PSNR 15.9→6.2 failure).  The multistep sampler instead runs
+        # an EDM diffusion trajectory (σ_max ↓ σ_min) that SELECTS one mode, with
+        # a per-step cavity-guidance term pulling the *denoised* estimate toward the
+        # cavity (ICDM-style conditional diffusion decoding).  These are plain
+        # attributes (set after construction, like cavity_var_*); default
+        # sampler="single_shot" leaves the exact single-shot path byte-for-byte.
+        # Enabling multistep affects WHATEVER path calls the denoiser (intended use:
+        # the legacy source step) — the decoder code itself is untouched.
+        self.sampler = "single_shot"          # "single_shot" | "multistep"
+        self.ms_steps = 10                    # K diffusion steps
+        self.ms_sigma_max = 1.5               # σ_0  (explore modes; EDM range ≤3.32)
+        self.ms_sigma_min = 0.05              # σ_K  (commit to a mode; ≥0.027)
+        self.ms_guidance = 0.5                # ζ cavity-guidance scale
+        self.ms_guidance_const = False        # True → constant ζ; False → anneal weak→strong
+        self.ms_use_confidence = True         # weight guidance by per-pixel cavity precision
+        self.ms_stochastic = False            # EDM Langevin churn (noise reinjection)
+        self.ms_churn = 0.1                   # per-step churn γ when ms_stochastic
+        self.last_ms_trace = None             # per-step diagnostics of the latest sample
+
         weights = torch.tensor(
             [2 ** (bits_per_pixel - 1 - i) for i in range(bits_per_pixel)],
             dtype=torch.float32)
@@ -250,6 +272,76 @@ class SourcePriorDenoiser(nn.Module):
         return posterior_logits - input_llr
 
     # ------------------------------------------------------------------
+    # [2a] Multistep diffusion posterior sampler (cavity-conditioned)
+    # ------------------------------------------------------------------
+
+    def _edm_sigmas(self, K, device):
+        """Descending σ schedule σ_0 > … > σ_K, geometric between ms_sigma_max and
+        ms_sigma_min (EDM-standard log-spacing).  Returns [K+1]."""
+        smax = float(self.ms_sigma_max); smin = float(self.ms_sigma_min)
+        j = torch.arange(K + 1, dtype=torch.float32, device=device) / max(K, 1)
+        return smax * (smin / smax) ** j                       # [K+1]: smax … smin
+
+    def _guidance_at(self, sj, s0, sK):
+        """Cavity-guidance scale ζ_j.  const → ms_guidance; else annealed WEAK at
+        large σ (explore) → STRONG at small σ (commit) — the ICDM prescription."""
+        if self.ms_guidance_const:
+            return float(self.ms_guidance)
+        frac = float((s0 - sj) / (s0 - sK + 1e-8))             # 0 at σ_0, 1 at σ_K
+        return float(self.ms_guidance) * frac
+
+    def _multistep_sample(self, mu_cavity, cavity_llr):
+        """EDM trajectory that samples a clean image consistent with the cavity.
+
+        (spec [1])  x_{σ0} = μ_cav + σ_0·ε ; then for j=0…K-1:
+            x̂0 = D(x_{σj}; σj)                                    (prior denoise)
+            x̂0 ← x̂0 + ζ_j·w·(μ_cav − x̂0)                         (cavity guidance
+                  on the DENOISED estimate — selects a mode, not the mode-mean)
+            x_{σj+1} = x̂0 + σ_{j+1}·(x_{σj} − x̂0)/σj              (EDM Euler step)
+        Returns the final denoised estimate x̂0 (∈[0,1]) as the projected mean.
+
+        w is the per-pixel cavity precision (normalised to (0,1] per image): the
+        A=I likelihood ∇½‖x−μ‖²/λ² weights each pixel by 1/var, so confident cavity
+        pixels are pulled hard and uncertain ones defer to the prior.  ms_use_confidence
+        off ⇒ w≡1.  ms_stochastic adds EDM churn (Langevin corrector).
+        """
+        dev = mu_cavity.device
+        B = mu_cavity.shape[0]
+        K = int(self.ms_steps)
+        sig = self._edm_sigmas(K, dev)                         # [K+1]
+
+        if self.ms_use_confidence:
+            v = self.pixel_variance(cavity_llr).clamp(min=1e-6)          # [B,n_pix]
+            prec = 1.0 / v
+            w = prec / prec.amax(dim=1, keepdim=True)                    # (0,1]
+            w = w.reshape(B, 1, self.img_h, self.img_w)
+        else:
+            w = torch.ones_like(mu_cavity)
+
+        x = mu_cavity + sig[0] * torch.randn_like(mu_cavity)   # cavity-anchored init
+        x0 = mu_cavity
+        trace = []
+        for j in range(K):
+            sj = sig[j]; sj1 = sig[j + 1]
+            if self.ms_stochastic:                             # EDM Alg-2 churn
+                s_hat = sj * (1.0 + float(self.ms_churn))
+                x = x + torch.sqrt((s_hat ** 2 - sj ** 2).clamp(min=0.0)) \
+                    * torch.randn_like(x)
+                sj = s_hat
+            sig_b = torch.full((B,), float(sj), device=dev, dtype=x.dtype)
+            x0 = self.net(x, sig_b).clamp(0.0, 1.0)            # x̂0 = D(x;σj)
+            zeta = self._guidance_at(sj, sig[0], sig[-1])
+            x0 = (x0 + zeta * w * (mu_cavity - x0)).clamp(0.0, 1.0)
+            x = x0 + sj1 * (x - x0) / sj                       # deterministic step
+            trace.append({
+                "step": j, "sigma": float(sj), "zeta": float(zeta),
+                "x0_mean": float(x0.mean()),
+                "dist_cavity": float((x0 - mu_cavity).pow(2).mean().sqrt()),
+            })
+        self.last_ms_trace = trace
+        return x0                                              # final projected mean
+
+    # ------------------------------------------------------------------
     # Forward  (one EP source-factor projection)
     # ------------------------------------------------------------------
 
@@ -306,10 +398,15 @@ class SourcePriorDenoiser(nn.Module):
                      else q.mean(dim=1))                              # per-image scalar
             sigma = s_img.clamp(min=1e-3).to(sigma.dtype)            # override global σ
 
-        # (3a) projection, 1st moment: Tweedie posterior mean via the EDM
-        #      denoiser.  D(μ_cav; σ) = E[clean image | Gaussian obs] = the
-        #      projected posterior MEAN.  EXACT given the score network.
-        mu_proj = self.net(mu_cavity, sigma)
+        # (3a) projection, 1st moment.
+        #   single_shot: Tweedie posterior MEAN via one EDM denoiser call
+        #                D(μ_cav; σ) = E[clean | Gaussian obs] (mode-averaging).
+        #   multistep  : [2a] EDM diffusion trajectory that SAMPLES one mode,
+        #                cavity-conditioned (selects a peak, not the peak-mean).
+        if self.sampler == "multistep":
+            mu_proj = self._multistep_sample(mu_cavity, cavity_llr)
+        else:
+            mu_proj = self.net(mu_cavity, sigma)
         mu_proj = mu_proj.clamp(0.0, 1.0)
 
         # (3b) projection, 2nd moment.  [Part D] optionally use the per-pixel
