@@ -1,5 +1,9 @@
 # no-LDPC 실제 동작점 재조정 보고서
 
+> 이 갈래는 종료됐다. 최종 판정과 문서 지도는
+> [`NO_LDPC_SUMMARY.md`](NO_LDPC_SUMMARY.md)를 참조한다. 아래 내용은
+> knee와 파라미터 재조정의 상세 근거다.
+
 ## 최종 판정
 
 - 튜닝 동작점: **Es/N0 3.0 dB**, AWGN + perfect CSI, exact log-MAP.

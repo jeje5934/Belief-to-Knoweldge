@@ -1,5 +1,9 @@
 # no-LDPC alpha schedule 최적화 보고서
 
+> 이 갈래는 종료됐다. 최종 판정과 문서 지도는
+> [`NO_LDPC_SUMMARY.md`](NO_LDPC_SUMMARY.md)를 참조한다. 아래 내용은
+> 초기 schedule 탐색의 상세 근거다.
+
 > 후속 실제 knee 재조정은 `NO_LDPC_OPERATING_POINT_RECALIBRATION_KO.md`에
 > 기록했다. 그 단계에서 `(sigma_post=3, llr_clip=45, outer=4, alpha=0.1)`이
 > 관측상 최상 후보였지만 기존 canonical과 95% Wilson CI가 겹치고 계산량이

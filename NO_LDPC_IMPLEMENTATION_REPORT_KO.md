@@ -1,5 +1,9 @@
 # no-LDPC 구현 진행 보고서
 
+> 이 갈래는 종료됐다. 최종 판정과 문서 지도는
+> [`NO_LDPC_SUMMARY.md`](NO_LDPC_SUMMARY.md)를 참조한다. 아래 내용은
+> 단계별 구현·검증 기록으로 보존한다.
+
 ## 1단계: 저장소 감사
 
 - 작업 브랜치: `no-LDPC`
@@ -16,7 +20,7 @@
 
 추가/수정 파일:
 
-- `CODEX_HANDOFF_NO_LDPC.md`
+- `archive/CODEX_HANDOFF_NO_LDPC.md` (당시 root의 원 작업 명세)
 - `NO_LDPC_DESIGN.md`
 - `NO_LDPC_IMPLEMENTATION_REPORT_KO.md`
 

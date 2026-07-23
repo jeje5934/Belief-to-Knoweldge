@@ -1,5 +1,9 @@
 # 동일 자원 3-arm BLER waterfall 최종 보고서
 
+> 종료 판정의 단일 진입점은
+> [`NO_LDPC_SUMMARY.md`](NO_LDPC_SUMMARY.md)다. 이 문서는 waterfall
+> 원자료, CI와 보조 실험의 상세 근거로 보존한다.
+
 ## 1. 결론
 
 **C(RSC/BCJR + score + SPC)는 A(5G LDPC only)와 B(5G LDPC + score)를

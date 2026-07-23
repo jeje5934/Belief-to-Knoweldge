@@ -1,5 +1,9 @@
 # No-LDPC Design and Decision Log
 
+> 종료 판정의 단일 진입점은
+> [`NO_LDPC_SUMMARY.md`](NO_LDPC_SUMMARY.md)다. 이 문서는 설계와
+> 자원 정합의 상세 근거로 보존한다.
+
 ## Status
 
 **Closed after the final decision experiment.** This branch implements and

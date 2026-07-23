@@ -1,5 +1,9 @@
 # RSC source 경로 배선 및 수치 인터페이스 감사
 
+> 종료 판정의 단일 진입점은
+> [`NO_LDPC_SUMMARY.md`](NO_LDPC_SUMMARY.md)다. 이 문서는 배선,
+> source 유효 조건과 block 회계의 상세 증거로 보존한다.
+
 ## 종료 판정
 
 **No-LDPC 갈래를 종료하고 5G LDPC 경로로 복귀한다.** 동일 payload

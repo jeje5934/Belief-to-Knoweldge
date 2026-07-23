@@ -6,6 +6,10 @@ learned EDM **score denoiser** supplying an image-domain prior. This branch
 (EP)** on a three-factor graph and documents, honestly, where pure EP works and
 where it does not.
 
+> **no-LDPC 갈래 종료:** 동일 자원 최종 비교에서 RSC/BCJR + score +
+> SPC가 5G LDPC 기준선에 뒤져 이 갈래를 종료했다. 최종 판정과 전체
+> 문서 지도는 [`NO_LDPC_SUMMARY.md`](NO_LDPC_SUMMARY.md)를 참조한다.
+
 > ### Status — read this first
 > **EP-aligned decoder. `full_ep` (α=1, the source site reflected in full) is the
 > EP-fidelity *reference point* — but it does NOT decode (BLER 1.0).** The

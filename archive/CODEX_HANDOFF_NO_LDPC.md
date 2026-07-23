@@ -1,5 +1,9 @@
 # Codex Handoff — `no-LDPC`: RSC/BCJR + Source-Side SPC ISCD
 
+> **Archived:** 이 문서는 구현 전 원 작업 명세이며 더 이상 활성
+> 지시서가 아니다. 완료 결과와 최종 판정은
+> [`../NO_LDPC_SUMMARY.md`](../NO_LDPC_SUMMARY.md)를 참조한다.
+
 You are working on the repository containing the current `pure-EP_practical` implementation.
 
 ## Mission
