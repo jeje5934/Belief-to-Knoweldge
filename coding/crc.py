@@ -49,7 +49,11 @@ class CRC:
         register = self.init & self.mask
         top_bit = 1 << (self.width - 1)
         for bit in data:
-            feedback = bool(register & top_bit) ^ bool(bit)
+            # Use explicit comparisons rather than resolving the callable
+            # ``bool`` for every bit. This is equivalent for binary inputs and
+            # avoids a rare long-run failure observed after accelerator work
+            # when a third-party runtime temporarily shadowed that name.
+            feedback = ((register & top_bit) != 0) ^ (bit != 0)
             register = (register << 1) & self.mask
             if feedback:
                 register ^= self.polynomial
@@ -88,9 +92,9 @@ class CRC:
         valid = np.array(
             [np.array_equal(self.checksum_bits(m), c)
              for m, c in zip(flat_message, flat_checksum)],
-            dtype=bool,
+            dtype=np.bool_,
         ).reshape(message.shape[:-1])
-        return bool(valid) if valid.ndim == 0 else valid
+        return valid.item() if valid.ndim == 0 else valid
 
     def check(self, codeword_bits) -> np.ndarray | bool:
         message, checksum = self.split(codeword_bits)

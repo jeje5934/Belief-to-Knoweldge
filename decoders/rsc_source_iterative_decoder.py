@@ -27,8 +27,8 @@ class NoLDPCConfig:
     termination_mode: str = "zero"
     bcjr_mode: str = "logmap"
     interleaver_seed: int = 20260722
-    outer_iterations: int = 4
-    alpha_schedule: tuple[float, ...] = (0.1,)
+    outer_iterations: int = 2
+    alpha_schedule: tuple[float, ...] = (0.1, 0.1)
     llr_clip: float = 30.0
     sigma: float = 0.3
     sigma_post: float = 3.0

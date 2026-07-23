@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from coding.bcjr import bcjr_decode
+from coding.bcjr import _decode_one, bcjr_decode
 from coding.rsc import RSCTrellis
 
 
@@ -83,6 +83,21 @@ class BCJRBruteForceTest(unittest.TestCase):
         actual = bcjr_decode(
             self.systematic_llr, parity, self.trellis, self.prior)
         np.testing.assert_allclose(actual.app_llr, expected, atol=1e-10)
+
+    def test_vectorized_batch_matches_scalar_reference(self):
+        rng = np.random.default_rng(31)
+        systematic = rng.normal(size=(4, self.length))
+        parity = rng.normal(size=(4, self.length))
+        parity[:, 2::3] = 0.0
+        prior = rng.normal(scale=0.2, size=(4, self.length))
+        for mode in ("logmap", "maxlog"):
+            expected = np.stack([
+                _decode_one(s, p, a, self.trellis, mode, 0, 0)
+                for s, p, a in zip(systematic, parity, prior)
+            ])
+            actual = bcjr_decode(
+                systematic, parity, self.trellis, prior, mode=mode)
+            np.testing.assert_allclose(actual.app_llr, expected, atol=1e-12)
 
 
 if __name__ == "__main__":
