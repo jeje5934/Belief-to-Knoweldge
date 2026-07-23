@@ -19,6 +19,10 @@ class FixedProvider:
         return np.broadcast_to(self.log_probability, shape)
 
 
+class BoundedFixedProvider(FixedProvider):
+    posterior_llr_bounds = (-2.0, 1.5)
+
+
 class SourceSPCSISOTest(unittest.TestCase):
     def test_score_only_categorical_siso(self):
         probability = np.array([0.1, 0.2, 0.3, 0.4])
@@ -75,6 +79,21 @@ class SourceSPCSISOTest(unittest.TestCase):
         self.assertTrue(np.all(np.isfinite(result.posterior_llr)))
         self.assertAlmostEqual(
             float(np.exp(result.log_symbol_posterior).sum()), 1.0, places=12)
+
+    def test_provider_posterior_bounds_apply_to_score_only_adapter(self):
+        decoder = SourceCategoricalSISO(
+            1, BoundedFixedProvider([1.0e-9, 1.0 - 1.0e-9]))
+        cavity = np.array([[0.25]])
+        result = decoder(cavity)
+        np.testing.assert_allclose(result.posterior_llr, [[1.5]], atol=0.0)
+        np.testing.assert_allclose(result.extrinsic_llr, [[1.25]], atol=0.0)
+
+    def test_provider_posterior_bounds_apply_after_spc_marginalization(self):
+        decoder = SourceSPCSISO(1, BoundedFixedProvider([0.5, 0.5]))
+        cavity = np.array([[0.0, 8.0]])
+        result = decoder(cavity)
+        np.testing.assert_allclose(result.posterior_llr, [[1.5, 1.5]], atol=0.0)
+        np.testing.assert_allclose(result.extrinsic_llr, [[1.5, -6.5]], atol=0.0)
 
 
 if __name__ == "__main__":

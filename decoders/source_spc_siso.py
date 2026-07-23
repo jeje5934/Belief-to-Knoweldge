@@ -61,6 +61,19 @@ class ScorePriorCategoricalProvider:
         self.sigma = float(sigma)
         self.sigma_post = (
             float(prior_model.sigma_post) if sigma_post is None else float(sigma_post))
+        # SourcePriorDenoiser.soft_field_to_posterior_logits() clamps every
+        # marginal P(bit=1) to [1e-7, 1-1e-7] in float32 before taking its
+        # logit.  The categorical adapter must preserve that public numerical
+        # contract.  Without it, exact logsumexp over the Gaussian pixel PMF can
+        # emit hundreds of LLR units although the legacy LDPC wrapper is bounded
+        # near +/-16 for the identical model, checkpoint, and input.
+        lower_probability = np.float32(1.0e-7)
+        upper_probability = np.float32(1.0 - 1.0e-7)
+        one = np.float32(1.0)
+        self.posterior_llr_bounds = (
+            float(np.log(lower_probability / (one - lower_probability))),
+            float(np.log(upper_probability / (one - upper_probability))),
+        )
 
     def __call__(self, systematic_llr: np.ndarray) -> np.ndarray:
         import torch
@@ -104,6 +117,20 @@ class SourceSISOResult:
     log_symbol_posterior: np.ndarray
 
 
+def _apply_provider_posterior_bounds(
+    posterior: np.ndarray, categorical_provider: CategoricalProvider
+) -> np.ndarray:
+    """Honor the provider's bit-posterior numerical range, when declared."""
+
+    bounds = getattr(categorical_provider, "posterior_llr_bounds", None)
+    if bounds is None:
+        return posterior
+    lower, upper = (float(value) for value in bounds)
+    if not np.isfinite(lower) or not np.isfinite(upper) or lower >= upper:
+        raise ValueError("posterior_llr_bounds must be finite and increasing")
+    return np.clip(posterior, lower, upper)
+
+
 class SourceCategoricalSISO:
     """Score-only source SISO for an uncoded M-bit source-symbol stream."""
 
@@ -136,6 +163,8 @@ class SourceCategoricalSISO:
                 _logsumexp(log_posterior[..., mask], axis=-1)
                 - _logsumexp(log_posterior[..., ~mask], axis=-1))
         posterior = np.stack(bit_llrs, axis=-1).reshape(cavity.shape)
+        posterior = _apply_provider_posterior_bounds(
+            posterior, self.categorical_provider)
         return SourceSISOResult(
             posterior_llr=posterior,
             extrinsic_llr=posterior - cavity,
@@ -192,6 +221,8 @@ class SourceSPCSISO:
             - _logsumexp(log_posterior[..., ~self.parity], axis=-1))
         posterior = np.concatenate(
             [systematic_app, parity_app[..., None]], axis=-1).reshape(cavity.shape)
+        posterior = _apply_provider_posterior_bounds(
+            posterior, self.categorical_provider)
         return SourceSISOResult(
             posterior_llr=posterior,
             extrinsic_llr=posterior - cavity,
