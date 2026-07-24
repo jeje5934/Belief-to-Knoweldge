@@ -1,0 +1,58 @@
+{
+  "kind": "ldpc_altproj_spc_feasibility",
+  "configuration": {
+    "payload_bits": 6272,
+    "spc_bits": 7056,
+    "crc_bits": 24,
+    "ldpc_k": 7080,
+    "ldpc_n": 12600,
+    "ldpc_rate": 0.5619047619047619,
+    "payload_rate": 0.49777777777777776,
+    "layout": "raster pixels; 8 systematic MSB-first bits then XOR parity; CRC24A follows the 7056 source positions",
+    "source_correction_positions": "all 7056 systematic+SPC bits; CRC24 positions excluded",
+    "llr_convention": "log P(1)/P(0)",
+    "sigma_post": 3.0,
+    "device": "cuda"
+  },
+  "ldpc_support": {
+    "supported": true,
+    "error": null,
+    "observed_coderate": 0.5619047619047619
+  },
+  "checks": {
+    "spc_exhaustive": {
+      "symbols": 256,
+      "all_parity_valid": true,
+      "roundtrip_exact": true
+    },
+    "siso_vs_bruteforce": {
+      "max_abs_llr_error": 3.280592637544544e-07,
+      "passed_at_1e-5": true
+    },
+    "noiseless": {
+      "blocks": 8,
+      "crc_passes": 8,
+      "payload_exact_blocks": 8,
+      "spc_parity_valid_blocks": 8
+    },
+    "delta0_vs_bp100": {
+      "hard_bit_mismatches": 0,
+      "max_abs_logit_difference": 0.0,
+      "payload_bit_mismatches_to_truth_alt0": 7598
+    }
+  },
+  "runtime": {
+    "batch": 32,
+    "source_calls": 19,
+    "full_decode_seconds": 1.966389091219753,
+    "seconds_per_block": 0.06144965910061728,
+    "last_source_call": {
+      "batch": 32,
+      "seconds": 0.008436882868409157,
+      "sigma_min": 0.019999999552965164,
+      "sigma_max": 0.019999999552965164,
+      "mean_abs_extrinsic": 4.665744304656982
+    },
+    "candidate_evaluations_per_decode": 122028032
+  }
+}

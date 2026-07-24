@@ -1,0 +1,119 @@
+{
+  "kind": "altproj_spc_compression_axis_waterfall",
+  "configuration": {
+    "payload_bits": 6272,
+    "spc_bits": 7056,
+    "crc_bits": 24,
+    "ldpc_k": 7080,
+    "ldpc_n": 12600,
+    "ldpc_rate": 0.5619047619047619,
+    "payload_rate": 0.49777777777777776,
+    "bp_schedule": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nominal_bp_budget": 100,
+    "sigma_start": 0.3,
+    "sigma_end": 0.02,
+    "sigma_post": 3.0,
+    "delta": 0.05,
+    "rho": 0.9,
+    "crc_early_stop": false,
+    "batch": 32,
+    "seed": 20260811,
+    "knee_interpolation": "linear in BLER, identical to compression baseline"
+  },
+  "points": {
+    "-2.500": {
+      "blocks": 1024,
+      "failures": 743,
+      "crc_bler": 0.7255859375,
+      "wilson_95": [
+        0.6974500119508054,
+        0.7520355897216702
+      ],
+      "esn0_db": -2.5
+    },
+    "-2.750": {
+      "blocks": 1024,
+      "failures": 953,
+      "crc_bler": 0.9306640625,
+      "wilson_95": [
+        0.9134413451163033,
+        0.9446675308038774
+      ],
+      "esn0_db": -2.75
+    },
+    "-3.000": {
+      "blocks": 1024,
+      "failures": 1018,
+      "crc_bler": 0.994140625,
+      "wilson_95": [
+        0.9872755606107949,
+        0.9973119478146278
+      ],
+      "esn0_db": -3.0
+    },
+    "-3.250": {
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "esn0_db": -3.25
+    },
+    "-3.500": {
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "esn0_db": -3.5
+    },
+    "-3.750": {
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "esn0_db": -3.75
+    },
+    "-4.000": {
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "esn0_db": -4.0
+    }
+  },
+  "knee_bler_0p1_db": null,
+  "pixelcnn_max_knee_db": -3.79,
+  "gap_to_pixelcnn_max_db": null
+}
