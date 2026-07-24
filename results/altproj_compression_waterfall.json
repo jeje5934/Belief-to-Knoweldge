@@ -1,0 +1,159 @@
+{
+  "kind": "altproj_compression_axis_waterfall",
+  "configuration": {
+    "branch": "practical_sigma",
+    "payload_bits": 6272,
+    "crc": "CRC24A",
+    "ldpc_k": 6296,
+    "n": 12600,
+    "payload_rate": 0.49777777777777776,
+    "ldpc_rate": 0.4996825396825397,
+    "channel": "BPSK/AWGN/perfect_CSI",
+    "axis": "Es/N0",
+    "bp_schedule": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nominal_bp_budget": 100,
+    "sigma_start": 0.3,
+    "sigma_end": 0.02,
+    "sigma_mode": "geom",
+    "sigma_post": 3.0,
+    "delta": 0.02,
+    "rho": 0.9,
+    "crc_early_stop": false,
+    "legacy_beta_contract": 0.0,
+    "ep_beta_contract": 1.0,
+    "batch": 64,
+    "seed": 20260808,
+    "knee_interpolation": "linear in BLER, identical to compression_baseline/plot_channel.py"
+  },
+  "sigma_path": [
+    0.3,
+    0.2580969375421854,
+    0.22204676389551586,
+    0.19103196584195117,
+    0.16434921785490322,
+    0.1413934327193466,
+    0.12164403991146801,
+    0.10465318057136423,
+    0.09003555136506149,
+    0.07745966692414832,
+    0.06664034272053465,
+    0.057332227909772215,
+    0.0493242414866094,
+    0.042434785580950325,
+    0.03650762734567522,
+    0.03140835604950039,
+    0.027021335032035416,
+    0.023247079400232372,
+    0.02
+  ],
+  "points": {
+    "-2.500": {
+      "esn0_db": -2.5,
+      "blocks": 3200,
+      "failures": 1,
+      "crc_bler": 0.0003125,
+      "wilson_95": [
+        5.5164634444967065e-05,
+        0.0017681464805614677
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 100.0
+    },
+    "-2.750": {
+      "esn0_db": -2.75,
+      "blocks": 3200,
+      "failures": 58,
+      "crc_bler": 0.018125,
+      "wilson_95": [
+        0.014047379839163453,
+        0.023358214744538815
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 100.0
+    },
+    "-3.000": {
+      "esn0_db": -3.0,
+      "blocks": 1024,
+      "failures": 300,
+      "crc_bler": 0.29296875,
+      "wilson_95": [
+        0.2659075647839347,
+        0.32157751073742974
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 100.0
+    },
+    "-3.250": {
+      "esn0_db": -3.25,
+      "blocks": 1024,
+      "failures": 953,
+      "crc_bler": 0.9306640625,
+      "wilson_95": [
+        0.9134413451163033,
+        0.9446675308038774
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 100.0
+    },
+    "-3.500": {
+      "esn0_db": -3.5,
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 100.0
+    },
+    "-3.750": {
+      "esn0_db": -3.75,
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 100.0
+    },
+    "-4.000": {
+      "esn0_db": -4.0,
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 100.0
+    }
+  },
+  "knee_bler_0p1_db": -2.824474133030131,
+  "pixelcnn_max_knee_db": -3.79,
+  "gap_to_pixelcnn_max_db": 0.9655258669698692
+}
