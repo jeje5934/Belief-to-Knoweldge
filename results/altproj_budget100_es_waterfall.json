@@ -1,0 +1,161 @@
+{
+  "kind": "altproj_budget_waterfall",
+  "configuration": {
+    "bp_schedule": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nominal_bp_budget": 100,
+    "sigma_start": 0.3,
+    "sigma_end": 0.05,
+    "sigma_post": 3.0,
+    "delta": 0.02,
+    "rho": 0.9,
+    "crc_early_stop": true,
+    "batch": 64,
+    "seed": 20260813,
+    "actual_iterations": "per-codeword cumulative BP iterations at first CRC pass; nominal budget if never passing"
+  },
+  "points": {
+    "-2.500": {
+      "esn0_db": -2.5,
+      "blocks": 3200,
+      "failures": 1,
+      "crc_bler": 0.0003125,
+      "wilson_95": [
+        5.5164634444967065e-05,
+        0.0017681464805614677
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 36.54375,
+      "actual_iteration_distribution": {
+        "median": 35.0,
+        "q10": 30.0,
+        "q90": 40.0
+      }
+    },
+    "-2.750": {
+      "esn0_db": -2.75,
+      "blocks": 3200,
+      "failures": 65,
+      "crc_bler": 0.0203125,
+      "wilson_95": [
+        0.01596913666410074,
+        0.025806212029792247
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 51.6015625,
+      "actual_iteration_distribution": {
+        "median": 50.0,
+        "q10": 40.0,
+        "q90": 65.0
+      }
+    },
+    "-3.000": {
+      "esn0_db": -3.0,
+      "blocks": 1024,
+      "failures": 225,
+      "crc_bler": 0.2197265625,
+      "wilson_95": [
+        0.19543861189733416,
+        0.24610957996413554
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 78.8427734375,
+      "actual_iteration_distribution": {
+        "median": 75.0,
+        "q10": 60.0,
+        "q90": 100.0
+      }
+    },
+    "-3.250": {
+      "esn0_db": -3.25,
+      "blocks": 1024,
+      "failures": 841,
+      "crc_bler": 0.8212890625,
+      "wilson_95": [
+        0.7966358681286072,
+        0.8435405948594641
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 97.7734375,
+      "actual_iteration_distribution": {
+        "median": 100.0,
+        "q10": 90.0,
+        "q90": 100.0
+      }
+    },
+    "-3.500": {
+      "esn0_db": -3.5,
+      "blocks": 1024,
+      "failures": 1020,
+      "crc_bler": 0.99609375,
+      "wilson_95": [
+        0.9899992152398231,
+        0.9984799434165301
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 99.9853515625,
+      "actual_iteration_distribution": {
+        "median": 100.0,
+        "q10": 100.0,
+        "q90": 100.0
+      }
+    },
+    "-3.750": {
+      "esn0_db": -3.75,
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 100.0,
+      "actual_iteration_distribution": {
+        "median": 100.0,
+        "q10": 100.0,
+        "q90": 100.0
+      }
+    },
+    "-4.000": {
+      "esn0_db": -4.0,
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "nominal_bp_iters": 100,
+      "actual_mean_bp_iters": 100.0,
+      "actual_iteration_distribution": {
+        "median": 100.0,
+        "q10": 100.0,
+        "q90": 100.0
+      }
+    }
+  },
+  "knee_bler_0p1_db": -2.849902056807052,
+  "pixelcnn_max_knee_db": -3.79,
+  "gap_to_pixelcnn_max_db": 0.9400979431929479
+}

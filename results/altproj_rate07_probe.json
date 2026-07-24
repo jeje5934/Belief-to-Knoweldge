@@ -1,0 +1,46 @@
+{
+  "kind": "altproj_rate_probe",
+  "supported": true,
+  "configuration": {
+    "payload_bits": 6272,
+    "crc_bits": 24,
+    "ldpc_k": 6296,
+    "n": 9000,
+    "ldpc_rate": 0.6995555555555556,
+    "payload_rate": 0.6968888888888889,
+    "esn0_db": -1.5,
+    "blocks": 512,
+    "bp_schedule": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "sigma_end": 0.05,
+    "crc_early_stop": true,
+    "selection_reason": "single exploratory point near the rate-ratio shifted knee; not a same-resource comparison"
+  },
+  "failures": 512,
+  "crc_bler": 1.0,
+  "wilson_95": [
+    0.9925527526279385,
+    1.0
+  ],
+  "actual_mean_bp_iters": 100.0
+}

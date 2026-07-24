@@ -1,0 +1,151 @@
+{
+  "kind": "altproj_budget_waterfall",
+  "configuration": {
+    "bp_schedule": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "nominal_bp_budget": 50,
+    "sigma_start": 0.3,
+    "sigma_end": 0.05,
+    "sigma_post": 3.0,
+    "delta": 0.02,
+    "rho": 0.9,
+    "crc_early_stop": true,
+    "batch": 64,
+    "seed": 20260813,
+    "actual_iterations": "per-codeword cumulative BP iterations at first CRC pass; nominal budget if never passing"
+  },
+  "points": {
+    "-2.500": {
+      "esn0_db": -2.5,
+      "blocks": 1024,
+      "failures": 10,
+      "crc_bler": 0.009765625,
+      "wilson_95": [
+        0.0053129775554746775,
+        0.017882814480963623
+      ],
+      "nominal_bp_iters": 50,
+      "actual_mean_bp_iters": 36.4599609375,
+      "actual_iteration_distribution": {
+        "median": 35.0,
+        "q10": 30.0,
+        "q90": 40.0
+      }
+    },
+    "-2.750": {
+      "esn0_db": -2.75,
+      "blocks": 1024,
+      "failures": 415,
+      "crc_bler": 0.4052734375,
+      "wilson_95": [
+        0.37561126696691316,
+        0.43564369683295634
+      ],
+      "nominal_bp_iters": 50,
+      "actual_mean_bp_iters": 47.412109375,
+      "actual_iteration_distribution": {
+        "median": 50.0,
+        "q10": 40.0,
+        "q90": 50.0
+      }
+    },
+    "-3.000": {
+      "esn0_db": -3.0,
+      "blocks": 1024,
+      "failures": 1012,
+      "crc_bler": 0.98828125,
+      "wilson_95": [
+        0.9796286472333218,
+        0.9932839104993094
+      ],
+      "nominal_bp_iters": 50,
+      "actual_mean_bp_iters": 49.990234375,
+      "actual_iteration_distribution": {
+        "median": 50.0,
+        "q10": 50.0,
+        "q90": 50.0
+      }
+    },
+    "-3.250": {
+      "esn0_db": -3.25,
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "nominal_bp_iters": 50,
+      "actual_mean_bp_iters": 50.0,
+      "actual_iteration_distribution": {
+        "median": 50.0,
+        "q10": 50.0,
+        "q90": 50.0
+      }
+    },
+    "-3.500": {
+      "esn0_db": -3.5,
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "nominal_bp_iters": 50,
+      "actual_mean_bp_iters": 50.0,
+      "actual_iteration_distribution": {
+        "median": 50.0,
+        "q10": 50.0,
+        "q90": 50.0
+      }
+    },
+    "-3.750": {
+      "esn0_db": -3.75,
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "nominal_bp_iters": 50,
+      "actual_mean_bp_iters": 50.0,
+      "actual_iteration_distribution": {
+        "median": 50.0,
+        "q10": 50.0,
+        "q90": 50.0
+      }
+    },
+    "-4.000": {
+      "esn0_db": -4.0,
+      "blocks": 1024,
+      "failures": 1024,
+      "crc_bler": 1.0,
+      "wilson_95": [
+        0.9962624591182144,
+        1.0
+      ],
+      "nominal_bp_iters": 50,
+      "actual_mean_bp_iters": 50.0,
+      "actual_iteration_distribution": {
+        "median": 50.0,
+        "q10": 50.0,
+        "q90": 50.0
+      }
+    }
+  },
+  "knee_bler_0p1_db": -2.557037037037037,
+  "pixelcnn_max_knee_db": -3.79,
+  "gap_to_pixelcnn_max_db": 1.2329629629629628
+}
