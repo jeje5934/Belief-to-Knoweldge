@@ -159,6 +159,14 @@ def main():
     parser.add_argument("--blocks", type=int, default=512)
     parser.add_argument("--batch", type=int, default=64)
     parser.add_argument("--seed", type=int, default=20260901)
+    parser.add_argument(
+        "--groups",
+        default="",
+        help=(
+            "optional comma-separated subset of "
+            "bp10,10x2,5x4,5x6,5x10,5x20"
+        ),
+    )
     parser.add_argument("--a-result")
     parser.add_argument("--checkpoint", default=DEFAULT_CHECKPOINT)
     parser.add_argument("--output", required=True)
@@ -167,6 +175,18 @@ def main():
         raise ValueError("blocks must be divisible by batch")
 
     groups = experiment_groups()
+    requested_groups = {
+        value.strip() for value in args.groups.split(",") if value.strip()
+    }
+    if requested_groups:
+        unknown = requested_groups - set(groups)
+        if unknown:
+            raise ValueError(f"unknown groups: {sorted(unknown)}")
+        groups = OrderedDict(
+            (name, group)
+            for name, group in groups.items()
+            if name in requested_groups
+        )
     readout = readout_from_a(args.a_result)
     result = {
         "kind": "latency_matching_source_sweep",
@@ -177,6 +197,7 @@ def main():
             "blocks": args.blocks,
             "batch": args.batch,
             "seed": args.seed,
+            "groups": list(groups),
             "readout": readout,
             "legacy_beta": LEGACY_BETA_BP_EXTRINSIC_BOOST,
             "ep_beta_ep": EP_BETA_CODE_SITE,
