@@ -45,6 +45,7 @@ for _g in tf.config.list_physical_devices("GPU"):
 
 from sionna.phy.mapping import Mapper, Demapper
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.channel.awgn import AWGN
 from sionna.phy.utils import ebnodb2no
@@ -144,7 +145,7 @@ def run(dec, ldpc_enc, crc_enc, crc_dec, mapper, demapper, awgn,
         y = awgn(mapper(ldpc_enc(u_crc)), no)
         llr = demapper(y, no)
         hat = dec(llr)
-        _, cv = crc_dec(hat)
+        _, cv = hard_crc_decode(crc_dec, hat)
         ack = int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())
         tot_nack += (batch - ack)
         tot_biterr += int(tf.reduce_sum(tf.cast(

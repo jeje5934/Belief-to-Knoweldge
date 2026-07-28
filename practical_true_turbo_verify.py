@@ -13,6 +13,7 @@ import tensorflow as tf
 
 from sionna.phy.mapping import Mapper, Demapper
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
 from sionna.phy.channel.awgn import AWGN
@@ -109,7 +110,7 @@ def main():
         for r in range(4):
             l2, u2 = get_llr(ldpc, crc_enc, mp, dm, awgn, bk, 0.6, 32)
             hat = dec(l2)
-            _, cv = crc_dec(hat)
+            _, cv = hard_crc_decode(crc_dec, hat)
             nack += 32 - int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy()); total += 32
             be += int(tf.reduce_sum(tf.cast(tf.not_equal(u2, tf.cast(hat[:, :K_PAYLOAD] > 0, tf.int32)), tf.int32)).numpy())
         print(f"  {name:12} BLER={nack/total:.3f}  BER={be/(total*K_PAYLOAD):.4f}  ({nack}/{total})")

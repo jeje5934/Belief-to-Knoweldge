@@ -40,6 +40,7 @@ tf.config.set_visible_devices([], "GPU")
 
 import torch
 from sionna.phy.fec.crc import CRCDecoder
+from crc_utils import hard_crc_decode
 from syndrome_sigma_schedule import AnnealingSigmaScheduler
 
 from denoiser_sigma_alignment_diag import (
@@ -169,7 +170,7 @@ def run_candidates_at_snr(
             decoder.sigma_scheduler = scheduler
             decoder.denoiser.sigma = FIXED_SIGMA
             final_logits = decoder(channel_llr)
-            _, crc_valid = crc_decoder(final_logits)
+            _, crc_valid = hard_crc_decode(crc_decoder, final_logits)
             masks[name].extend(
                 np.asarray(crc_valid.numpy())
                 .reshape(-1)
@@ -590,7 +591,7 @@ def run_alpha(args):
             decoder.sigma_scheduler = scheduler
             decoder.denoiser.sigma = FIXED_SIGMA
             final_logits = decoder(channel_llr)
-            _, crc_valid = crc_decoder(final_logits)
+            _, crc_valid = hard_crc_decode(crc_decoder, final_logits)
             masks[name].extend(
                 np.asarray(crc_valid.numpy())
                 .reshape(-1)

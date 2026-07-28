@@ -11,6 +11,7 @@ import argparse, csv, os
 import numpy as np
 import tensorflow as tf
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.utils import ebnodb2no
 
@@ -29,7 +30,7 @@ def legacy_bler(dec, ldpc, crc, crcd, channel, ebno, batch, rounds):
         idx = tf.random.uniform([batch], 0, tf.shape(bank)[0], dtype=tf.int32)
         u = tf.gather(bank, idx)
         llr = channel.transmit(ldpc(crc(tf.cast(u, ldpc.rdtype))), no)
-        hat = dec(llr); _, cv = crcd(hat)
+        hat = dec(llr); _, cv = hard_crc_decode(crcd, hat)
         nack += batch - int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())
     return wilson(nack, batch * rounds), nack, batch * rounds
 

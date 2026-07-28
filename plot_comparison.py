@@ -57,6 +57,7 @@ import matplotlib.pyplot as plt
 
 from sionna.phy.mapping import Mapper, Demapper
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
 from sionna.phy.channel.awgn import AWGN
@@ -139,7 +140,7 @@ def run_sweep(ebno_list, dec_base, decoders_named, ldpc_enc,
             llr_ch = demapper(y, no)
 
             hat_b = dec_base(llr_ch)
-            _, cv_b = crc_dec(hat_b)
+            _, cv_b = hard_crc_decode(crc_dec, hat_b)
             ack_b += int(tf.reduce_sum(tf.cast(cv_b, tf.int32)).numpy())
             err_b += int(tf.reduce_sum(tf.cast(
                 tf.not_equal(u, tf.cast(hat_b[:, :K_PAYLOAD] > 0, tf.int32)),
@@ -147,7 +148,7 @@ def run_sweep(ebno_list, dec_base, decoders_named, ldpc_enc,
 
             for k, dec in decoders_named.items():
                 hat = dec(llr_ch)
-                _, cv = crc_dec(hat)
+                _, cv = hard_crc_decode(crc_dec, hat)
                 ack[k] += int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())
                 err[k] += int(tf.reduce_sum(tf.cast(
                     tf.not_equal(u, tf.cast(hat[:, :K_PAYLOAD] > 0, tf.int32)),

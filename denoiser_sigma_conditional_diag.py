@@ -31,6 +31,7 @@ tf.config.set_visible_devices([], "GPU")
 import torch
 from sionna.phy.channel.awgn import AWGN
 from sionna.phy.fec.crc import CRCDecoder, CRCEncoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.mapping import Demapper, Mapper
 from syndrome_sigma_schedule import AnnealingSigmaScheduler
@@ -366,7 +367,7 @@ def run_profile(args):
             awgn,
         )
         final_logits = decoder(channel_llr)
-        _, crc_valid = crc_decoder(final_logits)
+        _, crc_valid = hard_crc_decode(crc_decoder, final_logits)
         final_success = np.asarray(crc_valid.numpy()).reshape(-1).astype(bool)
         payload_history = decoder.last_payload_hist
         diagnostics = decoder.last_chunk_diagnostics
@@ -635,7 +636,7 @@ def run_schedule(args):
             decoder.sigma_scheduler = scheduler
             decoder.denoiser.sigma = FIXED_SIGMA
             final_logits = decoder(channel_llr)
-            _, crc_valid = crc_decoder(final_logits)
+            _, crc_valid = hard_crc_decode(crc_decoder, final_logits)
             success_masks[name].extend(
                 np.asarray(crc_valid.numpy()).reshape(-1).astype(bool).tolist())
         print(

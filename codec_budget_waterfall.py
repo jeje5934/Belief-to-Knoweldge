@@ -24,6 +24,7 @@ for gpu in tf.config.list_physical_devices("GPU"):
     tf.config.experimental.set_memory_growth(gpu, True)
 
 from sionna.phy.fec.crc import CRCDecoder, CRCEncoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.mapping import Demapper, Mapper
@@ -162,7 +163,7 @@ def run_codec_point(
                 num_iter=CHUNK,
                 msg_v2c=message,
             )
-            _, valid = crc_decoder(logits)
+            _, valid = hard_crc_decode(crc_decoder, logits)
             valid_np = np.asarray(valid.numpy()).reshape(-1).astype(bool)
             newly = valid_np & ~captured
             first_iterations[start:stop][newly] = float(iteration)

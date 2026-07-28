@@ -60,6 +60,7 @@ from ldpc_altproj_spc import (
 )
 from sionna.phy.channel.awgn import AWGN
 from sionna.phy.fec.crc import CRCDecoder, CRCEncoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.mapping import Demapper, Mapper
@@ -305,7 +306,7 @@ def run_waterfall(args):
             )
             decoder.altproj_early_stop = False
             final_logits = decoder(channel_llr)
-            _, crc_valid = crc_decoder(final_logits)
+            _, crc_valid = hard_crc_decode(crc_decoder, final_logits)
             failures += (
                 args.batch
                 - int(
@@ -491,7 +492,7 @@ def run_feasibility(args):
     direct_llr = (2.0 * codeword - 1.0) * 50.0
     adapter.reset_path(path)
     decoded_logits = decoder(direct_llr)
-    _, crc_valid = crc_decoder(decoded_logits)
+    _, crc_valid = hard_crc_decode(crc_decoder, decoded_logits)
     hard_spc = (
         decoded_logits[:, :SPC_BITS].numpy() > 0
     ).astype(np.uint8)
@@ -649,7 +650,7 @@ def _spc_success_masks(
             decoder.altproj_early_stop = False
             adapter.reset_path(path)
             logits = decoder(channel_llr)
-            _, valid = crc_decoder(logits)
+            _, valid = hard_crc_decode(crc_decoder, logits)
             masks[config["name"]].extend(
                 np.asarray(valid.numpy()).reshape(-1).astype(bool).tolist()
             )
@@ -903,7 +904,7 @@ def run_spc_waterfall(args):
 
 def _crc_check_callable(crc_decoder):
     def check(info_logits):
-        _, valid = crc_decoder(info_logits)
+        _, valid = hard_crc_decode(crc_decoder, info_logits)
         return tf.reshape(tf.cast(valid, tf.bool), [-1])
 
     return check
@@ -914,7 +915,7 @@ def _crc_capture_iterations(history, crc_decoder, schedule, batch):
     iterations = np.full(batch, float(sum(schedule)), dtype=np.float64)
     cumulative = np.cumsum(schedule)
     for chunk_index, info_logits in enumerate(history):
-        _, valid = crc_decoder(info_logits)
+        _, valid = hard_crc_decode(crc_decoder, info_logits)
         valid_np = np.asarray(valid.numpy()).reshape(-1).astype(bool)
         newly = valid_np & ~captured
         iterations[newly] = float(cumulative[chunk_index])
@@ -1009,7 +1010,7 @@ def run_budget_screen(args):
                 decoder.altproj_crc_check = crc_check
                 decoder.track_u_hat = True
                 logits = decoder(channel_llr)
-                _, valid = crc_decoder(logits)
+                _, valid = hard_crc_decode(crc_decoder, logits)
                 masks[endpoint].extend(
                     np.asarray(valid.numpy())
                     .reshape(-1)
@@ -1188,7 +1189,7 @@ def run_budget_waterfall(args):
             decoder.altproj_crc_check = _crc_check_callable(crc_decoder)
             decoder.track_u_hat = True
             logits = decoder(channel_llr)
-            _, valid = crc_decoder(logits)
+            _, valid = hard_crc_decode(crc_decoder, logits)
             failures += (
                 args.batch
                 - int(
@@ -1294,7 +1295,7 @@ def run_rate_probe(args):
         decoder.altproj_crc_check = _crc_check_callable(crc_decoder)
         decoder.track_u_hat = True
         logits = decoder(channel_llr)
-        _, valid = crc_decoder(logits)
+        _, valid = hard_crc_decode(crc_decoder, logits)
         failures += (
             args.batch
             - int(tf.reduce_sum(tf.cast(valid, tf.int32)).numpy())

@@ -22,6 +22,7 @@ os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 
 import numpy as np
 import tensorflow as tf
+from crc_utils import hard_crc_decode
 
 tf.config.set_visible_devices([], "GPU")
 
@@ -267,7 +268,7 @@ def first_crc_success(history, final_logits, crc_decoder, schedule, batch):
         tensors = [final_logits]
         cumulative = np.asarray([sum(schedule)])
     for chunk_index, info_logits in enumerate(tensors):
-        _, valid = crc_decoder(info_logits)
+        _, valid = hard_crc_decode(crc_decoder, info_logits)
         valid_np = np.asarray(valid.numpy()).reshape(-1).astype(bool)
         newly = valid_np & ~captured
         iterations[newly] = float(cumulative[min(chunk_index, len(cumulative) - 1)])
@@ -514,7 +515,7 @@ def run_sigma_post(args):
                 decoder.altproj_crc_check = _crc_check_callable(crc_decoder)
                 decoder.track_u_hat = True
                 logits = decoder(channel_llr)
-                _, valid = crc_decoder(logits)
+                _, valid = hard_crc_decode(crc_decoder, logits)
                 success = np.asarray(valid.numpy()).reshape(-1).astype(bool)
                 masks[item["name"]].extend(success.tolist())
                 _, used = first_crc_success(

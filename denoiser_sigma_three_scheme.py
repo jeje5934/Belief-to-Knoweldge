@@ -21,6 +21,7 @@ os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 
 import numpy as np
 import tensorflow as tf
+from crc_utils import hard_crc_decode
 
 tf.config.set_visible_devices([], "GPU")
 
@@ -430,7 +431,7 @@ def run_point(
                 candidate,
             )
             final_logits = decoder(channel_llr)
-            _, crc_valid = crc_decoder(final_logits)
+            _, crc_valid = hard_crc_decode(crc_decoder, final_logits)
             masks[candidate["name"]].extend(
                 np.asarray(crc_valid.numpy())
                 .reshape(-1)

@@ -28,6 +28,7 @@ import tensorflow as tf
 tf.config.set_visible_devices([], "GPU")          # TF -> CPU (safe)
 
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.utils import ebnodb2no
 from decoder import LDPC5GDecoder_soft
@@ -116,7 +117,7 @@ def crc_es(hist, crcd, ldpc):
     captured = tf.zeros([B], tf.bool)
     iters = np.full(B, float(sum(SCHEDULE)))
     for t, uh in enumerate(hist):
-        _, cv = crcd(tf.reshape(uh, [-1, ldpc.k]))
+        _, cv = hard_crc_decode(crcd, tf.reshape(uh, [-1, ldpc.k]))
         cv = tf.reshape(tf.cast(cv, tf.bool), [-1])
         newly = tf.logical_and(cv, tf.logical_not(captured))
         nz = newly.numpy()

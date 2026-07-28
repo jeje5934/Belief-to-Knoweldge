@@ -25,6 +25,7 @@ import tensorflow as tf
 tf.config.set_visible_devices([], "GPU")          # TF -> CPU (safe)
 
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
 from sionna.phy.mapping import Mapper, Demapper
@@ -106,7 +107,7 @@ def run_config(dec, cfg, ldpc, crc, crcd, mapper, demapper, awgn, bk, cw):
     dec.altproj_early_stop = es_mode != "off"
     dec.altproj_es_patience = cfg.get("es_patience", 0)
     dec.altproj_crc_check = (
-        (lambda ul: crcd(tf.reshape(ul, [-1, ldpc.k]))[1]) if es_mode == "crc"
+        (lambda ul: hard_crc_decode(crcd, tf.reshape(ul, [-1, ldpc.k]))[1]) if es_mode == "crc"
         else None)
     dec.altproj_delta_schedule = cfg.get("delta_sched")
     dec.altproj_rho_schedule = cfg.get("rho_sched")
@@ -125,7 +126,7 @@ def run_config(dec, cfg, ldpc, crc, crcd, mapper, demapper, awgn, bk, cw):
         y = awgn(mapper(ldpc(crc(tf.cast(u, ldpc.rdtype)))), no)
         llr = demapper(y, no)
         hat = dec(llr)
-        _, cv = crcd(hat)
+        _, cv = hard_crc_decode(crcd, hat)
         ack = int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())
         tot_nack += BATCH - ack; tot += BATCH
         diag = dec.last_altproj_diag
@@ -233,7 +234,7 @@ def run_anchor(decoders, cfg, ldpc, crc, crcd, mapper, demapper, awgn, bk, cw):
         y = awgn(mapper(ldpc(crc(tf.cast(u, ldpc.rdtype)))), no)
         llr = demapper(y, no)
         hat = dec(llr)
-        _, cv = crcd(hat)
+        _, cv = hard_crc_decode(crcd, hat)
         ack = int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())
         tot_nack += BATCH - ack; tot += BATCH
     bler, lo, hi = wilson_ci(tot_nack, tot)

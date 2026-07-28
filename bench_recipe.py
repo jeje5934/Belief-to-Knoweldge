@@ -32,6 +32,7 @@ else:
 import torch
 
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.utils import ebnodb2no
 from decoder import LDPC5GDecoder_soft
@@ -67,7 +68,7 @@ def main():
     for r in range(a.rounds):
         idx = tf.random.uniform([a.batch], 0, tf.shape(bk)[0], dtype=tf.int32)
         u = tf.gather(bk, idx); llr = ch.transmit(ldpc(crc(tf.cast(u, ldpc.rdtype))), no)
-        hat = dec(llr); _, cv = crcd(hat)
+        hat = dec(llr); _, cv = hard_crc_decode(crcd, hat)
     dt = time.time() - t0
     cw = a.batch * a.rounds
     print(f"RECIPE={a.recipe}  {cw} cw legacy[5]x20 decode: {dt:.1f}s  "

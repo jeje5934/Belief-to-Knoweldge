@@ -64,6 +64,7 @@ import torchvision
 
 from sionna.phy.mapping import Mapper, Demapper
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.fec.ldpc.decoding import LDPCBPDecoder
 from sionna.phy.channel.awgn import AWGN
@@ -133,7 +134,7 @@ def run_tail_from_chunk(
             payload_intr_n = payload0 + b * bp_ext2 + a * src2
 
     hat_info = x_hat[:, :int(dec.encoder.k)]
-    _, cv = crc_dec(hat_info)
+    _, cv = hard_crc_decode(crc_dec, hat_info)
     nack = tf.cast(tf.logical_not(cv), tf.float32)
     hard = tf.cast(hat_info[:, :u_bits.shape[1]] > 0.0, dec.rdtype)
     bit_err = tf.reduce_sum(tf.cast(tf.not_equal(hard, u_bits), tf.float32), axis=1)

@@ -19,6 +19,7 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 import numpy as np
 import tensorflow as tf
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
 from sionna.phy.utils import ebnodb2no
@@ -54,7 +55,7 @@ def check(kind, ebno_hi=25.0, batch=64, sweep=()):
     pre_ber = float(tf.reduce_mean(tf.cast(
         tf.not_equal(tf.cast(llr > 0, tf.int32), tf.cast(c, tf.int32)), tf.float32)))
     # (2) end-to-end
-    hat = dec(llr); _, cv = crcd(hat)
+    hat = dec(llr); _, cv = hard_crc_decode(crcd, hat)
     crc_pass = float(tf.reduce_mean(tf.cast(cv, tf.float32)))
     payload_ber = float(tf.reduce_mean(tf.cast(
         tf.not_equal(u, tf.cast(hat[:, :K] > 0, tf.int32)), tf.float32)))
@@ -66,7 +67,7 @@ def check(kind, ebno_hi=25.0, batch=64, sweep=()):
     for se2 in sweep:
         ch2 = ChannelModel(kind, sigma_e2=se2, perfect_csi=False)
         no2 = ebnodb2no(6.0, nb, ldpc.coderate)
-        hat2 = dec(ch2.transmit(c, no2)); _, cv2 = crcd(hat2)
+        hat2 = dec(ch2.transmit(c, no2)); _, cv2 = hard_crc_decode(crcd, hat2)
         print(f"   (3) imperfect CSI sigma_e2={se2:<5} ebno=6: "
               f"CRC pass={float(tf.reduce_mean(tf.cast(cv2, tf.float32))):.3f}")
 

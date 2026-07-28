@@ -18,6 +18,7 @@ import torch
 DEV = "cuda" if torch.cuda.is_available() else "cpu"
 from sionna.phy.mapping import Mapper, Demapper
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.channel.awgn import AWGN
 from sionna.phy.utils import ebnodb2no
@@ -61,7 +62,7 @@ def main():
             idx = tf.random.uniform([args.batch], 0, tf.shape(bank)[0], dtype=tf.int32)
             u = tf.gather(bank, idx)
             y = aw(mp(ldpc(crc(tf.cast(u, ldpc.rdtype)))), no); hat = ep(dm(y, no))
-            _, cv = crcd(hat); tn += args.batch - int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())
+            _, cv = hard_crc_decode(crcd, hat); tn += args.batch - int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())
             tb += int(tf.reduce_sum(tf.cast(tf.not_equal(u, tf.cast(hat[:, :K] > 0, tf.int32)), tf.int32)).numpy())
         p, lo, hi = wilson(tn, tot); return {"bler": p, "ci_lo": lo, "ci_hi": hi, "ber": tb/(tot*K), "nack": tn, "total": tot}
 

@@ -50,6 +50,7 @@ from denoiser_sigma_three_scheme import (
 )
 from syndrome_sigma_schedule import AnnealingSigmaScheduler
 from sionna.phy.fec.crc import CRCDecoder, CRCEncoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.utils import ebnodb2no
 
@@ -211,7 +212,7 @@ def run_profile(args):
         proxy.set_truth(truth_image)
         proxy.capture_enabled = True
         logits = decoder(channel_llr)
-        _, crc_valid = crc_decoder(logits)
+        _, crc_valid = hard_crc_decode(crc_decoder, logits)
         if len(proxy.actual_rmse) != len(schedule) - 1:
             raise RuntimeError(
                 f"{item['scheme']} captured {len(proxy.actual_rmse)} calls, "
@@ -330,7 +331,7 @@ def run_paired(
             configure_candidate(decoder, proxy, scheduler, path, item)
             decoder.altproj_early_stop = False
             logits = decoder(channel_llr)
-            _, crc_valid = crc_decoder(logits)
+            _, crc_valid = hard_crc_decode(crc_decoder, logits)
             masks[item["name"]].extend(
                 np.asarray(crc_valid.numpy()).reshape(-1).astype(bool).tolist()
             )
@@ -564,7 +565,7 @@ def run_fading(args):
                 )
                 decoder.altproj_early_stop = False
                 logits = decoder(channel_llr)
-                _, crc_valid = crc_decoder(logits)
+                _, crc_valid = hard_crc_decode(crc_decoder, logits)
                 masks[item["name"]].extend(
                     np.asarray(crc_valid.numpy())
                     .reshape(-1)

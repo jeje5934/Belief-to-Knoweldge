@@ -25,6 +25,7 @@ for gpu in gpus:
 
 from sionna.phy.mapping import Mapper, Demapper
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
 from sionna.phy.channel.awgn import AWGN
@@ -81,14 +82,14 @@ def run_sweep(ebno_list, dec_base, dec_dn, ldpc_enc, crc_enc, crc_dec,
             llr_ch = demapper(y, no)
 
             hat_b = dec_base(llr_ch)
-            _, cv_b = crc_dec(hat_b)
+            _, cv_b = hard_crc_decode(crc_dec, hat_b)
             ab += int(tf.reduce_sum(tf.cast(cv_b, tf.int32)).numpy())
             eb += int(tf.reduce_sum(tf.cast(
                 tf.not_equal(u, tf.cast(hat_b[:, :K_PAYLOAD] > 0, tf.int32)),
                 tf.int32)).numpy())
 
             hat_d = dec_dn(llr_ch)
-            _, cv_d = crc_dec(hat_d)
+            _, cv_d = hard_crc_decode(crc_dec, hat_d)
             ad += int(tf.reduce_sum(tf.cast(cv_d, tf.int32)).numpy())
             ed += int(tf.reduce_sum(tf.cast(
                 tf.not_equal(u, tf.cast(hat_d[:, :K_PAYLOAD] > 0, tf.int32)),
@@ -149,7 +150,7 @@ def main():
             y = awgn(x, no)
             llr_ch = demapper(y, no)
             hat_b = dec_base(llr_ch)
-            _, cv_b = crc_dec(hat_b)
+            _, cv_b = hard_crc_decode(crc_dec, hat_b)
             ab += int(tf.reduce_sum(tf.cast(cv_b, tf.int32)).numpy())
             eb += int(tf.reduce_sum(tf.cast(
                 tf.not_equal(u, tf.cast(hat_b[:, :K_PAYLOAD] > 0, tf.int32)),
@@ -194,7 +195,7 @@ def main():
                 y = awgn(x, no)
                 llr_ch = demapper(y, no)
                 hat_d = dec_dn(llr_ch)
-                _, cv_d = crc_dec(hat_d)
+                _, cv_d = hard_crc_decode(crc_dec, hat_d)
                 ad += int(tf.reduce_sum(tf.cast(cv_d, tf.int32)).numpy())
                 ed += int(tf.reduce_sum(tf.cast(
                     tf.not_equal(u, tf.cast(hat_d[:, :K_PAYLOAD] > 0, tf.int32)),

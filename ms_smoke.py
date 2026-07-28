@@ -12,6 +12,7 @@ import tensorflow as tf
 tf.config.set_visible_devices([], "GPU")
 
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.mapping import Mapper, Demapper
 from sionna.phy.channel.awgn import AWGN
@@ -62,7 +63,7 @@ def main():
                                              ms_use_confidence=True, ms_stochastic=False)
         t0 = time.time()
         hat = dec(llr)
-        _, cv = crcd(hat)
+        _, cv = hard_crc_decode(crcd, hat)
         nack = int(B - tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())
         finite = bool(tf.reduce_all(tf.math.is_finite(hat)).numpy())
         print(f"[{mode:11s}] completed, no crash. finite={finite}  "

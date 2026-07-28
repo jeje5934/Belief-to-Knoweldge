@@ -42,6 +42,7 @@ import matplotlib.pyplot as plt
 
 from sionna.phy.mapping import Mapper, Demapper
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.fec.ldpc.decoding import LDPCBPDecoder
 from sionna.phy.channel.awgn import AWGN
@@ -270,13 +271,13 @@ def main():
         dec._hard_out = prev_ho
 
     hat_info = x_hat[:, :int(ldpc_enc.k)]
-    _, crc_ok = crc_dec(hat_info)
+    _, crc_ok = hard_crc_decode(crc_dec, hat_info)
     crc_pass = bool(crc_ok.numpy()[0])
     final_ber = compute_ber(x_hat, orig_bits, k_payload)
 
     bl_final_ber = compute_ber(bl_hat, orig_bits, k_payload)
     bl_info = bl_hat[:, :int(ldpc_enc.k)]
-    _, bl_crc_ok = crc_dec(bl_info)
+    _, bl_crc_ok = hard_crc_decode(crc_dec, bl_info)
     bl_crc_pass = bool(bl_crc_ok.numpy()[0])
 
     print(f"\n{'='*55}")

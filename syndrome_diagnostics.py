@@ -44,6 +44,7 @@ import torchvision
 
 from sionna.phy.mapping import Mapper, Demapper
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
 from sionna.phy.channel.awgn import AWGN
@@ -124,7 +125,7 @@ def run_mode(dec, ldpc_enc, crc_enc, crc_dec, mapper, demapper, awgn,
         y = awgn(x, no)
         llr_ch = demapper(y, no)
         hat = dec(llr_ch)
-        _, cv = crc_dec(hat)
+        _, cv = hard_crc_decode(crc_dec, hat)
         ack += int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())
         err += int(tf.reduce_sum(tf.cast(
             tf.not_equal(u, tf.cast(hat[:, :K_PAYLOAD] > 0, tf.int32)),

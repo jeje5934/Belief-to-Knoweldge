@@ -19,6 +19,7 @@ import argparse, csv, os
 import numpy as np
 import tensorflow as tf
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
 from sionna.phy.utils import ebnodb2no
@@ -64,7 +65,7 @@ def run_point(channel, ldpc, crc, crcd, decs, ebno, batch, rounds):
         c = ldpc(crc(tf.cast(u, ldpc.rdtype)))
         llr = channel.transmit(c, no)                       # SAME LLR to all
         for name, dec in decs.items():
-            hat = dec(llr); _, cv = crcd(hat)
+            hat = dec(llr); _, cv = hard_crc_decode(crcd, hat)
             nack[name] += batch - int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())
             berr[name] += int(tf.reduce_sum(tf.cast(
                 tf.not_equal(u, tf.cast(hat[:, :K] > 0, tf.int32)), tf.int32)).numpy())

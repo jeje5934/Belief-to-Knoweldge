@@ -31,6 +31,7 @@ import tensorflow as tf
 
 from sionna.phy.mapping import Mapper, Demapper
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
 from sionna.phy.channel.awgn import AWGN
@@ -87,7 +88,7 @@ def run(dec, ldpc, crc_enc, crc_dec, mp, dm, awgn, bank, ebno, batch, rounds, tr
         u = tf.gather(bank, idx)
         y = awgn(mp(ldpc(crc_enc(tf.cast(u, ldpc.rdtype)))), no)
         hat = dec(dm(y, no))
-        _, cv = crc_dec(hat)
+        _, cv = hard_crc_decode(crc_dec, hat)
         tot_nack += batch - int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())
         tot_be += int(tf.reduce_sum(tf.cast(tf.not_equal(u, tf.cast(hat[:, :K_PAYLOAD] > 0, tf.int32)), tf.int32)).numpy())
         if track and getattr(dec, "last_payload_hist", None):

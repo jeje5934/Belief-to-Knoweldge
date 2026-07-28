@@ -48,6 +48,7 @@ for _gpu in tf.config.list_physical_devices("GPU"):
 
 from sionna.phy.mapping import Mapper, Demapper
 from sionna.phy.fec.crc import CRCEncoder, CRCDecoder
+from crc_utils import hard_crc_decode
 from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
 from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
 from sionna.phy.channel.awgn import AWGN
@@ -138,7 +139,7 @@ def run_point(dec, ldpc_enc, crc_enc, crc_dec, mapper, demapper, awgn,
         y = awgn(mapper(ldpc_enc(u_crc)), no)
         llr = demapper(y, no)
         hat = dec(llr)
-        _, cv = crc_dec(hat)
+        _, cv = hard_crc_decode(crc_dec, hat)
         ack = int(tf.reduce_sum(tf.cast(cv, tf.int32)).numpy())   # cv=1 => ACK
         nack = batch - ack
         tot_nack += nack
