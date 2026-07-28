@@ -149,6 +149,16 @@ far 군만 상대적으로 명확한 이미지 손상을 갖는다. 그러나 �
 4. 과거 altproj의 `syn=0 != 정답` 근거는 soft-logit CRC misuse 영향을 먼저
    재감사해야 하며, 현재 HARQ 프레임의 근거로 사용할 수 없다.
 
+### 후속 hard-CRC 재검증
+
+과거 조건(`delta=0.02`, `rho=0.9`, `[5]x20`, Eb/N0 `+0.6 dB`, 512 block)을
+hard CRC로 재현한 결과, 전 round에서 `syn=0 & hard-CRC fail=0`이고
+`syn=0 & payload wrong=0`이었다. 반면 hard CRC가 full-graph syndrome zero보다
+먼저 통과한 block은 164/512였다. 따라서 과거 `27/32` 관측과
+"source가 valid-but-wrong codeword를 판별한다"는 해석은 철회한다. CRC-ES는
+syndrome-ES와 동일하지 않지만, 이유는 hard CRC가 더 이르게 통과할 수 있기
+때문이며 valid codeword 사이의 source 판별 근거가 아니다.
+
 ## 산출물과 제안 커밋
 
 - 진단 스크립트: `bp20_failure_diagnostic.py`
@@ -156,10 +166,10 @@ far 군만 상대적으로 명확한 이미지 손상을 갖는다. 그러나 �
 - 동작점 스캔: `results/bp20_failure_scan_hardcrc_512.json`,
   `results/bp20_failure_scan_hardcrc_refine_512.json`
 
-이번 작업은 아직 커밋하지 않았다. 다음 두 단계가 필요하다.
+두 논리 커밋으로 분리했다.
 
 1. 현재 계측/보고서: `diagnostics: classify hard-CRC BP20 failures before HARQ`
 2. 별도 긴급 교정: `fix: hard-decision CRC checks in latency and codec diagnostics`
    이후 fixed-latency/codec 결과를 hard-CRC로 재측정하고 기존 보고서를 정정
 
-두 번째는 과거 결과 재계산을 동반하므로 이번 계측 커밋과 분리해야 한다.
+과거 결과의 대규모 재측정은 CRC 영향 감사 후 별도 승인 대상으로 남겼다.

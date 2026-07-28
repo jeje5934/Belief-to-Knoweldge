@@ -102,7 +102,7 @@ def run_config(dec, cfg, ldpc, crc, crcd, mapper, demapper, awgn, bk, cw):
     dec.denoiser.sigma_post = cfg.get("sigma_post", 3.0)
     dec.bp_schedule = cfg["schedule"]
     # structural improvements (always set — decoder state persists across configs)
-    # early-stop criterion: "off" | "syn" (syndrome — NOT sufficient) | "crc"
+    # early-stop criterion: "off" | "syn" (LDPC parity) | "crc" (hard CRC)
     es_mode = cfg.get("es_mode", "off")
     dec.altproj_early_stop = es_mode != "off"
     dec.altproj_es_patience = cfg.get("es_patience", 0)

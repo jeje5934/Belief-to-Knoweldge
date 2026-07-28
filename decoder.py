@@ -239,17 +239,15 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         # 0 disables the up-turn freeze entirely, leaving the syn=0 freeze + the
         # best-syndrome decision — the strictly-safe subset.
         self._altproj_es_patience = int(altproj_es_patience)
-        # [early-stop criterion] MEASURED: a zero syndrome does NOT mean the codeword
-        # is right — BP can sit on a VALID BUT WRONG codeword, and the source pull
-        # then migrates it to the correct one.  (Probe, sweetspot [5]x20: at round 6
-        # syn=0 for 32/32 while CRC passed only 27/32; by round 7 CRC passed 32/32.)
-        # So the syndrome is NOT a sufficient stopping statistic and the "post-syn=0
-        # rounds are just self-sustain" premise is false — those rounds are exactly
-        # where the source prior arbitrates among valid codewords, i.e. where this
-        # scheme earns its gain.  `altproj_crc_check` supplies the sufficient one: a
-        # callable u_hat_logits[B, k] -> [B] bool (CRC pass), i.e. standard 5G CRC
-        # early termination.  When set, a codeword is captured+frozen the round its
-        # CRC passes; codewords that never pass fall back to the best-syndrome state.
+        # [early-stop criterion] `altproj_crc_check` is a callable
+        # u_hat_logits[B, k] -> [B] bool and MUST hard-decision the logits before the
+        # Sionna CRCDecoder call.  The former "syn=0 but CRC 27/32" probe passed soft
+        # logits to CRCDecoder and was invalid.  A 512-block hard-CRC reproduction at
+        # the historical [5]x20 sweetspot found syn=0 => correct in every observed
+        # case; hard CRC actually fired before full-graph syn=0 for 164/512 blocks.
+        # Thus CRC-ES remains a valid compute shortcut, but not as evidence that the
+        # source arbitrates among valid-but-wrong codewords.  Codewords that never
+        # pass CRC still fall back to the best-syndrome state.
         self._altproj_crc_check = altproj_crc_check
         # [altproj δ/ρ schedules] Per-round overrides of the scalars; round idx uses
         # sched[min(idx, len-1)].  Motivation: aggressive early (large δ, ρ=1 → fast
@@ -482,8 +480,8 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
     @property
     def altproj_crc_check(self):
         """Callable u_hat_logits[B, k] -> [B] bool (CRC pass) used as the early-stop
-        criterion.  None ⇒ fall back to the syndrome, which is NOT sufficient (a zero
-        syndrome can be a valid-but-WRONG codeword; see __init__ notes)."""
+        criterion. The callback must hard-decision logits before CRCDecoder. None ⇒
+        fall back to the syndrome-based early-stop path; see __init__ audit notes."""
         return self._altproj_crc_check
 
     @altproj_crc_check.setter
