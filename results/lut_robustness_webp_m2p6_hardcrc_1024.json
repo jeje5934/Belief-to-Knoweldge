@@ -1,0 +1,91 @@
+{
+  "kind": "equal_budget_codec_waterfalls",
+  "configuration": {
+    "n": 12600,
+    "crc": "CRC24A",
+    "budgets": [
+      20,
+      30,
+      50,
+      100
+    ],
+    "bp_chunk": 5,
+    "crc_early_stop": "universal first CRC pass on one warm BP trajectory",
+    "channel": "BPSK/AWGN/perfect_CSI",
+    "batch": 64,
+    "seed": 20261121
+  },
+  "codecs": {
+    "webp": {
+      "container_bits": 5808,
+      "ldpc_k": 5832,
+      "ldpc_rate": 0.46285714285714286,
+      "expected_rate": 0.46285714285714286,
+      "points": {
+        "-2.600": {
+          "esn0_db": -2.6,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 796,
+              "crc_bler": 0.77734375,
+              "wilson_95": [
+                0.7508519166013562,
+                0.8017624161907783
+              ],
+              "actual_mean_bp_iters": 19.9951171875
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 82,
+              "crc_bler": 0.080078125,
+              "wilson_95": [
+                0.06498052141075511,
+                0.09831467893918208
+              ],
+              "actual_mean_bp_iters": 25.2392578125
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 3,
+              "crc_bler": 0.0029296875,
+              "wilson_95": [
+                0.0009968294590821545,
+                0.00857818676909931
+              ],
+              "actual_mean_bp_iters": 25.7568359375
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 25.7861328125
+            }
+          }
+        }
+      },
+      "knees": {
+        "20": {
+          "bler_0.1": null,
+          "bler_0.01": null
+        },
+        "30": {
+          "bler_0.1": null,
+          "bler_0.01": null
+        },
+        "50": {
+          "bler_0.1": null,
+          "bler_0.01": null
+        },
+        "100": {
+          "bler_0.1": null,
+          "bler_0.01": null
+        }
+      }
+    }
+  }
+}
