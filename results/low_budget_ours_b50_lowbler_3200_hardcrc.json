@@ -1,0 +1,95 @@
+{
+  "kind": "budget_best_source_waterfall",
+  "configuration": {
+    "budget": 50,
+    "schedule_name": "5x10",
+    "schedule": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "candidate": {
+      "name": "altproj_d0.05_r0.9",
+      "scheme": "altproj",
+      "delta": 0.05,
+      "rho": 0.9
+    },
+    "sigma_start": 0.3,
+    "sigma_end": 0.05,
+    "readout": {
+      "name": "global_sigma_post_3",
+      "mode": "global",
+      "sigma_post": 3.0
+    },
+    "legacy_beta": 0.0,
+    "ep_beta_ep": 1.0,
+    "crc_early_stop": "universal first CRC-pass over existing per-chunk history",
+    "batch": 64,
+    "seed": 20260871
+  },
+  "points": {
+    "-2.550": {
+      "blocks": 3200,
+      "failures": 28,
+      "crc_bler": 0.00875,
+      "wilson_95": [
+        0.006060785461286975,
+        0.012617291507312224
+      ],
+      "actual_mean_bp_iters": 27.325,
+      "actual_iteration_distribution": {
+        "median": 25.0,
+        "q10": 25.0,
+        "q90": 30.0
+      },
+      "config": {
+        "name": "altproj_5x10_d0.05_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.05_r0.9",
+          "scheme": "altproj",
+          "delta": 0.05,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.55
+    },
+    "-2.650": {
+      "blocks": 3200,
+      "failures": 98,
+      "crc_bler": 0.030625,
+      "wilson_95": [
+        0.025195030460394514,
+        0.037180587610111844
+      ],
+      "actual_mean_bp_iters": 30.5328125,
+      "actual_iteration_distribution": {
+        "median": 30.0,
+        "q10": 25.0,
+        "q90": 35.0
+      },
+      "config": {
+        "name": "altproj_5x10_d0.05_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.05_r0.9",
+          "scheme": "altproj",
+          "delta": 0.05,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.65
+    }
+  },
+  "knees": {
+    "bler_0.1": null,
+    "bler_0.01": -2.5557142857142856
+  }
+}

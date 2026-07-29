@@ -1,0 +1,91 @@
+{
+  "kind": "budget_best_source_waterfall",
+  "configuration": {
+    "budget": 30,
+    "schedule_name": "5x6",
+    "schedule": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "candidate": {
+      "name": "altproj_d0.1_r0.9",
+      "scheme": "altproj",
+      "delta": 0.1,
+      "rho": 0.9
+    },
+    "sigma_start": 0.3,
+    "sigma_end": 0.05,
+    "readout": {
+      "name": "global_sigma_post_3",
+      "mode": "global",
+      "sigma_post": 3.0
+    },
+    "legacy_beta": 0.0,
+    "ep_beta_ep": 1.0,
+    "crc_early_stop": "universal first CRC-pass over existing per-chunk history",
+    "batch": 64,
+    "seed": 20260872
+  },
+  "points": {
+    "-2.100": {
+      "blocks": 3200,
+      "failures": 8,
+      "crc_bler": 0.0025,
+      "wilson_95": [
+        0.0012673228517494986,
+        0.0049257423734476525
+      ],
+      "actual_mean_bp_iters": 17.7953125,
+      "actual_iteration_distribution": {
+        "median": 20.0,
+        "q10": 15.0,
+        "q90": 20.0
+      },
+      "config": {
+        "name": "altproj_5x6_d0.1_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.1_r0.9",
+          "scheme": "altproj",
+          "delta": 0.1,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.1
+    },
+    "-2.200": {
+      "blocks": 3200,
+      "failures": 20,
+      "crc_bler": 0.00625,
+      "wilson_95": [
+        0.0040495825938413905,
+        0.009634489677396989
+      ],
+      "actual_mean_bp_iters": 19.4234375,
+      "actual_iteration_distribution": {
+        "median": 20.0,
+        "q10": 15.0,
+        "q90": 20.0
+      },
+      "config": {
+        "name": "altproj_5x6_d0.1_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.1_r0.9",
+          "scheme": "altproj",
+          "delta": 0.1,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.2
+    }
+  },
+  "knees": {
+    "bler_0.1": null,
+    "bler_0.01": null
+  }
+}

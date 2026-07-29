@@ -1,0 +1,1484 @@
+{
+  "kind": "latency_matching_bp_baselines",
+  "configuration": {
+    "channel": "BPSK/AWGN/perfect_CSI",
+    "n": 12600,
+    "crc": "CRC24A",
+    "budgets": [
+      20,
+      30,
+      50,
+      100,
+      200
+    ],
+    "bp_chunk": 5,
+    "blocks": 1024,
+    "batch": 64,
+    "seed": 20261011,
+    "paired_unit_noise_across_systems": true,
+    "crc_early_stop": "first CRC pass on one warm BP trajectory"
+  },
+  "systems": {
+    "pixelcnn": {
+      "payload_bits": 4872,
+      "ldpc_k": 4896,
+      "ldpc_rate": 0.38857142857142857,
+      "points": {
+        "-2.400": {
+          "esn0_db": -2.4,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 10.0244140625,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 10.0244140625,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 10.0244140625,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 10.0244140625,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 10.0244140625,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              }
+            }
+          }
+        },
+        "-2.600": {
+          "esn0_db": -2.6,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 10.458984375,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 10.458984375,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 10.458984375,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 10.458984375,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 10.458984375,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              }
+            }
+          }
+        },
+        "-2.700": {
+          "esn0_db": -2.7,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 11.5234375,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 15.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 11.5234375,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 15.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 11.5234375,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 15.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 11.5234375,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 15.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 11.5234375,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 15.0
+              }
+            }
+          }
+        },
+        "-2.900": {
+          "esn0_db": -2.9,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 14.1943359375,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 10.0,
+                "q90": 15.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 14.1943359375,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 10.0,
+                "q90": 15.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 14.1943359375,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 10.0,
+                "q90": 15.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 14.1943359375,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 10.0,
+                "q90": 15.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 14.1943359375,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 10.0,
+                "q90": 15.0
+              }
+            }
+          }
+        },
+        "-3.000": {
+          "esn0_db": -3.0,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 14.8779296875,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 15.0,
+                "q90": 15.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 14.8779296875,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 15.0,
+                "q90": 15.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 14.8779296875,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 15.0,
+                "q90": 15.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 14.8779296875,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 15.0,
+                "q90": 15.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 14.8779296875,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 15.0,
+                "q90": 15.0
+              }
+            }
+          }
+        },
+        "-3.200": {
+          "esn0_db": -3.2,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 1,
+              "crc_bler": 0.0009765625,
+              "wilson_95": [
+                0.00017240363051574184,
+                0.005510962366735196
+              ],
+              "actual_mean_bp_iters": 15.9765625,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 15.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 15.9814453125,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 15.0,
+                "q90": 20.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 15.9814453125,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 15.0,
+                "q90": 20.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 15.9814453125,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 15.0,
+                "q90": 20.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 15.9814453125,
+              "actual_iteration_distribution": {
+                "median": 15.0,
+                "q10": 15.0,
+                "q90": 20.0
+              }
+            }
+          }
+        }
+      }
+    },
+    "webp": {
+      "payload_bits": 5808,
+      "ldpc_k": 5832,
+      "ldpc_rate": 0.46285714285714286,
+      "points": {
+        "-2.400": {
+          "esn0_db": -2.4,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 164,
+              "crc_bler": 0.16015625,
+              "wilson_95": [
+                0.13896900632610706,
+                0.18388385349198164
+              ],
+              "actual_mean_bp_iters": 19.4580078125,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 15.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 20.29296875,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 15.0,
+                "q90": 25.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 20.29296875,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 15.0,
+                "q90": 25.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 20.29296875,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 15.0,
+                "q90": 25.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 20.29296875,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 15.0,
+                "q90": 25.0
+              }
+            }
+          }
+        },
+        "-2.600": {
+          "esn0_db": -2.6,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 809,
+              "crc_bler": 0.7900390625,
+              "wilson_95": [
+                0.7640321791845782,
+                0.8138778801086047
+              ],
+              "actual_mean_bp_iters": 19.9951171875,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 64,
+              "crc_bler": 0.0625,
+              "wilson_95": [
+                0.04924657680438506,
+                0.07902377146717741
+              ],
+              "actual_mean_bp_iters": 25.4052734375,
+              "actual_iteration_distribution": {
+                "median": 25.0,
+                "q10": 20.0,
+                "q90": 30.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 1,
+              "crc_bler": 0.0009765625,
+              "wilson_95": [
+                0.00017240363051574184,
+                0.005510962366735196
+              ],
+              "actual_mean_bp_iters": 25.8544921875,
+              "actual_iteration_distribution": {
+                "median": 25.0,
+                "q10": 20.0,
+                "q90": 30.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 25.859375,
+              "actual_iteration_distribution": {
+                "median": 25.0,
+                "q10": 20.0,
+                "q90": 30.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 25.859375,
+              "actual_iteration_distribution": {
+                "median": 25.0,
+                "q10": 20.0,
+                "q90": 30.0
+              }
+            }
+          }
+        },
+        "-2.700": {
+          "esn0_db": -2.7,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 986,
+              "crc_bler": 0.962890625,
+              "wilson_95": [
+                0.949475349389666,
+                0.9728457553408684
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 291,
+              "crc_bler": 0.2841796875,
+              "wilson_95": [
+                0.2574010536233476,
+                0.3125715958588294
+              ],
+              "actual_mean_bp_iters": 27.890625,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 25.0,
+                "q90": 30.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 23,
+              "crc_bler": 0.0224609375,
+              "wilson_95": [
+                0.01501273728147908,
+                0.03347878125600763
+              ],
+              "actual_mean_bp_iters": 30.5029296875,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 25.0,
+                "q90": 40.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 8,
+              "crc_bler": 0.0078125,
+              "wilson_95": [
+                0.003963886846879922,
+                0.015340254958627854
+              ],
+              "actual_mean_bp_iters": 31.1083984375,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 25.0,
+                "q90": 40.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 5,
+              "crc_bler": 0.0048828125,
+              "wilson_95": [
+                0.0020873641822286623,
+                0.011379302276883326
+              ],
+              "actual_mean_bp_iters": 31.73828125,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 25.0,
+                "q90": 40.0
+              }
+            }
+          }
+        },
+        "-2.900": {
+          "esn0_db": -2.9,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 939,
+              "crc_bler": 0.9169921875,
+              "wilson_95": [
+                0.8984949099102676,
+                0.9323724143933995
+              ],
+              "actual_mean_bp_iters": 29.970703125,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 30.0,
+                "q90": 30.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 388,
+              "crc_bler": 0.37890625,
+              "wilson_95": [
+                0.3496976915423956,
+                0.40901999413991186
+              ],
+              "actual_mean_bp_iters": 43.84765625,
+              "actual_iteration_distribution": {
+                "median": 45.0,
+                "q10": 35.0,
+                "q90": 50.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 167,
+              "crc_bler": 0.1630859375,
+              "wilson_95": [
+                0.1417239704827075,
+                0.186966364681777
+              ],
+              "actual_mean_bp_iters": 55.8740234375,
+              "actual_iteration_distribution": {
+                "median": 45.0,
+                "q10": 35.0,
+                "q90": 100.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 146,
+              "crc_bler": 0.142578125,
+              "wilson_95": [
+                0.12249678037183598,
+                0.16533122736787798
+              ],
+              "actual_mean_bp_iters": 70.76171875,
+              "actual_iteration_distribution": {
+                "median": 45.0,
+                "q10": 35.0,
+                "q90": 200.0
+              }
+            }
+          }
+        },
+        "-3.000": {
+          "esn0_db": -3.0,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 1019,
+              "crc_bler": 0.9951171875,
+              "wilson_95": [
+                0.9886206977231168,
+                0.9979126358177713
+              ],
+              "actual_mean_bp_iters": 30.0,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 30.0,
+                "q90": 30.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 788,
+              "crc_bler": 0.76953125,
+              "wilson_95": [
+                0.742758025047114,
+                0.7942897068212984
+              ],
+              "actual_mean_bp_iters": 48.5107421875,
+              "actual_iteration_distribution": {
+                "median": 50.0,
+                "q10": 45.0,
+                "q90": 50.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 498,
+              "crc_bler": 0.486328125,
+              "wilson_95": [
+                0.4558228957177314,
+                0.516935552665755
+              ],
+              "actual_mean_bp_iters": 78.2763671875,
+              "actual_iteration_distribution": {
+                "median": 95.0,
+                "q10": 45.0,
+                "q90": 100.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 457,
+              "crc_bler": 0.4462890625,
+              "wilson_95": [
+                0.41609831019124727,
+                0.4768813084581633
+              ],
+              "actual_mean_bp_iters": 124.1455078125,
+              "actual_iteration_distribution": {
+                "median": 95.0,
+                "q10": 45.0,
+                "q90": 200.0
+              }
+            }
+          }
+        },
+        "-3.200": {
+          "esn0_db": -3.2,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 30.0,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 30.0,
+                "q90": 30.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 1022,
+              "crc_bler": 0.998046875,
+              "wilson_95": [
+                0.9929065784982852,
+                0.9994642303889986
+              ],
+              "actual_mean_bp_iters": 49.9951171875,
+              "actual_iteration_distribution": {
+                "median": 50.0,
+                "q10": 50.0,
+                "q90": 50.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 982,
+              "crc_bler": 0.958984375,
+              "wilson_95": [
+                0.9450233794209816,
+                0.9695144248476918
+              ],
+              "actual_mean_bp_iters": 99.0283203125,
+              "actual_iteration_distribution": {
+                "median": 100.0,
+                "q10": 100.0,
+                "q90": 100.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 972,
+              "crc_bler": 0.94921875,
+              "wilson_95": [
+                0.9340128470855571,
+                0.9610667060284637
+              ],
+              "actual_mean_bp_iters": 194.1796875,
+              "actual_iteration_distribution": {
+                "median": 200.0,
+                "q10": 200.0,
+                "q90": 200.0
+              }
+            }
+          }
+        }
+      }
+    },
+    "raw": {
+      "payload_bits": 6272,
+      "ldpc_k": 6296,
+      "ldpc_rate": 0.4996825396825397,
+      "points": {
+        "-2.400": {
+          "esn0_db": -2.4,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 911,
+              "crc_bler": 0.8896484375,
+              "wilson_95": [
+                0.868981421260915,
+                0.9074027998097247
+              ],
+              "actual_mean_bp_iters": 29.9365234375,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 30.0,
+                "q90": 30.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 434,
+              "crc_bler": 0.423828125,
+              "wilson_95": [
+                0.3939005633456113,
+                0.45432507764809826
+              ],
+              "actual_mean_bp_iters": 43.427734375,
+              "actual_iteration_distribution": {
+                "median": 45.0,
+                "q10": 30.0,
+                "q90": 50.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 218,
+              "crc_bler": 0.212890625,
+              "wilson_95": [
+                0.18891486512845385,
+                0.23901255092475898
+              ],
+              "actual_mean_bp_iters": 57.4755859375,
+              "actual_iteration_distribution": {
+                "median": 45.0,
+                "q10": 30.0,
+                "q90": 100.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 191,
+              "crc_bler": 0.1865234375,
+              "wilson_95": [
+                0.16385227266176927,
+                0.21153786527388152
+              ],
+              "actual_mean_bp_iters": 76.748046875,
+              "actual_iteration_distribution": {
+                "median": 45.0,
+                "q10": 30.0,
+                "q90": 200.0
+              }
+            }
+          }
+        },
+        "-2.600": {
+          "esn0_db": -2.6,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 30.0,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 30.0,
+                "q90": 30.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 967,
+              "crc_bler": 0.9443359375,
+              "wilson_95": [
+                0.928560540994002,
+                0.9567898865426924
+              ],
+              "actual_mean_bp_iters": 49.7705078125,
+              "actual_iteration_distribution": {
+                "median": 50.0,
+                "q10": 50.0,
+                "q90": 50.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 828,
+              "crc_bler": 0.80859375,
+              "wilson_95": [
+                0.7833615578803264,
+                0.8315191786066967
+              ],
+              "actual_mean_bp_iters": 93.1640625,
+              "actual_iteration_distribution": {
+                "median": 100.0,
+                "q10": 60.0,
+                "q90": 100.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 809,
+              "crc_bler": 0.7900390625,
+              "wilson_95": [
+                0.7640321791845782,
+                0.8138778801086047
+              ],
+              "actual_mean_bp_iters": 172.71484375,
+              "actual_iteration_distribution": {
+                "median": 200.0,
+                "q10": 60.0,
+                "q90": 200.0
+              }
+            }
+          }
+        },
+        "-2.700": {
+          "esn0_db": -2.7,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 30.0,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 30.0,
+                "q90": 30.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 1023,
+              "crc_bler": 0.9990234375,
+              "wilson_95": [
+                0.994489037633265,
+                0.9998275963694844
+              ],
+              "actual_mean_bp_iters": 50.0,
+              "actual_iteration_distribution": {
+                "median": 50.0,
+                "q10": 50.0,
+                "q90": 50.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 999,
+              "crc_bler": 0.9755859375,
+              "wilson_95": [
+                0.964207353551252,
+                0.9834094776803307
+              ],
+              "actual_mean_bp_iters": 99.3359375,
+              "actual_iteration_distribution": {
+                "median": 100.0,
+                "q10": 100.0,
+                "q90": 100.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 991,
+              "crc_bler": 0.9677734375,
+              "wilson_95": [
+                0.9550878806866112,
+                0.9769623496212494
+              ],
+              "actual_mean_bp_iters": 196.4013671875,
+              "actual_iteration_distribution": {
+                "median": 200.0,
+                "q10": 200.0,
+                "q90": 200.0
+              }
+            }
+          }
+        },
+        "-2.900": {
+          "esn0_db": -2.9,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 30.0,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 30.0,
+                "q90": 30.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 50.0,
+              "actual_iteration_distribution": {
+                "median": 50.0,
+                "q10": 50.0,
+                "q90": 50.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 1023,
+              "crc_bler": 0.9990234375,
+              "wilson_95": [
+                0.994489037633265,
+                0.9998275963694844
+              ],
+              "actual_mean_bp_iters": 100.0,
+              "actual_iteration_distribution": {
+                "median": 100.0,
+                "q10": 100.0,
+                "q90": 100.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 1023,
+              "crc_bler": 0.9990234375,
+              "wilson_95": [
+                0.994489037633265,
+                0.9998275963694844
+              ],
+              "actual_mean_bp_iters": 199.90234375,
+              "actual_iteration_distribution": {
+                "median": 200.0,
+                "q10": 200.0,
+                "q90": 200.0
+              }
+            }
+          }
+        },
+        "-3.000": {
+          "esn0_db": -3.0,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 30.0,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 30.0,
+                "q90": 30.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 50.0,
+              "actual_iteration_distribution": {
+                "median": 50.0,
+                "q10": 50.0,
+                "q90": 50.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 100.0,
+              "actual_iteration_distribution": {
+                "median": 100.0,
+                "q10": 100.0,
+                "q90": 100.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 200.0,
+              "actual_iteration_distribution": {
+                "median": 200.0,
+                "q10": 200.0,
+                "q90": 200.0
+              }
+            }
+          }
+        },
+        "-3.200": {
+          "esn0_db": -3.2,
+          "budgets": {
+            "20": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              }
+            },
+            "30": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 30.0,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 30.0,
+                "q90": 30.0
+              }
+            },
+            "50": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 50.0,
+              "actual_iteration_distribution": {
+                "median": 50.0,
+                "q10": 50.0,
+                "q90": 50.0
+              }
+            },
+            "100": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 100.0,
+              "actual_iteration_distribution": {
+                "median": 100.0,
+                "q10": 100.0,
+                "q90": 100.0
+              }
+            },
+            "200": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 200.0,
+              "actual_iteration_distribution": {
+                "median": 200.0,
+                "q10": 200.0,
+                "q90": 200.0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

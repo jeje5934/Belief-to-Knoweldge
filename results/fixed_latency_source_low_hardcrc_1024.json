@@ -1,0 +1,545 @@
+{
+  "kind": "latency_matching_source_sweep",
+  "configuration": {
+    "channel": "BPSK/AWGN/perfect_CSI",
+    "payload_bits": 6272,
+    "n": 12600,
+    "blocks": 1024,
+    "batch": 64,
+    "seed": 20261012,
+    "groups": [
+      "bp10",
+      "10x2"
+    ],
+    "hard_lut_only": true,
+    "readout": {
+      "name": "global_sigma_post_3",
+      "mode": "global",
+      "sigma_post": 3.0
+    },
+    "legacy_beta": 0.0,
+    "ep_beta_ep": 1.0,
+    "crc_early_stop": "first CRC pass from existing chunk history",
+    "crc_input": "hard decision logit>0 -> bit 1",
+    "lut_revision": "hard-CRC refine; sigma_end=0.05 at budgets 20/30/50/100",
+    "source_call_count": "number of inter-chunk denoiser calls completed before the first CRC pass; a final failed block uses outer_count-1"
+  },
+  "points": {
+    "-2.400": {
+      "esn0_db": -2.4,
+      "groups": {
+        "bp10": {
+          "schedule": [
+            10
+          ],
+          "nominal_bp_budget": 10,
+          "rows": {
+            "bp10_send0.3": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 10.0,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              },
+              "config": {
+                "name": "bp10_send0.3",
+                "candidate": {
+                  "name": "bp10",
+                  "scheme": "altproj",
+                  "delta": 0.0,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.3
+              },
+              "actual_mean_source_calls": 0.0,
+              "actual_source_call_distribution": {
+                "median": 0.0,
+                "q10": 0.0,
+                "q90": 0.0
+              }
+            }
+          },
+          "selected": "bp10_send0.3"
+        },
+        "10x2": {
+          "schedule": [
+            10,
+            10
+          ],
+          "nominal_bp_budget": 20,
+          "rows": {
+            "altproj_10x2_d0.1_r0.9_send0.05": {
+              "blocks": 1024,
+              "failures": 1022,
+              "crc_bler": 0.998046875,
+              "wilson_95": [
+                0.9929065784982852,
+                0.9994642303889986
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              },
+              "config": {
+                "name": "altproj_10x2_d0.1_r0.9_send0.05",
+                "candidate": {
+                  "name": "altproj_10x2_d0.1_r0.9",
+                  "scheme": "altproj",
+                  "delta": 0.1,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 1.0,
+              "actual_source_call_distribution": {
+                "median": 1.0,
+                "q10": 1.0,
+                "q90": 1.0
+              }
+            }
+          },
+          "selected": "altproj_10x2_d0.1_r0.9_send0.05"
+        }
+      }
+    },
+    "-2.600": {
+      "esn0_db": -2.6,
+      "groups": {
+        "bp10": {
+          "schedule": [
+            10
+          ],
+          "nominal_bp_budget": 10,
+          "rows": {
+            "bp10_send0.3": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 10.0,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              },
+              "config": {
+                "name": "bp10_send0.3",
+                "candidate": {
+                  "name": "bp10",
+                  "scheme": "altproj",
+                  "delta": 0.0,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.3
+              },
+              "actual_mean_source_calls": 0.0,
+              "actual_source_call_distribution": {
+                "median": 0.0,
+                "q10": 0.0,
+                "q90": 0.0
+              }
+            }
+          },
+          "selected": "bp10_send0.3"
+        },
+        "10x2": {
+          "schedule": [
+            10,
+            10
+          ],
+          "nominal_bp_budget": 20,
+          "rows": {
+            "altproj_10x2_d0.1_r0.9_send0.05": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              },
+              "config": {
+                "name": "altproj_10x2_d0.1_r0.9_send0.05",
+                "candidate": {
+                  "name": "altproj_10x2_d0.1_r0.9",
+                  "scheme": "altproj",
+                  "delta": 0.1,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 1.0,
+              "actual_source_call_distribution": {
+                "median": 1.0,
+                "q10": 1.0,
+                "q90": 1.0
+              }
+            }
+          },
+          "selected": "altproj_10x2_d0.1_r0.9_send0.05"
+        }
+      }
+    },
+    "-2.700": {
+      "esn0_db": -2.7,
+      "groups": {
+        "bp10": {
+          "schedule": [
+            10
+          ],
+          "nominal_bp_budget": 10,
+          "rows": {
+            "bp10_send0.3": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 10.0,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              },
+              "config": {
+                "name": "bp10_send0.3",
+                "candidate": {
+                  "name": "bp10",
+                  "scheme": "altproj",
+                  "delta": 0.0,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.3
+              },
+              "actual_mean_source_calls": 0.0,
+              "actual_source_call_distribution": {
+                "median": 0.0,
+                "q10": 0.0,
+                "q90": 0.0
+              }
+            }
+          },
+          "selected": "bp10_send0.3"
+        },
+        "10x2": {
+          "schedule": [
+            10,
+            10
+          ],
+          "nominal_bp_budget": 20,
+          "rows": {
+            "altproj_10x2_d0.1_r0.9_send0.05": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              },
+              "config": {
+                "name": "altproj_10x2_d0.1_r0.9_send0.05",
+                "candidate": {
+                  "name": "altproj_10x2_d0.1_r0.9",
+                  "scheme": "altproj",
+                  "delta": 0.1,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 1.0,
+              "actual_source_call_distribution": {
+                "median": 1.0,
+                "q10": 1.0,
+                "q90": 1.0
+              }
+            }
+          },
+          "selected": "altproj_10x2_d0.1_r0.9_send0.05"
+        }
+      }
+    },
+    "-2.900": {
+      "esn0_db": -2.9,
+      "groups": {
+        "bp10": {
+          "schedule": [
+            10
+          ],
+          "nominal_bp_budget": 10,
+          "rows": {
+            "bp10_send0.3": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 10.0,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              },
+              "config": {
+                "name": "bp10_send0.3",
+                "candidate": {
+                  "name": "bp10",
+                  "scheme": "altproj",
+                  "delta": 0.0,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.3
+              },
+              "actual_mean_source_calls": 0.0,
+              "actual_source_call_distribution": {
+                "median": 0.0,
+                "q10": 0.0,
+                "q90": 0.0
+              }
+            }
+          },
+          "selected": "bp10_send0.3"
+        },
+        "10x2": {
+          "schedule": [
+            10,
+            10
+          ],
+          "nominal_bp_budget": 20,
+          "rows": {
+            "altproj_10x2_d0.1_r0.9_send0.05": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              },
+              "config": {
+                "name": "altproj_10x2_d0.1_r0.9_send0.05",
+                "candidate": {
+                  "name": "altproj_10x2_d0.1_r0.9",
+                  "scheme": "altproj",
+                  "delta": 0.1,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 1.0,
+              "actual_source_call_distribution": {
+                "median": 1.0,
+                "q10": 1.0,
+                "q90": 1.0
+              }
+            }
+          },
+          "selected": "altproj_10x2_d0.1_r0.9_send0.05"
+        }
+      }
+    },
+    "-3.000": {
+      "esn0_db": -3.0,
+      "groups": {
+        "bp10": {
+          "schedule": [
+            10
+          ],
+          "nominal_bp_budget": 10,
+          "rows": {
+            "bp10_send0.3": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 10.0,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              },
+              "config": {
+                "name": "bp10_send0.3",
+                "candidate": {
+                  "name": "bp10",
+                  "scheme": "altproj",
+                  "delta": 0.0,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.3
+              },
+              "actual_mean_source_calls": 0.0,
+              "actual_source_call_distribution": {
+                "median": 0.0,
+                "q10": 0.0,
+                "q90": 0.0
+              }
+            }
+          },
+          "selected": "bp10_send0.3"
+        },
+        "10x2": {
+          "schedule": [
+            10,
+            10
+          ],
+          "nominal_bp_budget": 20,
+          "rows": {
+            "altproj_10x2_d0.1_r0.9_send0.05": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              },
+              "config": {
+                "name": "altproj_10x2_d0.1_r0.9_send0.05",
+                "candidate": {
+                  "name": "altproj_10x2_d0.1_r0.9",
+                  "scheme": "altproj",
+                  "delta": 0.1,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 1.0,
+              "actual_source_call_distribution": {
+                "median": 1.0,
+                "q10": 1.0,
+                "q90": 1.0
+              }
+            }
+          },
+          "selected": "altproj_10x2_d0.1_r0.9_send0.05"
+        }
+      }
+    },
+    "-3.200": {
+      "esn0_db": -3.2,
+      "groups": {
+        "bp10": {
+          "schedule": [
+            10
+          ],
+          "nominal_bp_budget": 10,
+          "rows": {
+            "bp10_send0.3": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 10.0,
+              "actual_iteration_distribution": {
+                "median": 10.0,
+                "q10": 10.0,
+                "q90": 10.0
+              },
+              "config": {
+                "name": "bp10_send0.3",
+                "candidate": {
+                  "name": "bp10",
+                  "scheme": "altproj",
+                  "delta": 0.0,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.3
+              },
+              "actual_mean_source_calls": 0.0,
+              "actual_source_call_distribution": {
+                "median": 0.0,
+                "q10": 0.0,
+                "q90": 0.0
+              }
+            }
+          },
+          "selected": "bp10_send0.3"
+        },
+        "10x2": {
+          "schedule": [
+            10,
+            10
+          ],
+          "nominal_bp_budget": 20,
+          "rows": {
+            "altproj_10x2_d0.1_r0.9_send0.05": {
+              "blocks": 1024,
+              "failures": 1024,
+              "crc_bler": 1.0,
+              "wilson_95": [
+                0.9962624591182144,
+                1.0
+              ],
+              "actual_mean_bp_iters": 20.0,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 20.0
+              },
+              "config": {
+                "name": "altproj_10x2_d0.1_r0.9_send0.05",
+                "candidate": {
+                  "name": "altproj_10x2_d0.1_r0.9",
+                  "scheme": "altproj",
+                  "delta": 0.1,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 1.0,
+              "actual_source_call_distribution": {
+                "median": 1.0,
+                "q10": 1.0,
+                "q90": 1.0
+              }
+            }
+          },
+          "selected": "altproj_10x2_d0.1_r0.9_send0.05"
+        }
+      }
+    }
+  }
+}

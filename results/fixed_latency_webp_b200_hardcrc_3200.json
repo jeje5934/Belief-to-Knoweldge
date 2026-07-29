@@ -1,0 +1,66 @@
+{
+  "kind": "latency_matching_bp_baselines",
+  "configuration": {
+    "channel": "BPSK/AWGN/perfect_CSI",
+    "n": 12600,
+    "crc": "CRC24A",
+    "budgets": [
+      200
+    ],
+    "bp_chunk": 5,
+    "blocks": 3200,
+    "batch": 64,
+    "seed": 20261013,
+    "paired_unit_noise_across_systems": true,
+    "crc_early_stop": "first CRC pass on one warm BP trajectory"
+  },
+  "systems": {
+    "webp": {
+      "payload_bits": 5808,
+      "ldpc_k": 5832,
+      "ldpc_rate": 0.46285714285714286,
+      "points": {
+        "-2.700": {
+          "esn0_db": -2.7,
+          "budgets": {
+            "200": {
+              "blocks": 3200,
+              "failures": 10,
+              "crc_bler": 0.003125,
+              "wilson_95": [
+                0.001698331174343108,
+                0.005743235225194248
+              ],
+              "actual_mean_bp_iters": 31.26875,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 25.0,
+                "q90": 40.0
+              }
+            }
+          }
+        },
+        "-2.750": {
+          "esn0_db": -2.75,
+          "budgets": {
+            "200": {
+              "blocks": 3200,
+              "failures": 30,
+              "crc_bler": 0.009375,
+              "wilson_95": [
+                0.006574795261401289,
+                0.013351782881538111
+              ],
+              "actual_mean_bp_iters": 35.6765625,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 25.0,
+                "q90": 45.0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

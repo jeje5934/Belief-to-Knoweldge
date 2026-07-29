@@ -73,7 +73,7 @@ def experiment_groups():
         named_config(
             "altproj_5x4_d0.1_r0.9",
             "altproj",
-            0.02,
+            0.05,
             delta=0.1,
             rho=0.9,
         )
@@ -122,7 +122,7 @@ def experiment_groups():
             named_config(
                 "altproj_5x10_d0.05_r0.9",
                 "altproj",
-                0.02,
+                0.05,
                 delta=0.05,
                 rho=0.9,
             )
@@ -134,7 +134,7 @@ def experiment_groups():
             named_config(
                 "altproj_5x20_d0.02_r0.95",
                 "altproj",
-                0.02,
+                0.05,
                 delta=0.02,
                 rho=0.95,
             )
@@ -167,6 +167,14 @@ def main():
             "bp10,10x2,5x4,5x6,5x10,5x20"
         ),
     )
+    parser.add_argument(
+        "--hard-lut-only",
+        action="store_true",
+        help=(
+            "run one hard-CRC LUT configuration per group instead of the "
+            "historical low-latency search grid"
+        ),
+    )
     parser.add_argument("--a-result")
     parser.add_argument("--checkpoint", default=DEFAULT_CHECKPOINT)
     parser.add_argument("--output", required=True)
@@ -187,6 +195,22 @@ def main():
             for name, group in groups.items()
             if name in requested_groups
         )
+    if args.hard_lut_only:
+        selected = {
+            "bp10": "bp10_send0.3",
+            "10x2": "altproj_10x2_d0.1_r0.9_send0.05",
+            "5x4": "altproj_5x4_d0.1_r0.9_send0.05",
+            "5x6": "altproj_5x6_d0.1_r0.9_send0.05",
+            "5x10": "altproj_5x10_d0.05_r0.9_send0.05",
+            "5x20": "altproj_5x20_d0.02_r0.95_send0.05",
+        }
+        for group_name, group in groups.items():
+            wanted = selected[group_name]
+            group["configs"] = [
+                config for config in group["configs"] if config["name"] == wanted
+            ]
+            if len(group["configs"]) != 1:
+                raise RuntimeError(f"missing hard-CRC LUT config: {wanted}")
     readout = readout_from_a(args.a_result)
     result = {
         "kind": "latency_matching_source_sweep",
@@ -198,10 +222,13 @@ def main():
             "batch": args.batch,
             "seed": args.seed,
             "groups": list(groups),
+            "hard_lut_only": bool(args.hard_lut_only),
             "readout": readout,
             "legacy_beta": LEGACY_BETA_BP_EXTRINSIC_BOOST,
             "ep_beta_ep": EP_BETA_CODE_SITE,
             "crc_early_stop": "first CRC pass from existing chunk history",
+            "crc_input": "hard decision logit>0 -> bit 1",
+            "lut_revision": "hard-CRC refine; sigma_end=0.05 at budgets 20/30/50/100",
             "source_call_count": (
                 "number of inter-chunk denoiser calls completed before the "
                 "first CRC pass; a final failed block uses outer_count-1"

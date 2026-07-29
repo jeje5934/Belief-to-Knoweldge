@@ -238,7 +238,7 @@ def render(path, l_den, panels):
         frameon=False,
     )
     fig.suptitle(
-        f"Fixed-latency SNR-BLER map (L_den={l_den})\n"
+        f"Fixed-latency SNR-BLER map (hard CRC, L_den={l_den})\n"
         "payload=6272, N=12600, AWGN + perfect CSI",
         fontsize=16,
         y=0.995,
@@ -272,6 +272,7 @@ def main():
     result = {
         "kind": "fixed_latency_snr_bler_map",
         "model": {
+            "crc_input": "hard decision logit>0 -> bit 1",
             "latency_budgets": LATENCY_BUDGETS,
             "l_den_values": L_DEN_VALUES,
             "default_l_den": 50,

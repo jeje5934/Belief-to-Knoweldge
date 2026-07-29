@@ -1,0 +1,226 @@
+{
+  "kind": "equal_budget_codec_waterfalls",
+  "configuration": {
+    "n": 12600,
+    "crc": "CRC24A",
+    "budgets": [
+      20,
+      30,
+      50,
+      100
+    ],
+    "bp_chunk": 5,
+    "crc_early_stop": "universal first CRC pass on one warm BP trajectory",
+    "channel": "BPSK/AWGN/perfect_CSI",
+    "batch": 64,
+    "seed": 20260860
+  },
+  "codecs": {
+    "webp": {
+      "container_bits": 5808,
+      "ldpc_k": 5832,
+      "ldpc_rate": 0.46285714285714286,
+      "expected_rate": 0.46285714285714286,
+      "points": {
+        "-2.200": {
+          "esn0_db": -2.2,
+          "budgets": {
+            "20": {
+              "blocks": 3200,
+              "failures": 16,
+              "crc_bler": 0.005,
+              "wilson_95": [
+                0.00308004935832714,
+                0.00810702056423083
+              ],
+              "actual_mean_bp_iters": 16.6515625
+            },
+            "30": {
+              "blocks": 3200,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.0011990605278363324
+              ],
+              "actual_mean_bp_iters": 16.678125
+            },
+            "50": {
+              "blocks": 3200,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.0011990605278363324
+              ],
+              "actual_mean_bp_iters": 16.678125
+            },
+            "100": {
+              "blocks": 3200,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.0011990605278363324
+              ],
+              "actual_mean_bp_iters": 16.678125
+            }
+          }
+        },
+        "-2.500": {
+          "esn0_db": -2.5,
+          "budgets": {
+            "20": {
+              "blocks": 3200,
+              "failures": 1516,
+              "crc_bler": 0.47375,
+              "wilson_95": [
+                0.4564915969410452,
+                0.4910713537366664
+              ],
+              "actual_mean_bp_iters": 19.928125
+            },
+            "30": {
+              "blocks": 3200,
+              "failures": 42,
+              "crc_bler": 0.013125,
+              "wilson_95": [
+                0.009724833971463082,
+                0.01769275121751755
+              ],
+              "actual_mean_bp_iters": 22.653125
+            },
+            "50": {
+              "blocks": 3200,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.0011990605278363324
+              ],
+              "actual_mean_bp_iters": 22.73125
+            },
+            "100": {
+              "blocks": 3200,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.0011990605278363324
+              ],
+              "actual_mean_bp_iters": 22.73125
+            }
+          }
+        },
+        "-2.550": {
+          "esn0_db": -2.55,
+          "budgets": {
+            "20": {
+              "blocks": 3200,
+              "failures": 2006,
+              "crc_bler": 0.626875,
+              "wilson_95": [
+                0.6099751326343199,
+                0.6434706057567416
+              ],
+              "actual_mean_bp_iters": 19.975
+            },
+            "30": {
+              "blocks": 3200,
+              "failures": 86,
+              "crc_bler": 0.026875,
+              "wilson_95": [
+                0.02181375800614715,
+                0.03307085301831798
+              ],
+              "actual_mean_bp_iters": 23.9015625
+            },
+            "50": {
+              "blocks": 3200,
+              "failures": 1,
+              "crc_bler": 0.0003125,
+              "wilson_95": [
+                5.5164634444967065e-05,
+                0.0017681464805614677
+              ],
+              "actual_mean_bp_iters": 24.0609375
+            },
+            "100": {
+              "blocks": 3200,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.0011990605278363324
+              ],
+              "actual_mean_bp_iters": 24.0640625
+            }
+          }
+        },
+        "-2.750": {
+          "esn0_db": -2.75,
+          "budgets": {
+            "20": {
+              "blocks": 3200,
+              "failures": 3147,
+              "crc_bler": 0.9834375,
+              "wilson_95": [
+                0.97840063989565,
+                0.9873150184564983
+              ],
+              "actual_mean_bp_iters": 20.0
+            },
+            "30": {
+              "blocks": 3200,
+              "failures": 1499,
+              "crc_bler": 0.4684375,
+              "wilson_95": [
+                0.45119610721551423,
+                0.4857545834803056
+              ],
+              "actual_mean_bp_iters": 28.8890625
+            },
+            "50": {
+              "blocks": 3200,
+              "failures": 166,
+              "crc_bler": 0.051875,
+              "wilson_95": [
+                0.04471406317360641,
+                0.060110594824466894
+              ],
+              "actual_mean_bp_iters": 33.4671875
+            },
+            "100": {
+              "blocks": 3200,
+              "failures": 34,
+              "crc_bler": 0.010625,
+              "wilson_95": [
+                0.007613321375798883,
+                0.01481025911582093
+              ],
+              "actual_mean_bp_iters": 34.5203125
+            }
+          }
+        }
+      },
+      "knees": {
+        "20": {
+          "bler_0.1": -2.2608,
+          "bler_0.01": -2.2032000000000003
+        },
+        "30": {
+          "bler_0.1": -2.58312101910828,
+          "bler_0.01": -2.428571428571429
+        },
+        "50": {
+          "bler_0.1": null,
+          "bler_0.01": -2.5875757575757574
+        },
+        "100": {
+          "bler_0.1": null,
+          "bler_0.01": -2.738235294117647
+        }
+      }
+    }
+  }
+}

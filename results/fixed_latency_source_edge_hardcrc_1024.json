@@ -1,0 +1,346 @@
+{
+  "kind": "latency_matching_source_sweep",
+  "configuration": {
+    "channel": "BPSK/AWGN/perfect_CSI",
+    "payload_bits": 6272,
+    "n": 12600,
+    "blocks": 1024,
+    "batch": 64,
+    "seed": 20261014,
+    "groups": [
+      "5x6",
+      "5x10",
+      "5x20"
+    ],
+    "hard_lut_only": true,
+    "readout": {
+      "name": "global_sigma_post_3",
+      "mode": "global",
+      "sigma_post": 3.0
+    },
+    "legacy_beta": 0.0,
+    "ep_beta_ep": 1.0,
+    "crc_early_stop": "first CRC pass from existing chunk history",
+    "crc_input": "hard decision logit>0 -> bit 1",
+    "lut_revision": "hard-CRC refine; sigma_end=0.05 at budgets 20/30/50/100",
+    "source_call_count": "number of inter-chunk denoiser calls completed before the first CRC pass; a final failed block uses outer_count-1"
+  },
+  "points": {
+    "-2.400": {
+      "esn0_db": -2.4,
+      "groups": {
+        "5x6": {
+          "schedule": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "nominal_bp_budget": 30,
+          "rows": {
+            "altproj_5x6_d0.1_r0.9_send0.05": {
+              "blocks": 1024,
+              "failures": 44,
+              "crc_bler": 0.04296875,
+              "wilson_95": [
+                0.03216234577698616,
+                0.05719150018527106
+              ],
+              "actual_mean_bp_iters": 22.4169921875,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 20.0,
+                "q90": 25.0
+              },
+              "config": {
+                "name": "altproj_5x6_d0.1_r0.9_send0.05",
+                "candidate": {
+                  "name": "altproj_5x6_d0.1_r0.9",
+                  "scheme": "altproj",
+                  "delta": 0.1,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 3.4833984375,
+              "actual_source_call_distribution": {
+                "median": 3.0,
+                "q10": 3.0,
+                "q90": 4.0
+              }
+            }
+          },
+          "selected": "altproj_5x6_d0.1_r0.9_send0.05"
+        },
+        "5x10": {
+          "schedule": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "nominal_bp_budget": 50,
+          "rows": {
+            "altproj_5x10_d0.05_r0.9_send0.05": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 23.6376953125,
+              "actual_iteration_distribution": {
+                "median": 25.0,
+                "q10": 20.0,
+                "q90": 25.0
+              },
+              "config": {
+                "name": "altproj_5x10_d0.05_r0.9_send0.05",
+                "candidate": {
+                  "name": "altproj_5x10_d0.05_r0.9",
+                  "scheme": "altproj",
+                  "delta": 0.05,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 3.7275390625,
+              "actual_source_call_distribution": {
+                "median": 4.0,
+                "q10": 3.0,
+                "q90": 4.0
+              }
+            }
+          },
+          "selected": "altproj_5x10_d0.05_r0.9_send0.05"
+        },
+        "5x20": {
+          "schedule": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "nominal_bp_budget": 100,
+          "rows": {
+            "altproj_5x20_d0.02_r0.95_send0.05": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 28.10546875,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 25.0,
+                "q90": 35.0
+              },
+              "config": {
+                "name": "altproj_5x20_d0.02_r0.95_send0.05",
+                "candidate": {
+                  "name": "altproj_5x20_d0.02_r0.95",
+                  "scheme": "altproj",
+                  "delta": 0.02,
+                  "rho": 0.95
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 4.62109375,
+              "actual_source_call_distribution": {
+                "median": 5.0,
+                "q10": 4.0,
+                "q90": 6.0
+              }
+            }
+          },
+          "selected": "altproj_5x20_d0.02_r0.95_send0.05"
+        }
+      }
+    },
+    "-3.200": {
+      "esn0_db": -3.2,
+      "groups": {
+        "5x6": {
+          "schedule": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "nominal_bp_budget": 30,
+          "rows": {
+            "altproj_5x6_d0.1_r0.9_send0.05": {
+              "blocks": 1024,
+              "failures": 1022,
+              "crc_bler": 0.998046875,
+              "wilson_95": [
+                0.9929065784982852,
+                0.9994642303889986
+              ],
+              "actual_mean_bp_iters": 30.0,
+              "actual_iteration_distribution": {
+                "median": 30.0,
+                "q10": 30.0,
+                "q90": 30.0
+              },
+              "config": {
+                "name": "altproj_5x6_d0.1_r0.9_send0.05",
+                "candidate": {
+                  "name": "altproj_5x6_d0.1_r0.9",
+                  "scheme": "altproj",
+                  "delta": 0.1,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 5.0,
+              "actual_source_call_distribution": {
+                "median": 5.0,
+                "q10": 5.0,
+                "q90": 5.0
+              }
+            }
+          },
+          "selected": "altproj_5x6_d0.1_r0.9_send0.05"
+        },
+        "5x10": {
+          "schedule": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "nominal_bp_budget": 50,
+          "rows": {
+            "altproj_5x10_d0.05_r0.9_send0.05": {
+              "blocks": 1024,
+              "failures": 778,
+              "crc_bler": 0.759765625,
+              "wilson_95": [
+                0.7326580729848972,
+                0.7849314077288626
+              ],
+              "actual_mean_bp_iters": 49.1748046875,
+              "actual_iteration_distribution": {
+                "median": 50.0,
+                "q10": 45.0,
+                "q90": 50.0
+              },
+              "config": {
+                "name": "altproj_5x10_d0.05_r0.9_send0.05",
+                "candidate": {
+                  "name": "altproj_5x10_d0.05_r0.9",
+                  "scheme": "altproj",
+                  "delta": 0.05,
+                  "rho": 0.9
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 8.8349609375,
+              "actual_source_call_distribution": {
+                "median": 9.0,
+                "q10": 8.0,
+                "q90": 9.0
+              }
+            }
+          },
+          "selected": "altproj_5x10_d0.05_r0.9_send0.05"
+        },
+        "5x20": {
+          "schedule": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "nominal_bp_budget": 100,
+          "rows": {
+            "altproj_5x20_d0.02_r0.95_send0.05": {
+              "blocks": 1024,
+              "failures": 530,
+              "crc_bler": 0.517578125,
+              "wilson_95": [
+                0.48696353616976107,
+                0.5480613159086136
+              ],
+              "actual_mean_bp_iters": 90.9326171875,
+              "actual_iteration_distribution": {
+                "median": 100.0,
+                "q10": 70.0,
+                "q90": 100.0
+              },
+              "config": {
+                "name": "altproj_5x20_d0.02_r0.95_send0.05",
+                "candidate": {
+                  "name": "altproj_5x20_d0.02_r0.95",
+                  "scheme": "altproj",
+                  "delta": 0.02,
+                  "rho": 0.95
+                },
+                "sigma_end": 0.05
+              },
+              "actual_mean_source_calls": 17.1865234375,
+              "actual_source_call_distribution": {
+                "median": 19.0,
+                "q10": 13.0,
+                "q90": 19.0
+              }
+            }
+          },
+          "selected": "altproj_5x20_d0.02_r0.95_send0.05"
+        }
+      }
+    }
+  }
+}

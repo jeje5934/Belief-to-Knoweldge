@@ -140,29 +140,57 @@ def main():
     parser.add_argument("--results-dir", required=True)
     parser.add_argument("--json-output", required=True)
     parser.add_argument("--plot-output", required=True)
+    parser.add_argument(
+        "--input-suffix",
+        default="",
+        help="suffix inserted before .json, e.g. _hardcrc",
+    )
     args = parser.parse_args()
     root = Path(args.results_dir)
 
     ours_primary = {
-        budget: load(root / f"low_budget_ours_b{budget}_waterfall.json")
+        budget: load(
+            root
+            / f"low_budget_ours_b{budget}_waterfall{args.input_suffix}.json"
+        )
         for budget in BUDGETS
     }
     ours_low = {
-        budget: load(root / f"low_budget_ours_b{budget}_lowbler_3200.json")
+        budget: load(
+            root
+            / (
+                f"low_budget_ours_b{budget}_lowbler_3200"
+                f"{args.input_suffix}.json"
+            )
+        )
         for budget in BUDGETS
     }
     codec_primary = {
-        codec: load(root / f"low_budget_codec_{codec}_1024.json")
+        codec: load(
+            root
+            / f"low_budget_codec_{codec}_1024{args.input_suffix}.json"
+        )
         for codec in CODECS
     }
     codec_low = {
-        codec: load(root / f"low_budget_codec_{codec}_lowbler_3200.json")
+        codec: load(
+            root
+            / (
+                f"low_budget_codec_{codec}_lowbler_3200"
+                f"{args.input_suffix}.json"
+            )
+        )
         for codec in CODECS
     }
 
     consolidated = {
         "kind": "low_budget_source_vs_commercial_codec_duel",
         "method": {
+            "crc_input": (
+                "hard decision (logit > 0 -> bit 1)"
+                if args.input_suffix == "_hardcrc"
+                else "legacy input set; inspect source metadata"
+            ),
             "knee_interpolation": "linear in BLER",
             "duplicate_snr_rule": (
                 "when 1024- and 3200-block points share an SNR, retain 3200"
@@ -263,8 +291,9 @@ def main():
         axis.set_xlabel("Es/N0 (dB)")
         axis.set_ylabel("CRC BLER")
         axis.legend(fontsize=8, loc="lower left")
+    crc_label = "Hard-CRC " if args.input_suffix == "_hardcrc" else ""
     fig.suptitle(
-        "Budget-retuned AltProj vs commercial lossless codecs\n"
+        f"{crc_label}budget-retuned AltProj vs commercial lossless codecs\n"
         "payload=6272, N=12600, AWGN + perfect CSI",
         fontsize=13,
     )

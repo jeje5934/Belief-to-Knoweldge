@@ -1,0 +1,105 @@
+{
+  "kind": "budget_best_source_waterfall",
+  "configuration": {
+    "budget": 100,
+    "schedule_name": "5x20",
+    "schedule": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "candidate": {
+      "name": "altproj_d0.02_r0.95",
+      "scheme": "altproj",
+      "delta": 0.02,
+      "rho": 0.95
+    },
+    "sigma_start": 0.3,
+    "sigma_end": 0.05,
+    "readout": {
+      "name": "global_sigma_post_3",
+      "mode": "global",
+      "sigma_post": 3.0
+    },
+    "legacy_beta": 0.0,
+    "ep_beta_ep": 1.0,
+    "crc_early_stop": "universal first CRC-pass over existing per-chunk history",
+    "batch": 64,
+    "seed": 20260870
+  },
+  "points": {
+    "-2.650": {
+      "blocks": 3200,
+      "failures": 32,
+      "crc_bler": 0.01,
+      "wilson_95": [
+        0.007092414185061742,
+        0.014082665132217866
+      ],
+      "actual_mean_bp_iters": 39.2421875,
+      "actual_iteration_distribution": {
+        "median": 40.0,
+        "q10": 30.0,
+        "q90": 45.0
+      },
+      "config": {
+        "name": "altproj_5x20_d0.02_r0.95_send0.05",
+        "candidate": {
+          "name": "altproj_d0.02_r0.95",
+          "scheme": "altproj",
+          "delta": 0.02,
+          "rho": 0.95
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.65
+    },
+    "-2.750": {
+      "blocks": 3200,
+      "failures": 77,
+      "crc_bler": 0.0240625,
+      "wilson_95": [
+        0.019296155624099615,
+        0.0299702001158346
+      ],
+      "actual_mean_bp_iters": 45.79375,
+      "actual_iteration_distribution": {
+        "median": 45.0,
+        "q10": 35.0,
+        "q90": 55.0
+      },
+      "config": {
+        "name": "altproj_5x20_d0.02_r0.95_send0.05",
+        "candidate": {
+          "name": "altproj_d0.02_r0.95",
+          "scheme": "altproj",
+          "delta": 0.02,
+          "rho": 0.95
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.75
+    }
+  },
+  "knees": {
+    "bler_0.1": null,
+    "bler_0.01": -2.65
+  }
+}

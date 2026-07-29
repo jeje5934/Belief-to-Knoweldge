@@ -1,0 +1,106 @@
+{
+  "kind": "latency_matching_bp_baselines",
+  "configuration": {
+    "channel": "BPSK/AWGN/perfect_CSI",
+    "n": 12600,
+    "crc": "CRC24A",
+    "budgets": [
+      100
+    ],
+    "bp_chunk": 5,
+    "blocks": 1024,
+    "batch": 64,
+    "seed": 20261016,
+    "paired_unit_noise_across_systems": true,
+    "crc_early_stop": "first CRC pass on one warm BP trajectory"
+  },
+  "systems": {
+    "pixelcnn": {
+      "payload_bits": 4872,
+      "ldpc_k": 4896,
+      "ldpc_rate": 0.38857142857142857,
+      "points": {
+        "-3.400": {
+          "esn0_db": -3.4,
+          "budgets": {
+            "100": {
+              "blocks": 1024,
+              "failures": 0,
+              "crc_bler": 0.0,
+              "wilson_95": [
+                0.0,
+                0.003737540881785676
+              ],
+              "actual_mean_bp_iters": 19.6337890625,
+              "actual_iteration_distribution": {
+                "median": 20.0,
+                "q10": 15.0,
+                "q90": 25.0
+              }
+            }
+          }
+        },
+        "-3.600": {
+          "esn0_db": -3.6,
+          "budgets": {
+            "100": {
+              "blocks": 1024,
+              "failures": 3,
+              "crc_bler": 0.0029296875,
+              "wilson_95": [
+                0.0009968294590821545,
+                0.00857818676909931
+              ],
+              "actual_mean_bp_iters": 25.21484375,
+              "actual_iteration_distribution": {
+                "median": 25.0,
+                "q10": 20.0,
+                "q90": 30.0
+              }
+            }
+          }
+        },
+        "-3.800": {
+          "esn0_db": -3.8,
+          "budgets": {
+            "100": {
+              "blocks": 1024,
+              "failures": 46,
+              "crc_bler": 0.044921875,
+              "wilson_95": [
+                0.03384589206405392,
+                0.05939960412913382
+              ],
+              "actual_mean_bp_iters": 38.14453125,
+              "actual_iteration_distribution": {
+                "median": 35.0,
+                "q10": 25.0,
+                "q90": 50.0
+              }
+            }
+          }
+        },
+        "-4.000": {
+          "esn0_db": -4.0,
+          "budgets": {
+            "100": {
+              "blocks": 1024,
+              "failures": 486,
+              "crc_bler": 0.474609375,
+              "wilson_95": [
+                0.44417584913784874,
+                0.5052326978600545
+              ],
+              "actual_mean_bp_iters": 75.78125,
+              "actual_iteration_distribution": {
+                "median": 87.5,
+                "q10": 40.0,
+                "q90": 100.0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

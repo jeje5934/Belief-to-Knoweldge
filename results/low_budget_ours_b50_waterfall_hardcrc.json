@@ -1,0 +1,173 @@
+{
+  "kind": "budget_best_source_waterfall",
+  "configuration": {
+    "budget": 50,
+    "schedule_name": "5x10",
+    "schedule": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "candidate": {
+      "name": "altproj_d0.05_r0.9",
+      "scheme": "altproj",
+      "delta": 0.05,
+      "rho": 0.9
+    },
+    "sigma_start": 0.3,
+    "sigma_end": 0.05,
+    "readout": {
+      "name": "global_sigma_post_3",
+      "mode": "global",
+      "sigma_post": 3.0
+    },
+    "legacy_beta": 0.0,
+    "ep_beta_ep": 1.0,
+    "crc_early_stop": "universal first CRC-pass over existing per-chunk history",
+    "batch": 64,
+    "seed": 20260841
+  },
+  "points": {
+    "-2.300": {
+      "blocks": 1024,
+      "failures": 0,
+      "crc_bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.003737540881785676
+      ],
+      "actual_mean_bp_iters": 21.552734375,
+      "actual_iteration_distribution": {
+        "median": 20.0,
+        "q10": 20.0,
+        "q90": 25.0
+      },
+      "config": {
+        "name": "altproj_5x10_d0.05_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.05_r0.9",
+          "scheme": "altproj",
+          "delta": 0.05,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.3
+    },
+    "-2.450": {
+      "blocks": 1024,
+      "failures": 4,
+      "crc_bler": 0.00390625,
+      "wilson_95": [
+        0.0015200565834699161,
+        0.010000784760176809
+      ],
+      "actual_mean_bp_iters": 24.755859375,
+      "actual_iteration_distribution": {
+        "median": 25.0,
+        "q10": 20.0,
+        "q90": 30.0
+      },
+      "config": {
+        "name": "altproj_5x10_d0.05_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.05_r0.9",
+          "scheme": "altproj",
+          "delta": 0.05,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.45
+    },
+    "-2.600": {
+      "blocks": 1024,
+      "failures": 11,
+      "crc_bler": 0.0107421875,
+      "wilson_95": [
+        0.006008649786782673,
+        0.019132967365120886
+      ],
+      "actual_mean_bp_iters": 28.3984375,
+      "actual_iteration_distribution": {
+        "median": 30.0,
+        "q10": 25.0,
+        "q90": 35.0
+      },
+      "config": {
+        "name": "altproj_5x10_d0.05_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.05_r0.9",
+          "scheme": "altproj",
+          "delta": 0.05,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.6
+    },
+    "-2.750": {
+      "blocks": 1024,
+      "failures": 63,
+      "crc_bler": 0.0615234375,
+      "wilson_95": [
+        0.04838102291140676,
+        0.07794350024469046
+      ],
+      "actual_mean_bp_iters": 34.375,
+      "actual_iteration_distribution": {
+        "median": 35.0,
+        "q10": 30.0,
+        "q90": 45.0
+      },
+      "config": {
+        "name": "altproj_5x10_d0.05_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.05_r0.9",
+          "scheme": "altproj",
+          "delta": 0.05,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.75
+    },
+    "-2.900": {
+      "blocks": 1024,
+      "failures": 177,
+      "crc_bler": 0.1728515625,
+      "wilson_95": [
+        0.15092551638948692,
+        0.19722306992965016
+      ],
+      "actual_mean_bp_iters": 40.107421875,
+      "actual_iteration_distribution": {
+        "median": 40.0,
+        "q10": 30.0,
+        "q90": 50.0
+      },
+      "config": {
+        "name": "altproj_5x10_d0.05_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.05_r0.9",
+          "scheme": "altproj",
+          "delta": 0.05,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.9
+    }
+  },
+  "knees": {
+    "bler_0.1": -2.801842105263158,
+    "bler_0.01": -2.5837142857142856
+  }
+}

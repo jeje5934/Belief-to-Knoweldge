@@ -1,0 +1,195 @@
+{
+  "kind": "budget_best_source_waterfall",
+  "configuration": {
+    "budget": 30,
+    "schedule_name": "5x6",
+    "schedule": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "candidate": {
+      "name": "altproj_d0.1_r0.9",
+      "scheme": "altproj",
+      "delta": 0.1,
+      "rho": 0.9
+    },
+    "sigma_start": 0.3,
+    "sigma_end": 0.05,
+    "readout": {
+      "name": "global_sigma_post_3",
+      "mode": "global",
+      "sigma_post": 3.0
+    },
+    "legacy_beta": 0.0,
+    "ep_beta_ep": 1.0,
+    "crc_early_stop": "universal first CRC-pass over existing per-chunk history",
+    "batch": 64,
+    "seed": 20260842
+  },
+  "points": {
+    "-1.700": {
+      "blocks": 1024,
+      "failures": 0,
+      "crc_bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.003737540881785676
+      ],
+      "actual_mean_bp_iters": 14.814453125,
+      "actual_iteration_distribution": {
+        "median": 15.0,
+        "q10": 15.0,
+        "q90": 15.0
+      },
+      "config": {
+        "name": "altproj_5x6_d0.1_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.1_r0.9",
+          "scheme": "altproj",
+          "delta": 0.1,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -1.7
+    },
+    "-1.900": {
+      "blocks": 1024,
+      "failures": 0,
+      "crc_bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.003737540881785676
+      ],
+      "actual_mean_bp_iters": 15.44921875,
+      "actual_iteration_distribution": {
+        "median": 15.0,
+        "q10": 15.0,
+        "q90": 15.0
+      },
+      "config": {
+        "name": "altproj_5x6_d0.1_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.1_r0.9",
+          "scheme": "altproj",
+          "delta": 0.1,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -1.9
+    },
+    "-2.100": {
+      "blocks": 1024,
+      "failures": 2,
+      "crc_bler": 0.001953125,
+      "wilson_95": [
+        0.0005357696110014588,
+        0.007093421501714742
+      ],
+      "actual_mean_bp_iters": 17.6708984375,
+      "actual_iteration_distribution": {
+        "median": 20.0,
+        "q10": 15.0,
+        "q90": 20.0
+      },
+      "config": {
+        "name": "altproj_5x6_d0.1_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.1_r0.9",
+          "scheme": "altproj",
+          "delta": 0.1,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.1
+    },
+    "-2.300": {
+      "blocks": 1024,
+      "failures": 22,
+      "crc_bler": 0.021484375,
+      "wilson_95": [
+        0.014230048863088398,
+        0.03231564455893306
+      ],
+      "actual_mean_bp_iters": 20.8984375,
+      "actual_iteration_distribution": {
+        "median": 20.0,
+        "q10": 20.0,
+        "q90": 25.0
+      },
+      "config": {
+        "name": "altproj_5x6_d0.1_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.1_r0.9",
+          "scheme": "altproj",
+          "delta": 0.1,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.3
+    },
+    "-2.500": {
+      "blocks": 1024,
+      "failures": 142,
+      "crc_bler": 0.138671875,
+      "wilson_95": [
+        0.1188506012658997,
+        0.16119410601195322
+      ],
+      "actual_mean_bp_iters": 24.6875,
+      "actual_iteration_distribution": {
+        "median": 25.0,
+        "q10": 20.0,
+        "q90": 30.0
+      },
+      "config": {
+        "name": "altproj_5x6_d0.1_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.1_r0.9",
+          "scheme": "altproj",
+          "delta": 0.1,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.5
+    },
+    "-2.700": {
+      "blocks": 1024,
+      "failures": 427,
+      "crc_bler": 0.4169921875,
+      "wilson_95": [
+        0.3871573051924664,
+        0.44744755999298635
+      ],
+      "actual_mean_bp_iters": 28.33984375,
+      "actual_iteration_distribution": {
+        "median": 30.0,
+        "q10": 25.0,
+        "q90": 30.0
+      },
+      "config": {
+        "name": "altproj_5x6_d0.1_r0.9_send0.05",
+        "candidate": {
+          "name": "altproj_d0.1_r0.9",
+          "scheme": "altproj",
+          "delta": 0.1,
+          "rho": 0.9
+        },
+        "sigma_end": 0.05
+      },
+      "esn0_db": -2.7
+    }
+  },
+  "knees": {
+    "bler_0.1": -2.434,
+    "bler_0.01": -2.1824
+  }
+}
