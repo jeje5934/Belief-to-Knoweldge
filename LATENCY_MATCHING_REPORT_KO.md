@@ -1,5 +1,9 @@
 # Latency-매칭 4-system BLER 비교
 
+> **CRC 정정 상태 — 무효 보류:** 이 보고서의 BLER과 CRC early-stop latency는
+> soft-logit CRC 오용의 영향을 받았다. hard-CRC fixed-latency 재측정은 이번
+> 범위에 포함하지 않았으므로 아래 수치는 역사 기록으로만 유지한다.
+
 ## 최종 판정
 
 가설은 **부분적으로만 성립**했다.

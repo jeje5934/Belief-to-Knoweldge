@@ -1,5 +1,41 @@
 # sigma_post 정리와 예산별 재튜닝·상용 lossless codec 대결
 
+> **2026-07-28 hard-CRC 정정:** 아래 원 본문은 soft-CRC 결과이므로
+> 부록으로 보존한다. primary hard-CRC 결과와 전체 old/new 비교는
+> [`HARD_CRC_REMEASUREMENT_REPORT_KO.md`](HARD_CRC_REMEASUREMENT_REPORT_KO.md)다.
+> 최적 스킴·schedule·주입 강도는 유지됐지만 sigma endpoint는 budget
+> 100/50/30/20 모두 `0.05`로 정리됐다. 기존 sigma_post 스윕 자체는 이번에
+> 재측정하지 않았으므로 `sigma_post=3.0`은 실험 재확정이 아니라 이번 단계의
+> 고정 규약으로 유지한다.
+
+> **2026-07-29 LUT 강건성 후속:** budget 50은 기존 rho `.90`보다 `.85`가
+> 세 SNR과 독립 seed에서 일관되게 좋았다. 다만 아래 full-waterfall 표는 동결된
+> rho `.90` 결과로 유지한다. 독립 seed의 rho `.85` 대 WebP 비교도 BLER 0.1에서
+> ours +0.070 dB, BLER 0.01에서 WebP +0.076 dB로 곡선 교차를 재현했고 측정점
+> CI는 겹쳤다. 상세는 [`LUT_ROBUSTNESS_REPORT_KO.md`](LUT_ROBUSTNESS_REPORT_KO.md).
+
+## hard-CRC 최종 knee 정정표
+
+### BLER 0.1
+
+| budget | ours | WebP | gzip | PNG |
+|---:|---:|---:|---:|---:|
+| 100 | -2.940 | -2.801 | -2.529 | -2.027 |
+| 50 | -2.802 | -2.767 | -2.487 | -2.000 |
+| 30 | -2.434 | -2.583 | -2.334 | -1.835 |
+| 20 | -2.224 | -2.296 | -2.044 | -1.543 |
+
+### BLER 0.01
+
+| budget | ours | WebP | gzip | PNG |
+|---:|---:|---:|---:|---:|
+| 100 | -2.650 | -2.738 | -2.401 | -1.894 |
+| 50 | -2.581 | -2.588 | -2.359 | -1.860 |
+| 30 | -2.225 | -2.440 | -2.230 | -1.732 |
+| 20 | -2.051 | -2.222 | -1.944 | -1.408 |
+
+## 부록 A — soft-CRC 원 보고서(성능 근거로 사용 금지)
+
 ## 결론
 
 `sigma_post=3.0`을 유지한다. `1.5`는 통계적으로 유의한 개선이 없었고,

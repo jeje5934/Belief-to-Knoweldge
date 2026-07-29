@@ -1,5 +1,26 @@
 # β=0 denoiser σ 하강 스케줄 확정 보고서
 
+> **2026-07-28 hard-CRC 정정:** 아래 기존 본문은 soft logits를 Sionna
+> `CRCDecoder`에 직접 전달한 역사적 결과이므로 **부록으로만 보존**한다.
+> primary 수치는 [`HARD_CRC_REMEASUREMENT_REPORT_KO.md`](HARD_CRC_REMEASUREMENT_REPORT_KO.md)다.
+> hard-CRC 재측정에서도 geom `0.3→0.02`가 5개 SNR 모두 fixed와 CI가
+> 분리됐고, paired 합계는 `3 파괴 / 404 구제`였다. hard knee 이득은
+> BLER `1e-1`에서 0.130 dB, `1e-2`에서 0.170 dB다. 따라서 sigma
+> canonical 판정은 유지한다. 아래 상태 기반·alpha 절의 CRC-BLER은 이번에
+> 재측정하지 않았으므로 계속 무효 보류다.
+
+## hard-CRC 정정표
+
+| Es/N0 | fixed hard | geom 0.3→0.02 hard | 기존 soft fixed / geom |
+|---:|---:|---:|---:|
+| -2.8 | .30469 | .15723 | .30469 / .15723 |
+| -2.7 | .17578 | .05273 | .17578 / .05371 |
+| -2.6 | .08008 | .01270 | .08105 / .01367 |
+| -2.5 | .03125 | .00488 | .03223 / .00586 |
+| -2.4 | .00938 | .000625 | .00875 / .000625 |
+
+## 부록 A — soft-CRC 원 보고서(성능 근거로 사용 금지)
+
 ## 1. 최종 판정
 
 `practical_sigma`의 legacy `[5]×20` 경로에서 β를 0으로 고정했을 때,

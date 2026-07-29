@@ -927,7 +927,7 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
         r_sched = self._altproj_rho_schedule                # per-round ρ override
         es = self._altproj_early_stop
         es_pat = int(self._altproj_es_patience)             # 0 ⇒ syn=0 freeze only
-        crc_fn = self._altproj_crc_check                    # sufficient stop statistic
+        crc_fn = self._altproj_crc_check                    # hard-CRC stop signal
         sigma_den = float(self._altproj_sigma_den)          # σ_den → denoiser obs level
         warm = self._altproj_warm_start
         c_clip = tf.cast(25.0, self.rdtype)                 # spec [2](a): ±25 on C_t
@@ -989,10 +989,12 @@ class LDPC5GDecoder_soft(LDPC5GDecoder):
                 # decision is the best-syndrome posterior = "revert to the state
                 # before degradation".
                 if es and crc_fn is not None:
-                    # ── CRC-gated stop (the sufficient statistic; 5G-style early
-                    #    termination).  Capture+freeze a codeword the round its CRC
-                    #    passes; never revisit it.  Codewords that never pass keep the
-                    #    best-syndrome fallback so they still return their best try.
+                    # ── Hard-CRC-gated stop (5G-style early termination; measured
+                    # earlier than full-graph syn=0 in 164/512 historical-condition
+                    # blocks). The callback hard-decides logits before CRCDecoder.
+                    # Capture+freeze a codeword the round its CRC passes; never
+                    # revisit it. Codewords that never pass keep the best-syndrome
+                    # fallback so they still return their best try.
                     counts_f = tf.cast(counts, self.rdtype)
                     # flatten to rank 1 — CRC helpers often return [B, 1], which would
                     # broadcast into a rank-3 mess downstream.

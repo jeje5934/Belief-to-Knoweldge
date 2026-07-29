@@ -1,5 +1,11 @@
 # LDPC denoiser 조건부 σ_actual 및 하강 schedule 보고서
 
+> **CRC 정정 상태:** 원본 대비 sigma_actual/RMSE 원시 계측은 유효하지만,
+> soft-CRC로 성공/실패를 나눈 조건부 그룹과 schedule BLER은 무효다. hard-CRC
+> sigma waterfall 대체 결과는
+> [`HARD_CRC_REMEASUREMENT_REPORT_KO.md`](HARD_CRC_REMEASUREMENT_REPORT_KO.md)에
+> 있다.
+
 ## 최종 판정
 
 직전 32-block 결과는 성공 블록의 전형적인 궤적만 보여 준 것이

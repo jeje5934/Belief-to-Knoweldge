@@ -1,5 +1,28 @@
 # 스킴별 σ·스케줄 공정화 및 fading 재평가
 
+> **2026-07-28 hard-CRC 정정:** AWGN 3-way는 hard decision CRC로
+> 재측정했으며 primary 수치는
+> [`HARD_CRC_REMEASUREMENT_REPORT_KO.md`](HARD_CRC_REMEASUREMENT_REPORT_KO.md)다.
+> -2.7 dB에서 legacy/EP/altproj는 각각
+> `.05566 [.04321,.07144] / .13770 [.11794,.16016] /
+> .01270 [.00743,.02160]`으로 **altproj > legacy > EP** 순위가 유지됐다.
+> 아래 A-1의 CRC 비의존 sigma_actual 계측은 유효하지만, A-2 endpoint
+> BLER과 기존 AWGN/fading CRC-BLER는 soft-CRC 부록이다. 특히 fading은
+> 이번에 재측정하지 않았으므로 모든 성능 결론을 무효 보류한다.
+
+## hard-CRC 3-way 정정표
+
+| Es/N0 | scheme | 기존 soft | 신규 hard [Wilson 95% CI] |
+|---:|---|---:|---:|
+| -2.7 | legacy | .05664 | .05566 [.04321,.07144] |
+| -2.7 | EP | .14453 | .13770 [.11794,.16016] |
+| -2.7 | altproj | .01465 | .01270 [.00743,.02160] |
+| -2.5 | legacy | .00293 | .00293 [.00100,.00858] |
+| -2.5 | EP | .00488 | .00488 [.00209,.01138] |
+| -2.5 | altproj | .00098 | 0 [0,.00374] |
+
+## 부록 A — soft-CRC 원 보고서(성능 근거로 사용 금지)
+
 ## 0. 결론
 
 - AWGN 공정 비교의 최종 구성은 모두 `[5]×20`, CRC early-stop off이며,

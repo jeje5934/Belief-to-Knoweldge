@@ -146,7 +146,7 @@ far 군만 상대적으로 명확한 이미지 손상을 갖는다. 그러나 �
 2. 실패는 전부 미수렴이며 BP 연장 baseline이 100% 구제했다.
 3. source 보정은 denoiser 1회라는 추가 latency/FLOPs를 지불하면서 BP-40의
    100% 구제를 넘어야 하므로 구조적 여지가 없다.
-4. 과거 altproj의 `syn=0 != 정답` 근거는 soft-logit CRC misuse 영향을 먼저
+4. 과거 altproj의 ~~`syn=0 != 정답`~~ 근거는 soft-logit CRC misuse 영향을 먼저
    재감사해야 하며, 현재 HARQ 프레임의 근거로 사용할 수 없다.
 
 ### 후속 hard-CRC 재검증
@@ -154,8 +154,8 @@ far 군만 상대적으로 명확한 이미지 손상을 갖는다. 그러나 �
 과거 조건(`delta=0.02`, `rho=0.9`, `[5]x20`, Eb/N0 `+0.6 dB`, 512 block)을
 hard CRC로 재현한 결과, 전 round에서 `syn=0 & hard-CRC fail=0`이고
 `syn=0 & payload wrong=0`이었다. 반면 hard CRC가 full-graph syndrome zero보다
-먼저 통과한 block은 164/512였다. 따라서 과거 `27/32` 관측과
-"source가 valid-but-wrong codeword를 판별한다"는 해석은 철회한다. CRC-ES는
+먼저 통과한 block은 164/512였다. 따라서 과거 ~~`27/32` 관측과
+"source가 valid-but-wrong codeword를 판별한다"~~는 해석은 철회한다. CRC-ES는
 syndrome-ES와 동일하지 않지만, 이유는 hard CRC가 더 이르게 통과할 수 있기
 때문이며 valid codeword 사이의 source 판별 근거가 아니다.
 

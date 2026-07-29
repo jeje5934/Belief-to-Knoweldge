@@ -1,5 +1,10 @@
 # σ 교정 후 legacy / EP / altproj 재평가
 
+> **CRC 정정 상태:** 아래 3-way CRC-BLER은 soft-CRC 역사 결과다. 동일 조건의
+> hard-CRC 대체 표와 판정은
+> [`HARD_CRC_REMEASUREMENT_REPORT_KO.md`](HARD_CRC_REMEASUREMENT_REPORT_KO.md)를
+> 사용한다.
+
 ## 1. 최종 판정
 
 Legacy `β_legacy=0`, EP `β_ep=1`, 공통 `sigma_post=3.0`,

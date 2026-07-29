@@ -1,5 +1,10 @@
 # QPSK + fast Rayleigh fading + imperfect CSI — channel option (stage 1)
 
+> **CRC 정정 상태 — 무효 보류:** 아래 BLER은 soft logits를 Sionna
+> `CRCDecoder`에 전달한 경로에서 생성됐다. 이번 작업에서 fading은 재측정하지
+> 않았으므로 성능 서사에 사용하지 않는다. CRC와 독립적인 channel/LLR 계측만
+> 유지 가능하다.
+
 Branch `practical_sigma`.  Adds a selectable channel front-end; the decoder
 comparison structure (BP-only baseline vs BP+denoiser) is unchanged — only the
 LLR the decoders receive changes.  Stage 1 = implement + verify LLR/sign;

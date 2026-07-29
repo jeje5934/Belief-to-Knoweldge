@@ -1,5 +1,10 @@
 # HANDOFF — onlyextrinsic_ada_sigma
 
+> **CRC correction:** do not use historical soft-CRC BLER/CRC-ES numbers as
+> baselines. Start from `CRC_BUG_IMPACT_AUDIT_KO.md` and
+> `HARD_CRC_REMEASUREMENT_REPORT_KO.md`. Fixed-latency and fading are still
+> invalid pending hard-CRC reruns.
+
 Read-this-first context for any new chat / agent that picks up this
 codebase.  Pair this file with `README.md` (project overview) and
 `adaptive_sigma_review.md` (deep-dive on the adaptive σ design).

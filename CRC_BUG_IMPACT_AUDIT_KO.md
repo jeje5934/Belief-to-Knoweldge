@@ -19,7 +19,7 @@ CRC 검사가 아니다. 저장소 규약인 `logit > 0 -> bit 1`로 먼저 hard
   BP-20에서 hard BLER `29/256=0.1133`을 soft 방식은
   `164/256=0.6406`으로 과대 계상했다. hard-pass 227개 중 135개(59.47%)가
   가짜 실패였고 가짜 통과는 0개였다.
-- 과거 altproj의 `syn=0인데 CRC 27/32` 관측은 soft-CRC artifact다. 같은 조건의
+- 과거 altproj의 ~~`syn=0인데 CRC 27/32`~~ 관측은 soft-CRC artifact다. 같은 조건의
   512-block hard-CRC 재현에서 `syn=0 & CRC fail=0`,
   `syn=0 & payload wrong=0`이었다. 따라서 “source가 valid-but-wrong codeword
   사이를 판별한다”는 명제와 그에 기반한 CRC-ES 설명은 철회한다.
@@ -222,6 +222,10 @@ soft CRC를 쓰면 round 6에서 syndrome zero 383개 중 143개가 CRC fail로 
 일괄 갱신해야 하므로 목록으로 남겼다.
 
 ## [4] 재측정 우선순위와 예상 비용
+
+> **후속 상태:** P1, P0, P2는 hard CRC로 완료됐다. 최신 결과는 각각
+> `HARD_CRC_REMEASUREMENT_REPORT_KO.md`, `LOW_BUDGET_CODEC_DUEL_REPORT_KO.md`,
+> `FIXED_LATENCY_SNR_REPORT_KO.md`에 있다. P3 fading은 계속 무효 보류다.
 
 비용은 기존 실행의 block 수와 GPU throughput에 기반한 계획값이다. 실제 wall
 time은 source call 수, codec I/O, early-stop 분포에 따라 달라지므로 범위로 적었다.

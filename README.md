@@ -1,10 +1,23 @@
 # Belief-to-Knowledge — LDPC + score-denoiser decoding as Expectation Propagation
 
+> **CRC correction (2026-07-28):** historical CRC-BLER/NACK values in this
+> branch may include soft-logit CRC misuse. Current hard-CRC primary results are
+> in [`HARD_CRC_REMEASUREMENT_REPORT_KO.md`](HARD_CRC_REMEASUREMENT_REPORT_KO.md);
+> fixed-latency has been regenerated with hard CRC in
+> [`FIXED_LATENCY_SNR_REPORT_KO.md`](FIXED_LATENCY_SNR_REPORT_KO.md), while
+> fading remains pending remeasurement. The discussion entry point is
+> [`DISCUSSION_SUMMARY_KO.md`](DISCUSSION_SUMMARY_KO.md); the printable one-page
+> handout is [`output/pdf/PROFESSOR_DISCUSSION_ONEPAGE_KO.pdf`](output/pdf/PROFESSOR_DISCUSSION_ONEPAGE_KO.pdf).
+
 5G-LDPC decoding of **Fashion-MNIST images** over an AWGN channel, with a
 learned EDM **score denoiser** supplying an image-domain prior. This branch
 (`pure-EP_ada-sigma`) reformulates the decoder as **Expectation Propagation
 (EP)** on a three-factor graph and documents, honestly, where pure EP works and
 where it does not.
+
+> **no-LDPC 갈래 종료:** 동일 자원 최종 비교에서 RSC/BCJR + score +
+> SPC가 5G LDPC 기준선에 뒤져 이 갈래를 종료했다. 최종 판정과 전체
+> 문서 지도는 [`NO_LDPC_SUMMARY.md`](NO_LDPC_SUMMARY.md)를 참조한다.
 
 > ### Status — read this first
 > **EP-aligned decoder. `full_ep` (α=1, the source site reflected in full) is the

@@ -1,5 +1,10 @@
 # AltProj compression baseline 격차 해소 실험 보고서
 
+> **CRC 정정 상태:** 이 보고서의 CRC-BLER 수치는 soft-logit CRC 오용으로
+> primary 근거에서 제외한다. hard-CRC budget-100/50/30/20 대체 결과는
+> [`HARD_CRC_REMEASUREMENT_REPORT_KO.md`](HARD_CRC_REMEASUREMENT_REPORT_KO.md)에
+> 있고, 아래 수치는 역사적 부록으로만 보존한다.
+
 ## 최종 판정
 
 목표였던 PixelCNN-MAX 역전에는 실패했다.
@@ -244,4 +249,3 @@ production `decoder.py`는 수정하지 않았다. 승인 후 다음 논리 단�
 2. `feat: add SPC-aware source SISO for LDPC altproj`
 3. `experiments: evaluate SPC and altproj compute budgets`
 4. `docs: report altproj compression-gap outcome`
-

@@ -1,5 +1,10 @@
 # Adaptive Sigma — Review Notes
 
+> **CRC correction:** sigma_actual/RMSE observations remain usable, but all
+> CRC-conditioned groups and CRC-BLER claims below are historical soft-CRC
+> results. The hard-CRC sigma canonical replacement is documented in
+> `HARD_CRC_REMEASUREMENT_REPORT_KO.md`.
+
 This document explains the adaptive denoiser-σ scheduling scheme used in
 this branch (`onlyextrinsic_ada_sigma`), how it relates to DDECC, the
 exact syndrome computation, sign-convention conventions, and the

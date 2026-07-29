@@ -1,5 +1,15 @@
 # Learned-prior iterative decoding as Expectation Propagation — research summary
 
+> **2026-07-28 CRC 정정:** 이 문서의 과거 CRC-BLER/NACK 및 CRC 조건부
+> 비교는 soft-logit CRC 오용 때문에 무효 보류다. sigma canonical, AWGN
+> 3-way, 저예산 codec 대결의 hard-CRC 대체 수치는
+> [`HARD_CRC_REMEASUREMENT_REPORT_KO.md`](../HARD_CRC_REMEASUREMENT_REPORT_KO.md)에
+> 있다. fixed-latency는 후속 hard-CRC 재생성을 완료했으며
+> [`FIXED_LATENCY_SNR_REPORT_KO.md`](../FIXED_LATENCY_SNR_REPORT_KO.md)와
+> [`DISCUSSION_SUMMARY_KO.md`](../DISCUSSION_SUMMARY_KO.md)를 진입점으로 쓴다.
+> fading은 아직 무효 보류다. BER/LLR/RMSE/syndrome처럼 CRC 비의존 계측은
+> 별도로 유효하다.
+
 A single narrative over the whole study: formulating an LDPC + score-denoiser
 decoder as Expectation Propagation (EP), showing where and *why* pure EP fails,
 excluding every attempt to repair it, and establishing the one strategy that
