@@ -9,6 +9,12 @@
 > [`DISCUSSION_SUMMARY_KO.md`](DISCUSSION_SUMMARY_KO.md); the printable one-page
 > handout is [`output/pdf/PROFESSOR_DISCUSSION_ONEPAGE_KO.pdf`](output/pdf/PROFESSOR_DISCUSSION_ONEPAGE_KO.pdf).
 
+> **MSE experiment branch:** BP-50 `[10]×5`에서 hard-image MSE를 기준으로
+> source 파라미터를 다시 훑은 소표본 견적은
+> [`MSE_BUDGET50_ESTIMATE_KO.md`](MSE_BUDGET50_ESTIMATE_KO.md)에 있다.
+> BLER canonical을 대체하는 결과가 아니라 `codex/mse-optimization`의 별도
+> distortion-oriented 실험이다.
+
 5G-LDPC decoding of **Fashion-MNIST images** over an AWGN channel, with a
 learned EDM **score denoiser** supplying an image-domain prior. This branch
 (`pure-EP_ada-sigma`) reformulates the decoder as **Expectation Propagation
