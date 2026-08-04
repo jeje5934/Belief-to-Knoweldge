@@ -11,7 +11,9 @@
 
 > **MSE experiment branch:** BP-50 `[10]×5`에서 hard-image MSE를 기준으로
 > source 파라미터를 다시 훑은 소표본 견적은
-> [`MSE_BUDGET50_ESTIMATE_KO.md`](MSE_BUDGET50_ESTIMATE_KO.md)에 있다.
+> [`MSE_BUDGET50_ESTIMATE_KO.md`](MSE_BUDGET50_ESTIMATE_KO.md)에 있고,
+> 512-block concealment 공정 비교·PixelCNN/raw 대조·crossover 최종 결과는
+> [`MSE_FAIRNESS_EXTENSION_KO.md`](MSE_FAIRNESS_EXTENSION_KO.md)에 있다.
 > BLER canonical을 대체하는 결과가 아니라 `codex/mse-optimization`의 별도
 > distortion-oriented 실험이다.
 

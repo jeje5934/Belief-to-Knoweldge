@@ -1,0 +1,280 @@
+{
+  "kind": "bp50_mse_fairness_analysis",
+  "source_result": "results/mse_fairness_extended_source_512.json",
+  "codec_result": "results/mse_fairness_extended_codecs_512.json",
+  "snrs_db": [
+    -3.2,
+    -3.0,
+    -2.9,
+    -2.85,
+    -2.8,
+    -2.75,
+    -2.7,
+    -2.6,
+    -2.4
+  ],
+  "best_webp_concealment_by_grid_mean": "best_effort_full_decode_then_mean_image",
+  "best_pixelcnn_concealment_by_grid_mean": "all_zero",
+  "primary_webp_baseline": "per-SNR lower envelope across all policies",
+  "webp_envelope_policy_by_snr": {
+    "-3.200": "dataset_mean_image",
+    "-3.000": "dataset_mean_image",
+    "-2.900": "best_effort_full_decode_then_mean_image",
+    "-2.850": "best_effort_full_decode_then_mean_image",
+    "-2.800": "best_effort_full_decode_then_mean_image",
+    "-2.750": "best_effort_full_decode_then_mean_image",
+    "-2.700": "dataset_mean_image",
+    "-2.600": "dataset_mean_image",
+    "-2.400": "all_zero"
+  },
+  "ours_webp_crossover_db": {
+    "all_zero": -2.4,
+    "global_constant": -2.4,
+    "dataset_mean_image": -2.6249715562339286,
+    "best_effort_full_decode_then_mean_image": -2.4,
+    "per_snr_best_policy_envelope": -2.6249715562339286
+  },
+  "ours_webp_crossover_details": {
+    "all_zero": {
+      "kind": "touch_at_measured_zero_no_observed_reversal",
+      "estimate_db": -2.4,
+      "bracket_db": [
+        -2.6,
+        -2.4
+      ]
+    },
+    "global_constant": {
+      "kind": "touch_at_measured_zero_no_observed_reversal",
+      "estimate_db": -2.4,
+      "bracket_db": [
+        -2.6,
+        -2.4
+      ]
+    },
+    "dataset_mean_image": {
+      "kind": "strict_sign_change",
+      "estimate_db": -2.6249715562339286,
+      "bracket_db": [
+        -2.7,
+        -2.6
+      ]
+    },
+    "best_effort_full_decode_then_mean_image": {
+      "kind": "touch_at_measured_zero_no_observed_reversal",
+      "estimate_db": -2.4,
+      "bracket_db": [
+        -2.6,
+        -2.4
+      ]
+    },
+    "per_snr_best_policy_envelope": {
+      "kind": "strict_sign_change",
+      "estimate_db": -2.6249715562339286,
+      "bracket_db": [
+        -2.7,
+        -2.6
+      ]
+    }
+  },
+  "per_block_mse_quantiles_by_snr": {
+    "-3.200": {
+      "ours": {
+        "p50": 0.012322762438308658,
+        "p90": 0.021771985264694114,
+        "p99": 0.033197752041993246
+      },
+      "raw_bp50": {
+        "p50": 0.0601753642633524,
+        "p90": 0.07041457563417525,
+        "p99": 0.07687711672904456
+      },
+      "webp_envelope": {
+        "p50": 0.08254307983098605,
+        "p90": 0.12604209971344885,
+        "p99": 0.1927148255581265
+      },
+      "pixelcnn_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      }
+    },
+    "-3.000": {
+      "ours": {
+        "p50": 0.004403418230037114,
+        "p90": 0.015851668118227687,
+        "p99": 0.02976771630220713
+      },
+      "raw_bp50": {
+        "p50": 0.05418850873682807,
+        "p90": 0.06307564398308343,
+        "p99": 0.07208907033401596
+      },
+      "webp_envelope": {
+        "p50": 0.0709633967652761,
+        "p90": 0.11959066463765386,
+        "p99": 0.18137521645191543
+      },
+      "pixelcnn_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      }
+    },
+    "-2.900": {
+      "ours": {
+        "p50": 0.0003238059929854295,
+        "p90": 0.012508666211582682,
+        "p99": 0.024602057097348737
+      },
+      "raw_bp50": {
+        "p50": 0.050767924816985624,
+        "p90": 0.05885276855840376,
+        "p99": 0.06805209887876719
+      },
+      "webp_envelope": {
+        "p50": 0.0,
+        "p90": 0.1027862370675047,
+        "p99": 0.160072618496256
+      },
+      "pixelcnn_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      }
+    },
+    "-2.850": {
+      "ours": {
+        "p50": 0.0,
+        "p90": 0.010066146066269651,
+        "p99": 0.023041447363259016
+      },
+      "raw_bp50": {
+        "p50": 0.04926532377656945,
+        "p90": 0.05872725364655666,
+        "p99": 0.06755880881764467
+      },
+      "webp_envelope": {
+        "p50": 0.0,
+        "p90": 0.08887944888082822,
+        "p99": 0.15957299574435696
+      },
+      "pixelcnn_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      }
+    },
+    "-2.800": {
+      "ours": {
+        "p50": 0.0,
+        "p90": 0.005653955699927029,
+        "p99": 0.02409433322348544
+      },
+      "raw_bp50": {
+        "p50": 0.04671514684305095,
+        "p90": 0.0570065869485049,
+        "p99": 0.06393650342489936
+      },
+      "webp_envelope": {
+        "p50": 0.0,
+        "p90": 0.033012334604987315,
+        "p99": 0.1381384466255339
+      },
+      "pixelcnn_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      }
+    },
+    "-2.750": {
+      "ours": {
+        "p50": 0.0,
+        "p90": 0.0029261920454456297,
+        "p99": 0.025854496308327198
+      },
+      "raw_bp50": {
+        "p50": 0.04385023617290053,
+        "p90": 0.0543877590251787,
+        "p99": 0.0651240731586752
+      },
+      "webp_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.09632650837233062
+      },
+      "pixelcnn_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      }
+    },
+    "-2.700": {
+      "ours": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.01624817181774668
+      },
+      "raw_bp50": {
+        "p50": 0.04146354620279484,
+        "p90": 0.053182914342207475,
+        "p99": 0.06188145473875825
+      },
+      "webp_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.06104911820702271
+      },
+      "pixelcnn_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      }
+    },
+    "-2.600": {
+      "ours": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.007505970427386637
+      },
+      "raw_bp50": {
+        "p50": 0.03377164591326727,
+        "p90": 0.047742444036438104,
+        "p99": 0.055190117027203035
+      },
+      "webp_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      },
+      "pixelcnn_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      }
+    },
+    "-2.400": {
+      "ours": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      },
+      "raw_bp50": {
+        "p50": 0.0,
+        "p90": 0.026975286192908537,
+        "p99": 0.04349537481659328
+      },
+      "webp_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      },
+      "pixelcnn_envelope": {
+        "p50": 0.0,
+        "p90": 0.0,
+        "p99": 0.0
+      }
+    }
+  },
+  "interpolation": "linear in log(ours_MSE/WebP_MSE) between positive points; linear in MSE when an endpoint is measured zero"
+}

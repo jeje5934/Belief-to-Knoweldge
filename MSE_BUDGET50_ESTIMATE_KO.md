@@ -1,5 +1,12 @@
 # BP-50 MSE 기준 파라미터 최적화 — 소표본 견적
 
+> **512-block 공정성 확장으로 대체됨:** 이 문서의 WebP 비교는 all-zero가 아니라
+> `best-effort full decode + paired test-pool mean-image fallback`이었지만, concealment
+> 정책 민감도와 train/test 분리를 충분히 다루지 못했다. 최종 비교, PixelCNN/raw
+> 대조, 분포 및 crossover는
+> [`MSE_FAIRNESS_EXTENSION_KO.md`](MSE_FAIRNESS_EXTENSION_KO.md)를 사용한다.
+> 아래 32/64-block 수치는 파라미터 탐색 이력으로만 보존한다.
+
 ## 결론
 
 `codex/mse-optimization` 브랜치에서 BP 예산을 정확히 50회,

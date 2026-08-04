@@ -61,6 +61,7 @@ def describe(values, seed):
         "median": float(np.median(values)),
         "q10": float(np.quantile(values, 0.10)),
         "q90": float(np.quantile(values, 0.90)),
+        "q99": float(np.quantile(values, 0.99)),
         "min": float(np.min(values)),
         "max": float(np.max(values)),
         "bootstrap_mean_95": bootstrap_mean_ci(values, seed),
@@ -816,6 +817,764 @@ def run_plot(args):
     plt.close(fig)
 
 
+def extended_metric_summary(metrics, seed):
+    """Image-MSE summary with the tail quantiles required by the fair study."""
+    summary = summarize_image_metrics(metrics, seed)
+    normalized = np.asarray(metrics["hard_mse_255"], dtype=np.float64) / (
+        255.0**2
+    )
+    mean_nmse = float(np.mean(normalized))
+    summary["aggregate_psnr_db"] = (
+        None if mean_nmse == 0.0 else float(-10.0 * np.log10(mean_nmse))
+    )
+    summary["tail_quantiles_mse_01"] = {
+        "p50": float(np.quantile(normalized, 0.50)),
+        "p90": float(np.quantile(normalized, 0.90)),
+        "p99": float(np.quantile(normalized, 0.99)),
+    }
+    return summary
+
+
+def run_extended_source(args):
+    """Fixed altproj candidate and raw BP-50 on the expanded SNR grid."""
+    os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+    os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+    import tensorflow as tf
+
+    tf.config.set_visible_devices([], "GPU")
+    import torch
+    import torchvision
+
+    from crc_utils import hard_crc_decode
+    from denoiser_sigma_alignment_diag import load_fashion_mnist
+    from denoiser_sigma_conditional_diag import make_system
+    from denoiser_sigma_three_scheme import configure_candidate
+    from low_budget_source_study import build_experiment_decoder
+    from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
+    from syndrome_sigma_schedule import AnnealingSigmaScheduler
+
+    images, bit_bank = load_fashion_mnist()
+    train = torchvision.datasets.FashionMNIST(
+        root="/tmp/fmnist", train=True, download=False
+    ).data.numpy().astype(np.float64)
+    train_global_mean = float(np.mean(train))
+    train_mean_image = np.mean(train, axis=0)
+
+    crc_encoder, crc_decoder, ldpc, mapper, demapper, _ = make_system()
+    source_decoder, proxy = build_experiment_decoder(
+        ldpc, SCHEDULE, args.checkpoint
+    )
+    source_decoder._ep_config_logged = True
+    source_decoder.track_u_hat = False
+    pure_decoder = LDPC5GDecoder(
+        ldpc,
+        cn_update="boxplus-phi", vn_update="sum", cn_schedule="flooding",
+        hard_out=False, return_infobits=True, num_iter=10, llr_max=30.0,
+        return_state=True,
+    )
+    source_config = make_config(
+        "altproj", 0.05, rho=args.rho,
+        sigma_mode="geom", sigma_start=0.3, sigma_end=0.1,
+        sigma_post=3.0,
+    )
+
+    def channel_batch(round_index, seed, esn0_db):
+        indices = tf.random.stateless_uniform(
+            [args.batch], seed=[seed, round_index], minval=0,
+            maxval=args.paired_pool, dtype=tf.int32,
+        )
+        payload = tf.gather(bit_bank, indices)
+        noise_variance = tf.cast(10.0 ** (-esn0_db / 10.0), ldpc.rdtype)
+        codeword = ldpc(crc_encoder(tf.cast(payload, ldpc.rdtype)))
+        transmitted = mapper(codeword)
+        if transmitted.dtype.is_complex:
+            real_dtype = transmitted.dtype.real_dtype
+            noise_real = tf.random.stateless_normal(
+                tf.shape(transmitted), seed=[seed + 1, round_index],
+                dtype=real_dtype,
+            )
+            noise_imag = tf.random.stateless_normal(
+                tf.shape(transmitted), seed=[seed + 2, round_index],
+                dtype=real_dtype,
+            )
+            unit_noise = tf.complex(noise_real, noise_imag) / tf.cast(
+                math.sqrt(2.0), transmitted.dtype
+            )
+        else:
+            unit_noise = tf.random.stateless_normal(
+                tf.shape(transmitted), seed=[seed + 1, round_index],
+                dtype=transmitted.dtype,
+            )
+        received = transmitted + unit_noise * tf.cast(
+            tf.sqrt(noise_variance), transmitted.dtype
+        )
+        return (
+            indices.numpy(), payload.numpy().astype(bool),
+            images[indices.numpy()].astype(np.float64),
+            demapper(received, noise_variance),
+        )
+
+    def metrics_from_logits(logits, truth_bits, truth_image):
+        payload_logits = np.asarray(logits.numpy())[:, :K_PAYLOAD]
+        shaped = payload_logits.reshape(-1, NPIX, BPP)
+        hard_bits = shaped > 0.0
+        probabilities = 1.0 / (
+            1.0 + np.exp(-np.clip(shaped, -60.0, 60.0))
+        )
+        hard_image = np.sum(hard_bits * BIT_WEIGHTS, axis=2)
+        soft_image = np.sum(probabilities * BIT_WEIGHTS, axis=2)
+        truth_flat = truth_image.reshape(-1, NPIX)
+        _, valid = hard_crc_decode(crc_decoder, logits)
+        return {
+            "hard_mse_255": np.mean(
+                (hard_image - truth_flat) ** 2, axis=1
+            ).tolist(),
+            "soft_mse_255": np.mean(
+                (soft_image - truth_flat) ** 2, axis=1
+            ).tolist(),
+            "crc_valid": np.asarray(valid.numpy())
+            .reshape(-1).astype(bool).tolist(),
+            "bit_errors": np.sum(
+                hard_bits.reshape(-1, K_PAYLOAD) != truth_bits, axis=1
+            ).astype(int).tolist(),
+        }
+
+    def append_metrics(target, values):
+        for key in target:
+            target[key].extend(values[key])
+
+    result = {
+        "kind": "bp50_mse_fairness_extended_source",
+        "configuration": {
+            "branch": "codex/mse-optimization",
+            "channel": "BPSK/AWGN/perfect_CSI",
+            "payload_bits": K_PAYLOAD,
+            "n": N_CODEWORD,
+            "ldpc_k": K_PAYLOAD + 24,
+            "ldpc_rate": (K_PAYLOAD + 24) / N_CODEWORD,
+            "bp_schedule": SCHEDULE,
+            "bp_budget": 50,
+            "blocks_per_snr": args.blocks,
+            "batch": args.batch,
+            "snrs_db": args.esn0,
+            "seed_base": args.seed,
+            "paired_pool": args.paired_pool,
+            "source_config": source_config,
+            "fixed_iteration_count": True,
+            "crc_early_stop": False,
+            "retuning": False,
+        },
+        "training_concealment": {
+            "dataset": "FashionMNIST train split (60000 images)",
+            "global_pixel_mean_0_255": train_global_mean,
+            "dataset_mean_image_0_255": train_mean_image.reshape(-1).tolist(),
+            "test_data_used_for_concealment": False,
+        },
+        "points": {},
+    }
+    if args.blocks % args.batch:
+        raise ValueError("blocks must be divisible by batch")
+    for snr_index, snr in enumerate(args.esn0):
+        point_seed = args.seed + snr_index * 10000
+        accum = {
+            "ours": {
+                "hard_mse_255": [], "soft_mse_255": [],
+                "crc_valid": [], "bit_errors": [],
+            },
+            "raw_bp50": {
+                "hard_mse_255": [], "soft_mse_255": [],
+                "crc_valid": [], "bit_errors": [],
+            },
+        }
+        for round_index in range(args.blocks // args.batch):
+            _, truth_bits, truth_image, channel_llr = channel_batch(
+                round_index, point_seed, snr
+            )
+            scheduler = AnnealingSigmaScheduler(
+                0.3, 0.1, SOURCE_CALLS, mode="geom"
+            )
+            path = tuple(float(value) for value in scheduler.path)
+            configure_candidate(
+                source_decoder, proxy, scheduler, path,
+                candidate_for_decoder(source_config),
+            )
+            proxy.set_readout("global", 3.0)
+            source_decoder.altproj_early_stop = False
+            ours_logits = source_decoder(channel_llr)
+
+            raw_message = None
+            raw_logits = None
+            for _ in range(5):
+                raw_logits, raw_message = pure_decoder(
+                    channel_llr, num_iter=10, msg_v2c=raw_message
+                )
+            append_metrics(
+                accum["ours"],
+                metrics_from_logits(ours_logits, truth_bits, truth_image),
+            )
+            append_metrics(
+                accum["raw_bp50"],
+                metrics_from_logits(raw_logits, truth_bits, truth_image),
+            )
+            print(
+                f"extended source Es/N0={snr:+.2f} round "
+                f"{round_index + 1}/{args.blocks // args.batch}", flush=True,
+            )
+        result["points"][f"{snr:.3f}"] = {
+            "esn0_db": float(snr),
+            "seed": point_seed,
+            "systems": {
+                name: extended_metric_summary(values, point_seed + i * 101)
+                for i, (name, values) in enumerate(accum.items())
+            },
+        }
+        dump_json(args.output, result)
+
+
+def concealment_summary(values_255, failure_values_255, seed):
+    values = np.asarray(values_255, dtype=np.float64)
+    normalized = values / (255.0**2)
+    failures = np.asarray(failure_values_255, dtype=np.float64) / (255.0**2)
+    mean_nmse = float(np.mean(normalized))
+    return {
+        "blocks": int(len(values)),
+        "mse_01": describe(normalized, seed),
+        "tail_quantiles_mse_01": {
+            "p50": float(np.quantile(normalized, 0.50)),
+            "p90": float(np.quantile(normalized, 0.90)),
+            "p99": float(np.quantile(normalized, 0.99)),
+        },
+        "aggregate_psnr_db": (
+            None if mean_nmse == 0.0 else float(-10.0 * np.log10(mean_nmse))
+        ),
+        "concealment_only_mse_01": (
+            None if not len(failures) else describe(failures, seed + 1)
+        ),
+        "per_block_mse_255": values.astype(float).tolist(),
+    }
+
+
+def run_extended_codecs(args):
+    """CRC-gated lossless codecs under three explicit concealment policies."""
+    os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+    import tensorflow as tf
+
+    for gpu in tf.config.list_physical_devices("GPU"):
+        tf.config.experimental.set_memory_growth(gpu, True)
+
+    from crc_utils import hard_crc_decode
+    from sionna.phy.fec.crc import CRCDecoder, CRCEncoder
+    from sionna.phy.fec.ldpc.decoding import LDPC5GDecoder
+    from sionna.phy.fec.ldpc.encoding import LDPC5GEncoder
+    from sionna.phy.mapping import Demapper, Mapper
+
+    source = json.loads(Path(args.source_result).read_text(encoding="utf-8"))
+    global_mean = float(
+        source["training_concealment"]["global_pixel_mean_0_255"]
+    )
+    mean_image = np.asarray(
+        source["training_concealment"]["dataset_mean_image_0_255"],
+        dtype=np.float64,
+    ).reshape(IMG_H, IMG_W)
+    codec_specs = {
+        "webp": args.webp_streams,
+        "pixelcnn": args.pixelcnn_streams,
+    }
+    archives = {name: np.load(path) for name, path in codec_specs.items()}
+    reference_images = archives["webp"]["imgs"][:args.paired_pool]
+    if not np.array_equal(
+        reference_images,
+        archives["pixelcnn"]["imgs"][:args.paired_pool],
+    ):
+        raise RuntimeError("WebP and PixelCNN image order differs")
+
+    result = {
+        "kind": "bp50_mse_fairness_extended_codecs",
+        "configuration": {
+            "source_result": args.source_result,
+            "n": N_CODEWORD,
+            "bp_schedule": SCHEDULE,
+            "bp_budget": 50,
+            "fixed_iteration_count": True,
+            "crc_early_stop": False,
+            "concealment_trigger": (
+                "hard CRC24A failure; CRC pass is accepted only after checking "
+                "that the true-length compressed payload is exact"
+            ),
+            "concealment_statistics": (
+                "FashionMNIST training split only; no test-image leakage"
+            ),
+            "policies": {
+                "all_zero": "28x28 all-zero image",
+                "global_constant": "single training-set global pixel mean",
+                "dataset_mean_image": "training-set per-location mean image",
+                "best_effort_full_decode_then_mean_image": (
+                    "WebP only: on CRC failure, try libwebp full-frame decode; "
+                    "if it fails, use the training-set mean image"
+                ),
+            },
+            "partial_decode": {
+                "implemented": False,
+                "reason_webp": (
+                    "best-effort full-frame decode is measured, but Pillow/libwebp "
+                    "does not expose a verified pixel-prefix boundary; VP8L "
+                    "prediction and entropy state propagate a bit error beyond a "
+                    "local prefix"
+                ),
+                "reason_pixelcnn": (
+                    "the arithmetic stream has no in-stream restart/checksum marker; "
+                    "a wrong symbol desynchronizes later symbols and the receiver "
+                    "cannot identify the last correct pixel without ground truth"
+                ),
+            },
+            "paired_payload_indices_and_unit_noise": True,
+        },
+        "codecs": {},
+    }
+
+    mapper = Mapper("pam", num_bits_per_symbol=1)
+    demapper = Demapper("app", "pam", num_bits_per_symbol=1)
+    for codec_index, (codec, archive) in enumerate(archives.items()):
+        bits = archive["bits"]
+        lengths = archive["lengths"]
+        images = archive["imgs"].reshape(-1, IMG_H, IMG_W).astype(np.float64)
+        k_container = int(bits.shape[1])
+        if k_container != int(np.max(lengths)):
+            raise RuntimeError(f"{codec}: archive is not MAX-container padded")
+        crc_encoder = CRCEncoder("CRC24A")
+        crc_decoder = CRCDecoder(crc_encoder)
+        encoder = LDPC5GEncoder(
+            k_container + 24, N_CODEWORD, num_bits_per_symbol=1
+        )
+        decoder = LDPC5GDecoder(
+            encoder,
+            cn_update="boxplus-phi", vn_update="sum", cn_schedule="flooding",
+            hard_out=False, return_infobits=True, num_iter=10, llr_max=30.0,
+            return_state=True,
+        )
+        codec_result = {
+            "stream_path": codec_specs[codec],
+            "container_bits": k_container,
+            "ldpc_k": k_container + 24,
+            "ldpc_rate": (k_container + 24) / N_CODEWORD,
+            "points": {},
+        }
+        for snr_key, source_point in source["points"].items():
+            snr = float(snr_key)
+            point_seed = int(source_point["seed"])
+            blocks = int(source["configuration"]["blocks_per_snr"])
+            if blocks % args.batch:
+                raise ValueError("blocks must be divisible by batch")
+            policy_values = {
+                "all_zero": [], "global_constant": [],
+                "dataset_mean_image": [],
+            }
+            if codec == "webp":
+                policy_values["best_effort_full_decode_then_mean_image"] = []
+            failure_values = {name: [] for name in policy_values}
+            crc_valid_all = []
+            stream_exact_all = []
+            best_effort_decode_all = []
+            best_effort_exact_all = []
+            for round_index in range(blocks // args.batch):
+                indices = tf.random.stateless_uniform(
+                    [args.batch], seed=[point_seed, round_index], minval=0,
+                    maxval=args.paired_pool, dtype=tf.int32,
+                ).numpy()
+                payload_np = bits[indices, :k_container].astype(np.float32)
+                payload = tf.constant(payload_np, dtype=encoder.rdtype)
+                truth = images[indices]
+                noise_variance = tf.cast(
+                    10.0 ** (-snr / 10.0), encoder.rdtype
+                )
+                transmitted = mapper(encoder(crc_encoder(payload)))
+                if transmitted.dtype.is_complex:
+                    real_dtype = transmitted.dtype.real_dtype
+                    noise_real = tf.random.stateless_normal(
+                        tf.shape(transmitted), seed=[point_seed + 1, round_index],
+                        dtype=real_dtype,
+                    )
+                    noise_imag = tf.random.stateless_normal(
+                        tf.shape(transmitted), seed=[point_seed + 2, round_index],
+                        dtype=real_dtype,
+                    )
+                    unit_noise = tf.complex(noise_real, noise_imag) / tf.cast(
+                        math.sqrt(2.0), transmitted.dtype
+                    )
+                else:
+                    unit_noise = tf.random.stateless_normal(
+                        tf.shape(transmitted), seed=[point_seed + 1, round_index],
+                        dtype=transmitted.dtype,
+                    )
+                received = transmitted + unit_noise * tf.cast(
+                    tf.sqrt(noise_variance), transmitted.dtype
+                )
+                llr = demapper(received, noise_variance)
+                message = None
+                logits = None
+                for _ in range(5):
+                    logits, message = decoder(
+                        llr, num_iter=10, msg_v2c=message
+                    )
+                _, valid_tensor = hard_crc_decode(crc_decoder, logits)
+                valid = np.asarray(valid_tensor.numpy()).reshape(-1).astype(bool)
+                recovered = np.asarray(logits.numpy())[:, :k_container] > 0.0
+                stream_exact = np.asarray(
+                    [
+                        np.array_equal(
+                            recovered[local, : int(lengths[index])],
+                            bits[index, : int(lengths[index])].astype(bool),
+                        )
+                        for local, index in enumerate(indices)
+                    ],
+                    dtype=bool,
+                )
+                delivered = valid & stream_exact
+                fallback = {
+                    "all_zero": np.mean(truth**2, axis=(1, 2)),
+                    "global_constant": np.mean(
+                        (truth - global_mean) ** 2, axis=(1, 2)
+                    ),
+                    "dataset_mean_image": np.mean(
+                        (truth - mean_image[None, :, :]) ** 2, axis=(1, 2)
+                    ),
+                }
+                for policy, fallback_mse in fallback.items():
+                    policy_values[policy].extend(
+                        np.where(delivered, 0.0, fallback_mse).tolist()
+                    )
+                    failure_values[policy].extend(
+                        fallback_mse[~delivered].tolist()
+                    )
+                if codec == "webp":
+                    best_effort_values = []
+                    best_effort_failure_values = []
+                    for local, index in enumerate(indices):
+                        if delivered[local]:
+                            best_effort_values.append(0.0)
+                            best_effort_decode_all.append(True)
+                            best_effort_exact_all.append(True)
+                            continue
+                        nbytes = int(lengths[index] // 8)
+                        raw = np.packbits(recovered[local])[:nbytes].tobytes()
+                        decoded = decode_webp_bytes(raw)
+                        decode_ok = decoded is not None
+                        exact = bool(
+                            decode_ok and np.array_equal(decoded, truth[local])
+                        )
+                        estimate = decoded if decode_ok else mean_image
+                        mse = float(np.mean((estimate - truth[local]) ** 2))
+                        best_effort_values.append(mse)
+                        best_effort_failure_values.append(mse)
+                        best_effort_decode_all.append(decode_ok)
+                        best_effort_exact_all.append(exact)
+                    policy_values[
+                        "best_effort_full_decode_then_mean_image"
+                    ].extend(best_effort_values)
+                    failure_values[
+                        "best_effort_full_decode_then_mean_image"
+                    ].extend(best_effort_failure_values)
+                crc_valid_all.extend(valid.tolist())
+                stream_exact_all.extend(stream_exact.tolist())
+                print(
+                    f"extended {codec} Es/N0={snr:+.2f} round "
+                    f"{round_index + 1}/{blocks // args.batch}", flush=True,
+                )
+            crc_valid_np = np.asarray(crc_valid_all, dtype=bool)
+            stream_exact_np = np.asarray(stream_exact_all, dtype=bool)
+            codec_result["points"][snr_key] = {
+                "esn0_db": snr,
+                "seed": point_seed,
+                "blocks": blocks,
+                "crc_failures": int(np.sum(~crc_valid_np)),
+                "crc_bler": float(np.mean(~crc_valid_np)),
+                "stream_exact_rate": float(np.mean(stream_exact_np)),
+                "crc_pass_stream_wrong": int(
+                    np.sum(crc_valid_np & ~stream_exact_np)
+                ),
+                "crc_fail_stream_exact": int(
+                    np.sum(~crc_valid_np & stream_exact_np)
+                ),
+                "best_effort_full_decode_rate": (
+                    None if codec != "webp" else float(np.mean(best_effort_decode_all))
+                ),
+                "best_effort_exact_image_rate": (
+                    None if codec != "webp" else float(np.mean(best_effort_exact_all))
+                ),
+                "policies": {
+                    policy: concealment_summary(
+                        values, failure_values[policy],
+                        point_seed + codec_index * 1000 + i * 101,
+                    )
+                    for i, (policy, values) in enumerate(policy_values.items())
+                },
+            }
+            result["codecs"][codec] = codec_result
+            dump_json(args.output, result)
+
+
+def log_ratio_crossover(snrs, ours, baseline):
+    """Interpolate where ours/baseline=1; use linear MSE if a point is zero."""
+    ordered = sorted(zip(snrs, ours, baseline))
+    for (x0, a0, b0), (x1, a1, b1) in zip(ordered[:-1], ordered[1:]):
+        if min(a0, b0, a1, b1) > 0.0:
+            d0 = math.log(a0 / b0)
+            d1 = math.log(a1 / b1)
+        else:
+            d0 = a0 - b0
+            d1 = a1 - b1
+        if d0 == 0.0:
+            return float(x0)
+        if d0 * d1 <= 0.0 and d0 != d1:
+            return float(x0 + (-d0) * (x1 - x0) / (d1 - d0))
+    return None
+
+
+def crossover_detail(snrs, ours, baseline):
+    ordered = sorted(zip(snrs, ours, baseline))
+    for (x0, a0, b0), (x1, a1, b1) in zip(ordered[:-1], ordered[1:]):
+        d0, d1 = a0 - b0, a1 - b1
+        if d0 * d1 < 0.0:
+            return {
+                "kind": "strict_sign_change",
+                "estimate_db": log_ratio_crossover(
+                    [x0, x1], [a0, a1], [b0, b1]
+                ),
+                "bracket_db": [float(x0), float(x1)],
+            }
+        if d0 == 0.0 and (a0 > 0.0 or b0 > 0.0):
+            return {
+                "kind": "measured_equal_positive",
+                "estimate_db": float(x0),
+                "bracket_db": [float(x0), float(x0)],
+            }
+    last_x, last_a, last_b = ordered[-1]
+    if last_a == 0.0 and last_b == 0.0:
+        return {
+            "kind": "touch_at_measured_zero_no_observed_reversal",
+            "estimate_db": float(last_x),
+            "bracket_db": [float(ordered[-2][0]), float(last_x)],
+        }
+    return {"kind": "no_crossing_in_grid", "estimate_db": None, "bracket_db": None}
+
+
+def run_extended_plot(args):
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    source = json.loads(Path(args.source_result).read_text(encoding="utf-8"))
+    codecs = json.loads(Path(args.codec_result).read_text(encoding="utf-8"))
+    snrs = sorted(float(key) for key in source["points"])
+
+    def source_curve(system, field="primary_hard_mse_01"):
+        return [
+            source["points"][f"{snr:.3f}"]["systems"][system][field]["mean"]
+            for snr in snrs
+        ]
+
+    def codec_curve(codec, policy):
+        return [
+            codecs["codecs"][codec]["points"][f"{snr:.3f}"]
+            ["policies"][policy]["mse_01"]["mean"]
+            for snr in snrs
+        ]
+
+    ours = source_curve("ours")
+    raw = source_curve("raw_bp50")
+    policies = ("all_zero", "global_constant", "dataset_mean_image")
+    webp_policies = policies + ("best_effort_full_decode_then_mean_image",)
+    webp_curves = {policy: codec_curve("webp", policy) for policy in policies}
+    webp_curves["best_effort_full_decode_then_mean_image"] = codec_curve(
+        "webp", "best_effort_full_decode_then_mean_image"
+    )
+    pixelcnn_curves = {
+        policy: codec_curve("pixelcnn", policy) for policy in policies
+    }
+    best_webp_policy = min(
+        webp_policies, key=lambda policy: float(np.mean(webp_curves[policy]))
+    )
+    best_pixelcnn_policy = min(
+        policies, key=lambda policy: float(np.mean(pixelcnn_curves[policy]))
+    )
+    crossovers = {
+        policy: log_ratio_crossover(snrs, ours, webp_curves[policy])
+        for policy in webp_policies
+    }
+    webp_envelope = [
+        min(webp_curves[policy][index] for policy in webp_policies)
+        for index in range(len(snrs))
+    ]
+    webp_envelope_policy = [
+        min(webp_policies, key=lambda policy: webp_curves[policy][index])
+        for index in range(len(snrs))
+    ]
+    pixelcnn_envelope = [
+        min(pixelcnn_curves[policy][index] for policy in policies)
+        for index in range(len(snrs))
+    ]
+    crossovers["per_snr_best_policy_envelope"] = log_ratio_crossover(
+        snrs, ours, webp_envelope
+    )
+    crossover_details = {
+        policy: crossover_detail(snrs, ours, webp_curves[policy])
+        for policy in webp_policies
+    }
+    crossover_details["per_snr_best_policy_envelope"] = crossover_detail(
+        snrs, ours, webp_envelope
+    )
+
+    def tail_quantiles(values):
+        array = np.asarray(values, dtype=np.float64) / (255.0 ** 2)
+        return {
+            "p50": float(np.quantile(array, 0.50)),
+            "p90": float(np.quantile(array, 0.90)),
+            "p99": float(np.quantile(array, 0.99)),
+        }
+
+    tail_by_snr = {}
+    for snr, webp_policy in zip(snrs, webp_envelope_policy):
+        key = f"{snr:.3f}"
+        source_point = source["points"][key]["systems"]
+        webp_point = codecs["codecs"]["webp"]["points"][key]
+        pixelcnn_point = codecs["codecs"]["pixelcnn"]["points"][key]
+        pixelcnn_policy = min(
+            policies,
+            key=lambda policy: pixelcnn_point["policies"][policy]["mse_01"]["mean"],
+        )
+        tail_by_snr[key] = {
+            "ours": tail_quantiles(source_point["ours"]["per_block"]["hard_mse_255"]),
+            "raw_bp50": tail_quantiles(
+                source_point["raw_bp50"]["per_block"]["hard_mse_255"]
+            ),
+            "webp_envelope": tail_quantiles(
+                webp_point["policies"][webp_policy]["per_block_mse_255"]
+            ),
+            "pixelcnn_envelope": tail_quantiles(
+                pixelcnn_point["policies"][pixelcnn_policy]["per_block_mse_255"]
+            ),
+        }
+
+    analysis = {
+        "kind": "bp50_mse_fairness_analysis",
+        "source_result": args.source_result,
+        "codec_result": args.codec_result,
+        "snrs_db": snrs,
+        "best_webp_concealment_by_grid_mean": best_webp_policy,
+        "best_pixelcnn_concealment_by_grid_mean": best_pixelcnn_policy,
+        "primary_webp_baseline": "per-SNR lower envelope across all policies",
+        "webp_envelope_policy_by_snr": {
+            f"{snr:.3f}": policy
+            for snr, policy in zip(snrs, webp_envelope_policy)
+        },
+        "ours_webp_crossover_db": crossovers,
+        "ours_webp_crossover_details": crossover_details,
+        "per_block_mse_quantiles_by_snr": tail_by_snr,
+        "interpolation": (
+            "linear in log(ours_MSE/WebP_MSE) between positive points; "
+            "linear in MSE when an endpoint is measured zero"
+        ),
+    }
+    dump_json(args.analysis_output, analysis)
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.2, 8.6), constrained_layout=True)
+    ax = axes[0, 0]
+    ax.plot(snrs, ours, "o-", label="ours altproj", color="#D1495B")
+    ax.plot(snrs, raw, "D--", label="raw + BP-50", color="#555555")
+    ax.plot(
+        snrs, webp_envelope, "s-",
+        label="WebP + BP-50 (best-policy envelope)", color="#00798C",
+    )
+    ax.plot(
+        snrs, pixelcnn_envelope, "^-",
+        label="PixelCNN + BP-50 (best-policy envelope)", color="#6A4C93",
+    )
+    ax.set_yscale("log")
+    ax.set_title("Mean normalized image MSE")
+    ax.set_xlabel("Es/N0 (dB)")
+    ax.set_ylabel("MSE / 255²")
+    ax.grid(True, which="both", alpha=0.25)
+    ax.legend(fontsize=8)
+
+    ax = axes[0, 1]
+    style = {
+        "all_zero": (":", "all-zero"),
+        "global_constant": ("--", "global pixel mean"),
+        "dataset_mean_image": ("-", "dataset mean image"),
+    }
+    for policy in policies:
+        ls, label = style[policy]
+        ax.plot(
+            snrs, webp_curves[policy], marker="s", linestyle=ls,
+            label=f"WebP: {label}", color="#00798C",
+        )
+    ax.plot(
+        snrs, webp_curves["best_effort_full_decode_then_mean_image"],
+        marker="x", linestyle="-.", color="#00A6A6",
+        label="WebP: best-effort full decode + mean image",
+    )
+    ax.plot(snrs, ours, "o-", label="ours", color="#D1495B")
+    ax.set_yscale("log")
+    ax.set_title("WebP concealment sensitivity")
+    ax.set_xlabel("Es/N0 (dB)")
+    ax.set_ylabel("MSE / 255²")
+    ax.grid(True, which="both", alpha=0.25)
+    ax.legend(fontsize=8)
+
+    ax = axes[1, 0]
+    systems = {
+        "ours": ours,
+        "raw": raw,
+        "WebP": webp_envelope,
+        "PixelCNN": pixelcnn_envelope,
+    }
+    for (label, curve), marker, color in zip(
+        systems.items(), ("o", "D", "s", "^"),
+        ("#D1495B", "#555555", "#00798C", "#6A4C93"),
+    ):
+        psnr = [60.0 if value == 0.0 else -10.0 * math.log10(value) for value in curve]
+        ax.plot(snrs, psnr, marker=marker, label=label, color=color)
+    ax.set_title("Aggregate PSNR (MSE=0 shown at 60 dB)")
+    ax.set_xlabel("Es/N0 (dB)")
+    ax.set_ylabel("PSNR (dB)")
+    ax.grid(True, alpha=0.25)
+    ax.legend(fontsize=8)
+
+    ax = axes[1, 1]
+    ours_bler = [
+        source["points"][f"{snr:.3f}"]["systems"]["ours"]["crc_bler"]
+        for snr in snrs
+    ]
+    raw_bler = [
+        source["points"][f"{snr:.3f}"]["systems"]["raw_bp50"]["crc_bler"]
+        for snr in snrs
+    ]
+    webp_bler = [
+        codecs["codecs"]["webp"]["points"][f"{snr:.3f}"]["crc_bler"]
+        for snr in snrs
+    ]
+    pixelcnn_bler = [
+        codecs["codecs"]["pixelcnn"]["points"][f"{snr:.3f}"]["crc_bler"]
+        for snr in snrs
+    ]
+    for label, curve, marker, color in (
+        ("ours", ours_bler, "o", "#D1495B"),
+        ("raw", raw_bler, "D", "#555555"),
+        ("WebP", webp_bler, "s", "#00798C"),
+        ("PixelCNN", pixelcnn_bler, "^", "#6A4C93"),
+    ):
+        ax.plot(snrs, curve, marker=marker, label=label, color=color)
+    ax.set_title("Hard-CRC BLER (same runs)")
+    ax.set_xlabel("Es/N0 (dB)")
+    ax.set_ylabel("CRC BLER")
+    ax.set_ylim(-0.03, 1.03)
+    ax.grid(True, alpha=0.25)
+    ax.legend(fontsize=8)
+    fig.suptitle("BP-50 MSE fairness extension — 512 paired blocks/SNR", fontsize=14)
+    fig.savefig(args.plot, dpi=180, bbox_inches="tight", pad_inches=0.15)
+    plt.close(fig)
+
 def parse_args():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="mode", required=True)
@@ -845,6 +1604,39 @@ def parse_args():
     plot.add_argument("--webp-result", required=True)
     plot.add_argument("--sweep-plot", required=True)
     plot.add_argument("--comparison-plot", required=True)
+
+    extended_source = sub.add_parser("extended-source")
+    extended_source.add_argument("--blocks", type=int, default=512)
+    extended_source.add_argument("--batch", type=int, default=64)
+    extended_source.add_argument(
+        "--esn0", type=float, nargs="+",
+        default=[-3.2, -3.0, -2.9, -2.85, -2.8, -2.75, -2.7, -2.6, -2.4],
+    )
+    extended_source.add_argument("--seed", type=int, default=20261001)
+    extended_source.add_argument("--paired-pool", type=int, default=3200)
+    extended_source.add_argument("--rho", type=float, default=0.85)
+    extended_source.add_argument("--checkpoint", default=DEFAULT_CHECKPOINT)
+    extended_source.add_argument("--output", required=True)
+
+    extended_codecs = sub.add_parser("extended-codecs")
+    extended_codecs.add_argument("--source-result", required=True)
+    extended_codecs.add_argument("--webp-streams", default=DEFAULT_WEBP)
+    extended_codecs.add_argument(
+        "--pixelcnn-streams",
+        default=(
+            "/home/LJH/onlyextrinsic_ada_sigma/compression_baseline/results/"
+            "channel_streams.npz"
+        ),
+    )
+    extended_codecs.add_argument("--paired-pool", type=int, default=3200)
+    extended_codecs.add_argument("--batch", type=int, default=64)
+    extended_codecs.add_argument("--output", required=True)
+
+    extended_plot = sub.add_parser("extended-plot")
+    extended_plot.add_argument("--source-result", required=True)
+    extended_plot.add_argument("--codec-result", required=True)
+    extended_plot.add_argument("--analysis-output", required=True)
+    extended_plot.add_argument("--plot", required=True)
     return parser.parse_args()
 
 
@@ -856,6 +1648,12 @@ def main():
         run_webp(args)
     elif args.mode == "plot":
         run_plot(args)
+    elif args.mode == "extended-source":
+        run_extended_source(args)
+    elif args.mode == "extended-codecs":
+        run_extended_codecs(args)
+    elif args.mode == "extended-plot":
+        run_extended_plot(args)
     else:
         raise ValueError(args.mode)
 
