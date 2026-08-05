@@ -17,6 +17,12 @@
 > BLER canonical을 대체하는 결과가 아니라 `codex/mse-optimization`의 별도
 > distortion-oriented 실험이다.
 
+> **Lossy-JSCC positioning branch:** D²-JSCC/NTSCC/DeepJSCC와의 자원 정의,
+> SNR 환산, 직접 비교 실현성, 클래스 경계는
+> [`JSCC_POSITIONING_REPORT_KO.md`](JSCC_POSITIONING_REPORT_KO.md)에 정리했다.
+> 핵심 결론은 ours(`r=8.04`)와 대표 lossy JSCC(`r≈.02~.167`)가 48~129배 다른
+> 자원 영역에 있어 현재 수치를 head-to-head 성능 비교로 읽을 수 없다는 것이다.
+
 5G-LDPC decoding of **Fashion-MNIST images** over an AWGN channel, with a
 learned EDM **score denoiser** supplying an image-domain prior. This branch
 (`pure-EP_ada-sigma`) reformulates the decoder as **Expectation Propagation
