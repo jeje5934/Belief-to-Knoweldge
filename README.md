@@ -23,6 +23,12 @@
 > 핵심 결론은 ours(`r=8.04`)와 대표 lossy JSCC(`r≈.02~.167`)가 48~129배 다른
 > 자원 영역에 있어 현재 수치를 head-to-head 성능 비교로 읽을 수 없다는 것이다.
 
+> **Multiview receiver-side experiment:** 송신단이 통신하지 않는 상관 카메라의
+> 무손실 side view를 수신단에서만 쓰는 게이팅·altproj 통합 결과는
+> [`MULTIVIEW_REPORT_KO.md`](MULTIVIEW_REPORT_KO.md)에 정리했다. 재학습 없는
+> early-gated side pull은 BLER 0.1 knee를 약 0.19 dB 개선했지만, 무비용 side라는
+> 낙관 조건에서도 PixelCNN-MAX까지의 격차 0.69 dB가 남았다.
+
 5G-LDPC decoding of **Fashion-MNIST images** over an AWGN channel, with a
 learned EDM **score denoiser** supplying an image-domain prior. This branch
 (`pure-EP_ada-sigma`) reformulates the decoder as **Expectation Propagation

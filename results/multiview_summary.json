@@ -1,0 +1,94 @@
+{
+  "canonical_512_knees_linear_interpolation": {
+    "0.1": {
+      "no_side_db": -2.8984615384615386,
+      "no_side_same_endpoint_db": -2.8948920863309353,
+      "with_side_db": -3.08825,
+      "side_gain_db": 0.1897884615384613,
+      "side_gain_same_endpoint_db": 0.19335791366906463
+    },
+    "0.01": {
+      "no_side_db": -2.6511428571428572,
+      "no_side_same_endpoint_db": -2.6639999999999997,
+      "with_side_db": -2.856054054054054,
+      "side_gain_db": 0.20491119691119675,
+      "side_gain_same_endpoint_db": 0.1920540540540543
+    }
+  },
+  "established_hard_crc_knees": {
+    "raw_bp100_knee_0p1_db": -2.331,
+    "ours_no_side_knee_0p1_db": -2.94,
+    "webp_max_knee_0p1_db": -2.801,
+    "pixelcnn_max_knee_0p1_db": -3.826
+  },
+  "anchored_multiview_knee_0p1_db": -3.1333579136690646,
+  "remaining_gap_to_pixelcnn_db": 0.6926420863309355,
+  "advantage_over_webp_db": 0.3323579136690644,
+  "same_endpoint_paired_side_accounting": {
+    "-3.200": {
+      "broken": 1,
+      "rescued": 261
+    },
+    "-3.050": {
+      "broken": 1,
+      "rescued": 119
+    },
+    "-2.850": {
+      "broken": 0,
+      "rescued": 16
+    },
+    "-2.650": {
+      "broken": 0,
+      "rescued": 1
+    }
+  },
+  "estimated_registration_same_seed_minus3p05": {
+    "no_side_failures": 19,
+    "oracle_side_failures": 6,
+    "estimated_side_failures": 8,
+    "diagnostics": {
+      "oracle_mse_01": {
+        "mean": 0.007832917239284143,
+        "median": 0.006674527656286955,
+        "p90": 0.014426288940012457
+      },
+      "estimated_mse_01": {
+        "mean": 0.010156842745345784,
+        "median": 0.008820496965199709,
+        "p90": 0.018657542020082477
+      },
+      "raw_side_mse_01": {
+        "mean": 0.023591270699398592,
+        "median": 0.021172093227505684,
+        "p90": 0.0419142920523882
+      },
+      "abs_tx_error": {
+        "mean": 0.14811006627838452,
+        "median": 0.13278138370334647,
+        "p90": 0.2641465482755692
+      },
+      "abs_ty_error": {
+        "mean": 0.1807239301326675,
+        "median": 0.11047481047734231,
+        "p90": 0.376768241492215
+      },
+      "abs_angle_error_deg": {
+        "mean": 0.8026518991098551,
+        "median": 0.6576876951379313,
+        "p90": 1.9190636520512059
+      },
+      "abs_brightness_error": {
+        "mean": 0.0817970887915028,
+        "median": 0.08078615925881277,
+        "p90": 0.12892810052961373
+      }
+    }
+  },
+  "two_stage_accounting_not_direct_measurement": {
+    "snr_db": -3.05,
+    "assumption": "first-view no-side BLER equals target no-side BLER and view failures are independent",
+    "pair_bler_no_side": 0.4433441162109375,
+    "pair_bler_sequential_side": 0.31365203857421875,
+    "per_view_bler_with_no_side_fallback": 0.18906021118164062
+  }
+}
