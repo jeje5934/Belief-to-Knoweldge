@@ -1,5 +1,60 @@
 # Belief-to-Knowledge — LDPC + score-denoiser decoding as Expectation Propagation
 
+## 연구 전략 (Research Strategies)
+
+본 연구는 아래 세 가지 전략을 병행 검토 중이며, 각 실험 브랜치는 이 중
+하나 이상에 대응한다.
+
+### 전략 1 — Receiver-side JSCD for raw transmission
+
+송신단은 압축 없이 raw bit를 표준 5G LDPC로 보내고, 수신단만 learned source
+prior를 이용한 반복 복호(altproj / damped EP)를 수행한다. 상용 무손실 코덱
+(WebP) 대비 동등~우세한 BLER을 내면서 실패 시 열화가 완만하다. 송신단 계산
+요구가 낮고, 수신단 계산으로 기존 통신 수준의 신뢰도를 확보하는 접근이다.
+altproj는 채널 앵커와 누적 보정으로, damped EP는 코드·채널·소스 site의 곱으로
+수학적 정식화가 가능하다.
+
+**Hard-CRC 근거:** source prior는 raw+BP 대비 `0.61 dB` 이득을 냈다.
+WebP-MAX와 BP 예산 100/50에서 동급~우세하고, gzip/PNG에는 전 예산에서
+우세하다. 반면 learned lossless인 PixelCNN-MAX에는 `0.886 dB` 뒤진다.
+
+### 전략 2 — Task/distortion-oriented mode with unchanged transceiver
+
+동일 파이프라인을 왜곡(MSE/PSNR) 기준으로 운용하는 모드다. 송수신 구조를
+거의 바꾸지 않으면서 실패 구간에서 유의한 MSE 이득을 얻는다. 기존
+conventional 통신 기기가 이 모드를 선택적으로 지원하는 형태를 상정한다.
+
+**근거:** BP-50 조건에서 WebP에 가장 유리한 concealment를 적용해도 crossover
+`-2.625 dB` 아래에서 MSE가 `7~10배` 낮았고, p99 꼬리에서도 `6.9배` 낮았다.
+raw+BP 대비 평균 MSE는 `18.1배` 낮고 PSNR은 `+12.6 dB`였다.
+
+### 전략 3 — Multi-terminal decoding for correlated UEs
+
+복수 UE가 서로 통신하지 않고 상관된 데이터를 각자 UL로 전송하는 상황을
+다룬다. 뷰 간 상관은 송신단 압축으로 제거할 수 없으므로 수신단에서만 활용
+가능하며, 이는 본 접근의 구조적 강점 영역이다. 현재는 정합된 side view를
+고정 Gaussian pseudo-observation으로 쓰는 가장 단순한 형태다. virtual-channel
+분산 추정이나 conditional score `p(X|Y)`는 아직 구현하지 않았다.
+
+**Hard-CRC 근거:** side 정보로 BLER 0.1 knee가 `+0.19 dB` 개선됐고,
+canonical no-side 비교에서는 측정한 전 SNR에서 성공 블록 파괴가 `0`이었다.
+PixelCNN 격차는 `0.886 -> 0.693 dB`로 줄었고, WebP 대비 `0.332 dB` 우세로
+전환됐다.
+
+**미해결:** PixelCNN은 아직 이기지 못했다. UE 수가 늘면 활용 가능한 상관
+정보가 증가해 유리할 것으로 예상하지만 미검증이다. side view도 채널을 거쳐
+오는 현실적 2단 복호 역시 아직 직접 측정하지 않았다.
+
+### 전략별 브랜치·근거 문서
+
+브랜치가 서로 다른 README 이력을 가지므로 아래는 `branch:path` 표기다.
+
+| 전략 | 주요 브랜치 | 핵심 보고서 |
+|---|---|---|
+| 1. Receiver-side raw JSCD | `practical_sigma` | `practical_sigma:HARD_CRC_REMEASUREMENT_REPORT_KO.md`, `practical_sigma:ALTPROJ_COMPRESSION_GAP_REPORT_KO.md`, `practical_sigma:LOW_BUDGET_CODEC_DUEL_REPORT_KO.md`, `practical_sigma:DISCUSSION_SUMMARY_KO.md` |
+| 2. Distortion-oriented mode | `codex/mse-optimization`, `codex/jscc-positioning` | `codex/mse-optimization:MSE_BUDGET50_ESTIMATE_KO.md`, `codex/mse-optimization:MSE_FAIRNESS_EXTENSION_KO.md`, `codex/jscc-positioning:JSCC_POSITIONING_REPORT_KO.md` |
+| 3. Multi-terminal correlated UEs | `codex/multiview` | `codex/multiview:MULTIVIEW_REPORT_KO.md`, `codex/multiview:results/multiview_gate_256.json`, `codex/multiview:results/multiview_altproj_canonical_waterfall512.json` |
+
 > **CRC correction (2026-07-28):** historical CRC-BLER/NACK values in this
 > branch may include soft-logit CRC misuse. Current hard-CRC primary results are
 > in [`HARD_CRC_REMEASUREMENT_REPORT_KO.md`](HARD_CRC_REMEASUREMENT_REPORT_KO.md);
