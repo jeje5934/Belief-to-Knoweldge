@@ -1,0 +1,721 @@
+{
+  "kind": "multiview_loop_vs_post_summary",
+  "snrs_db": [
+    -3.2,
+    -3.05,
+    -2.85,
+    -2.75,
+    -2.65
+  ],
+  "rows": [
+    {
+      "esn0_db": -3.2,
+      "system": "A_raw_bp100",
+      "failures": 512,
+      "blocks": 512,
+      "bler": 1.0,
+      "wilson_95": [
+        0.9925527526279385,
+        1.0
+      ],
+      "mean_mse_01": 0.06044286330494207,
+      "psnr_db": 12.186549704071044,
+      "p50": 0.0604988367896178,
+      "p90": 0.0692396703779551,
+      "p99": 0.07449507626580044
+    },
+    {
+      "esn0_db": -3.2,
+      "system": "B_altproj_no_side",
+      "failures": 277,
+      "blocks": 512,
+      "bler": 0.541015625,
+      "wilson_95": [
+        0.49770579057321906,
+        0.5837145524157915
+      ],
+      "mean_mse_01": 0.005041656291805937,
+      "psnr_db": 22.974267650975165,
+      "p50": 0.00026038846911313545,
+      "p90": 0.015493874020196322,
+      "p99": 0.024829959434754283
+    },
+    {
+      "esn0_db": -3.2,
+      "system": "C_altproj_side_in_loop",
+      "failures": 131,
+      "blocks": 512,
+      "bler": 0.255859375,
+      "wilson_95": [
+        0.2199783852331612,
+        0.29537671602272814
+      ],
+      "mean_mse_01": 0.0034090718088706073,
+      "psnr_db": 24.67363850672605,
+      "p50": 0.0,
+      "p90": 0.01310420638843773,
+      "p99": 0.02659692739841033
+    },
+    {
+      "esn0_db": -3.2,
+      "system": "D_webp_independent",
+      "failures": 479,
+      "blocks": 512,
+      "bler": 0.935546875,
+      "wilson_95": [
+        0.9108653842000319,
+        0.9537411151594614
+      ],
+      "mean_mse_01": 0.0809935807956208,
+      "psnr_db": 10.915494000782973,
+      "p50": 0.08322503790259361,
+      "p90": 0.12188219279050827,
+      "p99": 0.1765877604484558
+    },
+    {
+      "esn0_db": -3.2,
+      "system": "E_webp_post_side",
+      "failures": 479,
+      "blocks": 512,
+      "bler": 0.935546875,
+      "wilson_95": [
+        0.9108653842000319,
+        0.9537411151594614
+      ],
+      "mean_mse_01": 0.008375143656849104,
+      "psnr_db": 20.77007734877174,
+      "p50": 0.00765142566524446,
+      "p90": 0.014779731538146738,
+      "p99": 0.023529900126159183
+    },
+    {
+      "esn0_db": -3.2,
+      "system": "D_pixelcnn_independent",
+      "failures": 0,
+      "blocks": 512,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.007447247372061501
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -3.2,
+      "system": "E_pixelcnn_post_side",
+      "failures": 0,
+      "blocks": 512,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.007447247372061501
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -3.05,
+      "system": "A_raw_bp100",
+      "failures": 512,
+      "blocks": 512,
+      "bler": 1.0,
+      "wilson_95": [
+        0.9925527526279385,
+        1.0
+      ],
+      "mean_mse_01": 0.05657590077238003,
+      "psnr_db": 12.473685227049202,
+      "p50": 0.05636659565787099,
+      "p90": 0.06569356762312768,
+      "p99": 0.0718494984268217
+    },
+    {
+      "esn0_db": -3.05,
+      "system": "B_altproj_no_side",
+      "failures": 112,
+      "blocks": 512,
+      "bler": 0.21875,
+      "wilson_95": [
+        0.18510786206007077,
+        0.2565812145867139
+      ],
+      "mean_mse_01": 0.002638011048475763,
+      "psnr_db": 25.787233898806278,
+      "p50": 0.0,
+      "p90": 0.011707912576795425,
+      "p99": 0.025699503134587166
+    },
+    {
+      "esn0_db": -3.05,
+      "system": "C_altproj_side_in_loop",
+      "failures": 67,
+      "blocks": 512,
+      "bler": 0.130859375,
+      "wilson_95": [
+        0.10437539972947389,
+        0.16284151336943087
+      ],
+      "mean_mse_01": 0.0017929066157713084,
+      "psnr_db": 27.464423302433904,
+      "p50": 0.0,
+      "p90": 0.0072861164073472545,
+      "p99": 0.024239606430807605
+    },
+    {
+      "esn0_db": -3.05,
+      "system": "D_webp_independent",
+      "failures": 318,
+      "blocks": 512,
+      "bler": 0.62109375,
+      "wilson_95": [
+        0.578318065472671,
+        0.6620658043044079
+      ],
+      "mean_mse_01": 0.054513732247869484,
+      "psnr_db": 12.634940832600158,
+      "p50": 0.05731581896543503,
+      "p90": 0.11867672950029373,
+      "p99": 0.17603988617658606
+    },
+    {
+      "esn0_db": -3.05,
+      "system": "E_webp_post_side",
+      "failures": 318,
+      "blocks": 512,
+      "bler": 0.62109375,
+      "wilson_95": [
+        0.578318065472671,
+        0.6620658043044079
+      ],
+      "mean_mse_01": 0.005746629958139238,
+      "psnr_db": 22.405867674238603,
+      "p50": 0.004996958188712597,
+      "p90": 0.014550738688558345,
+      "p99": 0.020827717762440443
+    },
+    {
+      "esn0_db": -3.05,
+      "system": "D_pixelcnn_independent",
+      "failures": 0,
+      "blocks": 512,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.007447247372061501
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -3.05,
+      "system": "E_pixelcnn_post_side",
+      "failures": 0,
+      "blocks": 512,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.007447247372061501
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -2.85,
+      "system": "A_raw_bp100",
+      "failures": 512,
+      "blocks": 512,
+      "bler": 1.0,
+      "wilson_95": [
+        0.9925527526279385,
+        1.0
+      ],
+      "mean_mse_01": 0.04917855630303592,
+      "psnr_db": 13.082242246584643,
+      "p50": 0.04963287275694592,
+      "p90": 0.05911407111864354,
+      "p99": 0.06713020816169604
+    },
+    {
+      "esn0_db": -2.85,
+      "system": "B_altproj_no_side",
+      "failures": 21,
+      "blocks": 512,
+      "bler": 0.041015625,
+      "wilson_95": [
+        0.026980743113877062,
+        0.06188684724719502
+      ],
+      "mean_mse_01": 0.0007246942894804981,
+      "psnr_db": 31.39845160865908,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.021892210805890953
+    },
+    {
+      "esn0_db": -2.85,
+      "system": "C_altproj_side_in_loop",
+      "failures": 9,
+      "blocks": 512,
+      "bler": 0.017578125,
+      "wilson_95": [
+        0.009274827345489841,
+        0.03306685273614762
+      ],
+      "mean_mse_01": 0.0002544506236931047,
+      "psnr_db": 35.94396480274507,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.012292774364647794
+    },
+    {
+      "esn0_db": -2.85,
+      "system": "D_webp_independent",
+      "failures": 32,
+      "blocks": 512,
+      "bler": 0.0625,
+      "wilson_95": [
+        0.04461632058907124,
+        0.08690002086148259
+      ],
+      "mean_mse_01": 0.005600452139333356,
+      "psnr_db": 22.51776909834707,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.11411256864666938
+    },
+    {
+      "esn0_db": -2.85,
+      "system": "E_webp_post_side",
+      "failures": 32,
+      "blocks": 512,
+      "bler": 0.0625,
+      "wilson_95": [
+        0.04461632058907124,
+        0.08690002086148259
+      ],
+      "mean_mse_01": 0.0005332400633051293,
+      "psnr_db": 32.73077228690458,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.011481595560908305
+    },
+    {
+      "esn0_db": -2.85,
+      "system": "D_pixelcnn_independent",
+      "failures": 0,
+      "blocks": 512,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.007447247372061501
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -2.85,
+      "system": "E_pixelcnn_post_side",
+      "failures": 0,
+      "blocks": 512,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.007447247372061501
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -2.75,
+      "system": "A_raw_bp100",
+      "failures": 1008,
+      "blocks": 1024,
+      "bler": 0.984375,
+      "wilson_95": [
+        0.9747694996955357,
+        0.9903597575752344
+      ],
+      "mean_mse_01": 0.04314347550830994,
+      "psnr_db": 13.650848723701667,
+      "p50": 0.04420464264137028,
+      "p90": 0.05431260151119271,
+      "p99": 0.062111778633021836
+    },
+    {
+      "esn0_db": -2.75,
+      "system": "B_altproj_no_side",
+      "failures": 22,
+      "blocks": 1024,
+      "bler": 0.021484375,
+      "wilson_95": [
+        0.014230048863088398,
+        0.03231564455893306
+      ],
+      "mean_mse_01": 0.00039406071481901583,
+      "psnr_db": 34.044368591910924,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.018302211080510618
+    },
+    {
+      "esn0_db": -2.75,
+      "system": "C_altproj_side_in_loop",
+      "failures": 12,
+      "blocks": 1024,
+      "bler": 0.01171875,
+      "wilson_95": [
+        0.0067160895006905435,
+        0.020371352766678282
+      ],
+      "mean_mse_01": 0.00022636382984566374,
+      "psnr_db": 36.45192966853834,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.007543245533507501
+    },
+    {
+      "esn0_db": -2.75,
+      "system": "D_webp_independent",
+      "failures": 11,
+      "blocks": 1024,
+      "bler": 0.0107421875,
+      "wilson_95": [
+        0.006008649786782673,
+        0.019132967365120886
+      ],
+      "mean_mse_01": 0.0010559675502008758,
+      "psnr_db": 29.7634942743216,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.02577757753431736
+    },
+    {
+      "esn0_db": -2.75,
+      "system": "E_webp_post_side",
+      "failures": 11,
+      "blocks": 1024,
+      "bler": 0.0107421875,
+      "wilson_95": [
+        0.006008649786782673,
+        0.019132967365120886
+      ],
+      "mean_mse_01": 0.0001186390209113597,
+      "psnr_db": 39.2577244605375,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.004919682019390049
+    },
+    {
+      "esn0_db": -2.75,
+      "system": "D_pixelcnn_independent",
+      "failures": 0,
+      "blocks": 1024,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.003737540881785676
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -2.75,
+      "system": "E_pixelcnn_post_side",
+      "failures": 0,
+      "blocks": 1024,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.003737540881785676
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -2.65,
+      "system": "A_raw_bp100",
+      "failures": 480,
+      "blocks": 512,
+      "bler": 0.9375,
+      "wilson_95": [
+        0.9130999791385175,
+        0.9553836794109287
+      ],
+      "mean_mse_01": 0.035673714300364756,
+      "psnr_db": 14.476516701353578,
+      "p50": 0.03854596740657047,
+      "p90": 0.049512722736153286,
+      "p99": 0.058334617180205404
+    },
+    {
+      "esn0_db": -2.65,
+      "system": "B_altproj_no_side",
+      "failures": 5,
+      "blocks": 512,
+      "bler": 0.009765625,
+      "wilson_95": [
+        0.004178240073313048,
+        0.022654803248512878
+      ],
+      "mean_mse_01": 0.00017439991468401087,
+      "psnr_db": 37.584537318591416,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -2.65,
+      "system": "C_altproj_side_in_loop",
+      "failures": 3,
+      "blocks": 512,
+      "bler": 0.005859375,
+      "wilson_95": [
+        0.001994639685501603,
+        0.017084085256418552
+      ],
+      "mean_mse_01": 0.00011260907549294225,
+      "psnr_db": 39.48426607018641,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -2.65,
+      "system": "D_webp_independent",
+      "failures": 0,
+      "blocks": 512,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.007447247372061501
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -2.65,
+      "system": "E_webp_post_side",
+      "failures": 0,
+      "blocks": 512,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.007447247372061501
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -2.65,
+      "system": "D_pixelcnn_independent",
+      "failures": 0,
+      "blocks": 512,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.007447247372061501
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    {
+      "esn0_db": -2.65,
+      "system": "E_pixelcnn_post_side",
+      "failures": 0,
+      "blocks": 512,
+      "bler": 0.0,
+      "wilson_95": [
+        0.0,
+        0.007447247372061501
+      ],
+      "mean_mse_01": 0.0,
+      "psnr_db": null,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    }
+  ],
+  "paired_accounting": {
+    "-3.20": {
+      "A_to_C": {
+        "rescued": 381,
+        "broken": 0,
+        "net_failure_reduction": 381
+      },
+      "B_to_C": {
+        "rescued": 153,
+        "broken": 7,
+        "net_failure_reduction": 146
+      },
+      "WebP_D_to_E_bit_exact": {
+        "rescued": 0,
+        "broken": 0,
+        "note": "postprocessing cannot repair the compressed bitstream CRC"
+      },
+      "WebP_vs_C": {
+        "C_only_success": 353,
+        "WebP_only_success": 5
+      }
+    },
+    "-3.05": {
+      "A_to_C": {
+        "rescued": 445,
+        "broken": 0,
+        "net_failure_reduction": 445
+      },
+      "B_to_C": {
+        "rescued": 52,
+        "broken": 7,
+        "net_failure_reduction": 45
+      },
+      "WebP_D_to_E_bit_exact": {
+        "rescued": 0,
+        "broken": 0,
+        "note": "postprocessing cannot repair the compressed bitstream CRC"
+      },
+      "WebP_vs_C": {
+        "C_only_success": 267,
+        "WebP_only_success": 16
+      }
+    },
+    "-2.85": {
+      "A_to_C": {
+        "rescued": 503,
+        "broken": 0,
+        "net_failure_reduction": 503
+      },
+      "B_to_C": {
+        "rescued": 17,
+        "broken": 5,
+        "net_failure_reduction": 12
+      },
+      "WebP_D_to_E_bit_exact": {
+        "rescued": 0,
+        "broken": 0,
+        "note": "postprocessing cannot repair the compressed bitstream CRC"
+      },
+      "WebP_vs_C": {
+        "C_only_success": 30,
+        "WebP_only_success": 7
+      }
+    },
+    "-2.75": {
+      "A_to_C": {
+        "rescued": 996,
+        "broken": 0,
+        "net_failure_reduction": 996
+      },
+      "B_to_C": {
+        "rescued": 13,
+        "broken": 3,
+        "net_failure_reduction": 10
+      },
+      "WebP_D_to_E_bit_exact": {
+        "rescued": 0,
+        "broken": 0,
+        "note": "postprocessing cannot repair the compressed bitstream CRC"
+      },
+      "WebP_vs_C": {
+        "C_only_success": 11,
+        "WebP_only_success": 12
+      }
+    },
+    "-2.65": {
+      "A_to_C": {
+        "rescued": 477,
+        "broken": 0,
+        "net_failure_reduction": 477
+      },
+      "B_to_C": {
+        "rescued": 3,
+        "broken": 1,
+        "net_failure_reduction": 2
+      },
+      "WebP_D_to_E_bit_exact": {
+        "rescued": 0,
+        "broken": 0,
+        "note": "postprocessing cannot repair the compressed bitstream CRC"
+      },
+      "WebP_vs_C": {
+        "C_only_success": 0,
+        "WebP_only_success": 3
+      }
+    }
+  },
+  "knees": {
+    "A_raw_bp100": {
+      "bler_0.1_db": null,
+      "bler_0.01_db": null
+    },
+    "B_altproj_no_side": {
+      "bler_0.1_db": -2.956479049101127,
+      "bler_0.01_db": -2.653007965656679
+    },
+    "C_altproj_side_in_loop": {
+      "bler_0.1_db": -3.0232047453098962,
+      "bler_0.01_db": -2.727118130950412
+    },
+    "D_webp_independent": {
+      "bler_0.1_db": -2.8909354579841735,
+      "bler_0.01_db": null
+    },
+    "E_webp_post_side": {
+      "bler_0.1_db": -2.8909354579841735,
+      "bler_0.01_db": null
+    },
+    "D_pixelcnn_independent": {
+      "bler_0.1_db": null,
+      "bler_0.01_db": null
+    },
+    "E_pixelcnn_post_side": {
+      "bler_0.1_db": null,
+      "bler_0.01_db": null
+    }
+  },
+  "correlation_realization": {
+    "calibration_db_per_bpp": 0.30097718990850586,
+    "calibration": "1.494 dB / (8 - PixelCNN mean 3.036 bpp)",
+    "strong_i_x_y_pixelwise_bpp": 1.7782264757967177,
+    "available_gain_proxy_db": 0.5352056077062018,
+    "measured_side_gain_at_bler_0.1_db": 0.06672569620876923,
+    "realization_fraction_at_bler_0.1": 0.12467301397446853,
+    "measured_side_gain_at_bler_0.01_db": 0.0741101652937326,
+    "realization_fraction_at_bler_0.01": 0.13847045738432354,
+    "warning": "heuristic cross-calibration, not an information-theoretic efficiency"
+  },
+  "primary_post_policy": "side_direct (selected on independent 64-block screen)"
+}

@@ -1,0 +1,218 @@
+{
+  "kind": "synthetic_multiview_correlation_entropy",
+  "blocks": 3200,
+  "pixels_per_block": 784,
+  "registration": "oracle inverse affine/brightness for an intrinsic-correlation upper bound",
+  "estimator": "plug-in 256x256 pixel joint histogram; spatial dependence is ignored, so this is not an operational whole-image entropy rate",
+  "pixelcnn_operational_hx_proxy_bpp": 3.0361686862244897,
+  "pixelcnn_note": "mean arithmetic-stream length / 784; reported beside, not subtracted from, the pixelwise conditional entropy because the estimators differ",
+  "strengths": {
+    "strong": {
+      "h_x_empirical_pixel_bpp": 4.924489826203607,
+      "h_y_empirical_pixel_bpp": 5.582411309651335,
+      "h_x_given_y_pixelwise_bpp": 3.1462633504068895,
+      "i_x_y_pixelwise_bpp": 1.7782264757967177,
+      "fraction_of_empirical_hx": 0.3610986190558525,
+      "residual_entropy_bpp_upper_bound_proxy": 4.572613713903461,
+      "byte_exact_rate": 0.4385375478316327,
+      "bit_agreement": 0.7967302096619898,
+      "bit_planes": [
+        {
+          "plane_msb0": 0,
+          "agreement": 0.969247050382653,
+          "h_x": 0.8996781063276847,
+          "h_x_given_y": 0.19795796691107181,
+          "mutual_information": 0.701720139416613
+        },
+        {
+          "plane_msb0": 1,
+          "agreement": 0.9047755899234694,
+          "h_x": 0.8463642166706864,
+          "h_x_given_y": 0.44308810608901683,
+          "mutual_information": 0.40327611058166957
+        },
+        {
+          "plane_msb0": 2,
+          "agreement": 0.8285435267857143,
+          "h_x": 0.7953927392580473,
+          "h_x_given_y": 0.6070724964277274,
+          "mutual_information": 0.1883202428303199
+        },
+        {
+          "plane_msb0": 3,
+          "agreement": 0.7852997448979592,
+          "h_x": 0.7934238357845111,
+          "h_x_given_y": 0.6723441700213963,
+          "mutual_information": 0.1210796657631148
+        },
+        {
+          "plane_msb0": 4,
+          "agreement": 0.7514241868622449,
+          "h_x": 0.8026218486963828,
+          "h_x_given_y": 0.7189304676266439,
+          "mutual_information": 0.08369138106973883
+        },
+        {
+          "plane_msb0": 5,
+          "agreement": 0.7278619260204081,
+          "h_x": 0.8088074920797964,
+          "h_x_given_y": 0.7468254018106157,
+          "mutual_information": 0.061982090269180556
+        },
+        {
+          "plane_msb0": 6,
+          "agreement": 0.7105042251275511,
+          "h_x": 0.8161532190614447,
+          "h_x_given_y": 0.7663412499487068,
+          "mutual_information": 0.049811969112737886
+        },
+        {
+          "plane_msb0": 7,
+          "agreement": 0.6961854272959184,
+          "h_x": 0.8220398071625203,
+          "h_x_given_y": 0.7785419087127021,
+          "mutual_information": 0.04349789844981822
+        }
+      ],
+      "sum_bitplane_mutual_information": 1.6533794974931928
+    },
+    "medium": {
+      "h_x_empirical_pixel_bpp": 4.924489826203607,
+      "h_y_empirical_pixel_bpp": 5.499928226100505,
+      "h_x_given_y_pixelwise_bpp": 3.1890658863801624,
+      "i_x_y_pixelwise_bpp": 1.7354239398234448,
+      "fraction_of_empirical_hx": 0.352406848439226,
+      "residual_entropy_bpp_upper_bound_proxy": 4.58938368148712,
+      "byte_exact_rate": 0.4411073022959184,
+      "bit_agreement": 0.7967390286192602,
+      "bit_planes": [
+        {
+          "plane_msb0": 0,
+          "agreement": 0.9656301817602041,
+          "h_x": 0.8996781063276847,
+          "h_x_given_y": 0.21520615169117874,
+          "mutual_information": 0.6844719546365061
+        },
+        {
+          "plane_msb0": 1,
+          "agreement": 0.9039158163265306,
+          "h_x": 0.8463642166706864,
+          "h_x_given_y": 0.447359719581238,
+          "mutual_information": 0.3990044970894484
+        },
+        {
+          "plane_msb0": 2,
+          "agreement": 0.8293435108418368,
+          "h_x": 0.7953927392580473,
+          "h_x_given_y": 0.6084978034307239,
+          "mutual_information": 0.1868949358273233
+        },
+        {
+          "plane_msb0": 3,
+          "agreement": 0.7856939572704081,
+          "h_x": 0.7934238357845111,
+          "h_x_given_y": 0.6749920086470578,
+          "mutual_information": 0.11843182713745337
+        },
+        {
+          "plane_msb0": 4,
+          "agreement": 0.75216796875,
+          "h_x": 0.8026218486963828,
+          "h_x_given_y": 0.7195123479100883,
+          "mutual_information": 0.08310950078629453
+        },
+        {
+          "plane_msb0": 5,
+          "agreement": 0.7280990911989796,
+          "h_x": 0.8088074920797964,
+          "h_x_given_y": 0.7485612822420713,
+          "mutual_information": 0.060246209837724995
+        },
+        {
+          "plane_msb0": 6,
+          "agreement": 0.711573262117347,
+          "h_x": 0.8161532190614447,
+          "h_x_given_y": 0.7672130602954392,
+          "mutual_information": 0.04894015876600544
+        },
+        {
+          "plane_msb0": 7,
+          "agreement": 0.6974884406887755,
+          "h_x": 0.8220398071625203,
+          "h_x_given_y": 0.7795025802228825,
+          "mutual_information": 0.042537226939637796
+        }
+      ],
+      "sum_bitplane_mutual_information": 1.623636311020394
+    },
+    "weak": {
+      "h_x_empirical_pixel_bpp": 4.924489826203607,
+      "h_y_empirical_pixel_bpp": 5.297647970476028,
+      "h_x_given_y_pixelwise_bpp": 3.308079865924441,
+      "i_x_y_pixelwise_bpp": 1.6164099602791673,
+      "fraction_of_empirical_hx": 0.32823906989879836,
+      "residual_entropy_bpp_upper_bound_proxy": 4.659737617964123,
+      "byte_exact_rate": 0.4455560427295918,
+      "bit_agreement": 0.7944605488679847,
+      "bit_planes": [
+        {
+          "plane_msb0": 0,
+          "agreement": 0.955790019132653,
+          "h_x": 0.8996781063276847,
+          "h_x_given_y": 0.25883962647186454,
+          "mutual_information": 0.6408384798558202
+        },
+        {
+          "plane_msb0": 1,
+          "agreement": 0.8980129942602041,
+          "h_x": 0.8463642166706864,
+          "h_x_given_y": 0.46910793084157787,
+          "mutual_information": 0.3772562858291084
+        },
+        {
+          "plane_msb0": 2,
+          "agreement": 0.8222879464285714,
+          "h_x": 0.7953927392580473,
+          "h_x_given_y": 0.6314908581733516,
+          "mutual_information": 0.16390188108469572
+        },
+        {
+          "plane_msb0": 3,
+          "agreement": 0.7832764668367347,
+          "h_x": 0.7934238357845111,
+          "h_x_given_y": 0.6808542986602446,
+          "mutual_information": 0.11256953712426654
+        },
+        {
+          "plane_msb0": 4,
+          "agreement": 0.7515302136479591,
+          "h_x": 0.8026218486963828,
+          "h_x_given_y": 0.7262230917546515,
+          "mutual_information": 0.07639875694173126
+        },
+        {
+          "plane_msb0": 5,
+          "agreement": 0.7299788743622448,
+          "h_x": 0.8088074920797964,
+          "h_x_given_y": 0.7512559342451886,
+          "mutual_information": 0.05755155783460797
+        },
+        {
+          "plane_msb0": 6,
+          "agreement": 0.7137049585459184,
+          "h_x": 0.8161532190614447,
+          "h_x_given_y": 0.7697114908073388,
+          "mutual_information": 0.04644172825410586
+        },
+        {
+          "plane_msb0": 7,
+          "agreement": 0.7011029177295919,
+          "h_x": 0.8220398071625203,
+          "h_x_given_y": 0.7813911971557752,
+          "mutual_information": 0.040648610006745134
+        }
+      ],
+      "sum_bitplane_mutual_information": 1.5156068369310811
+    }
+  }
+}
