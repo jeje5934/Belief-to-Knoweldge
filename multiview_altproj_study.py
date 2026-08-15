@@ -19,7 +19,6 @@ os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 
 import numpy as np
 import tensorflow as tf
-from scipy.ndimage import affine_transform
 
 tf.config.set_visible_devices([], "GPU")
 
@@ -47,41 +46,81 @@ PIXELS = IMG_H * IMG_W
 BIT_WEIGHTS = np.asarray([128, 64, 32, 16, 8, 4, 2, 1], dtype=np.float64)
 
 
+def _sample_affine_candidates(image, rotations, offsets):
+    """Vectorized bilinear sampler with SciPy ``mode='constant'`` semantics."""
+    yy, xx = np.meshgrid(
+        np.arange(IMG_H, dtype=np.float64),
+        np.arange(IMG_W, dtype=np.float64),
+        indexing="ij",
+    )
+    output = np.stack((yy, xx), axis=0)
+    coords = np.einsum("cij,jhw->cihw", rotations, output)
+    coords += offsets[:, :, None, None]
+    y, x = coords[:, 0], coords[:, 1]
+    valid = (y >= 0.0) & (y <= IMG_H - 1) & (x >= 0.0) & (x <= IMG_W - 1)
+    y0 = np.floor(y).astype(np.intp)
+    x0 = np.floor(x).astype(np.intp)
+    y0c = np.clip(y0, 0, IMG_H - 1)
+    x0c = np.clip(x0, 0, IMG_W - 1)
+    y1c = np.clip(y0 + 1, 0, IMG_H - 1)
+    x1c = np.clip(x0 + 1, 0, IMG_W - 1)
+    wy = y - y0
+    wx = x - x0
+    raw = (
+        (1.0 - wy) * (1.0 - wx) * image[y0c, x0c]
+        + (1.0 - wy) * wx * image[y0c, x1c]
+        + wy * (1.0 - wx) * image[y1c, x0c]
+        + wy * wx * image[y1c, x1c]
+    )
+    raw[~valid] = 0.0
+    return raw.astype(np.float32, copy=False)
+
+
 def estimate_alignment_grid(side, target, strength):
-    """Register side to a first-BP hard image using receiver-visible data only."""
+    """Register side to a first-BP hard image using receiver-visible data only.
+
+    The sampler is local NumPy rather than SciPy: the mixed TensorFlow/PyTorch
+    process intermittently exposes TensorFlow's ``f32`` dtype spelling, which
+    SciPy 1.x cannot allocate after several decoder calls.
+    """
     angles = np.linspace(-strength.max_angle, strength.max_angle, 7)
     shifts = np.linspace(-strength.max_shift, strength.max_shift, 5)
     center = np.asarray([(IMG_H - 1) / 2.0, (IMG_W - 1) / 2.0])
+    transforms = []
+    parameters = []
+    for angle in angles:
+        theta = math.radians(float(angle))
+        c, s = math.cos(theta), math.sin(theta)
+        rotation = np.asarray([[c, s], [-s, c]], dtype=np.float64)
+        for tx in shifts:
+            for ty in shifts:
+                translation = np.asarray([ty, tx], dtype=np.float64)
+                transforms.append((rotation, center + translation - rotation @ center))
+                parameters.append((float(tx), float(ty), float(angle)))
+    rotations = np.stack([item[0] for item in transforms])
+    offsets = np.stack([item[1] for item in transforms])
     aligned = np.empty_like(side, dtype=np.float32)
     estimates = []
     for index, (image, reference) in enumerate(zip(side, target)):
-        best = None
-        for angle in angles:
-            theta = math.radians(float(angle))
-            c, s = math.cos(theta), math.sin(theta)
-            rotation = np.asarray([[c, s], [-s, c]], dtype=np.float64)
-            for tx in shifts:
-                for ty in shifts:
-                    translation = np.asarray([ty, tx], dtype=np.float64)
-                    offset = center + translation - rotation @ center
-                    raw = affine_transform(
-                        image, rotation, offset=offset,
-                        output_shape=(IMG_H, IMG_W), order=1,
-                        mode="constant", cval=0.0, prefilter=False,
-                    )
-                    denom = float(np.sum(raw * raw)) + 1.0e-12
-                    scale = float(np.clip(np.sum(raw * reference) / denom,
-                                          0.5, 2.0))
-                    candidate = np.clip(scale * raw, 0.0, 1.0)
-                    loss = float(np.mean((candidate - reference) ** 2))
-                    if best is None or loss < best[0]:
-                        best = (loss, candidate, float(tx), float(ty),
-                                float(angle), scale)
-        _, candidate, tx, ty, angle, scale = best
+        image = np.asarray(image, dtype=np.float32)
+        reference = np.asarray(reference, dtype=np.float32)
+        raw = _sample_affine_candidates(image, rotations, offsets)
+        denom = np.sum(raw * raw, axis=(1, 2)) + 1.0e-12
+        scale = np.sum(raw * reference[None], axis=(1, 2)) / denom
+        scale = np.minimum(2.0, np.maximum(0.5, scale))
+        candidates = scale[:, None, None] * raw
+        candidates[candidates < 0.0] = 0.0
+        candidates[candidates > 1.0] = 1.0
+        losses = np.mean((candidates - reference[None]) ** 2, axis=(1, 2))
+        best_index = int(np.argmin(losses))
+        candidate = candidates[best_index]
+        tx, ty, angle = parameters[best_index]
+        best_loss = float(losses[best_index])
+        best_scale = float(scale[best_index])
         aligned[index] = candidate
         estimates.append({
             "tx": tx, "ty": ty, "angle_deg": angle,
-            "brightness": float(1.0 / scale), "fit_mse": float(best[0]),
+            "brightness": float(1.0 / best_scale), "fit_mse": best_loss,
         })
     return aligned, estimates
 
@@ -327,6 +366,11 @@ def paired(candidate, reference):
 
 def run(args, configs):
     images, bit_bank = load_fashion_mnist()
+    if args.paired_pool is not None:
+        if args.paired_pool <= 0 or args.paired_pool > len(images):
+            raise ValueError("paired_pool must be within the Fashion-MNIST test set")
+        images = images[:args.paired_pool]
+        bit_bank = bit_bank[:args.paired_pool]
     crc_encoder, crc_decoder, ldpc, mapper, demapper, awgn = make_system()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     decoder, old_proxy, _, _ = build_decoder(
@@ -364,6 +408,7 @@ def run(args, configs):
             "batch": args.batch,
             "snrs_db": args.esn0,
             "seed": args.seed,
+            "paired_pool": args.paired_pool,
             "strength": strength.__dict__,
             "registration": (
                 "oracle inverse affine and brightness"
@@ -519,6 +564,10 @@ def main():
     parser.add_argument("--batch", type=int, default=32)
     parser.add_argument("--esn0", type=float, nargs="+", default=[-2.85])
     parser.add_argument("--seed", type=int, default=20260806)
+    parser.add_argument(
+        "--paired-pool", type=int, default=None,
+        help="restrict source indices so raw and codec archives use identical images",
+    )
     parser.add_argument("--strength", default="strong")
     parser.add_argument("--registration", choices=("oracle", "estimated"),
                         default="oracle")
