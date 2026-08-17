@@ -1,0 +1,390 @@
+{
+  "kind": "site_variance_ep_waterfall_summary",
+  "input_files": [
+    "site_variance_both_waterfall_final.json",
+    "site_variance_both_m255_a512.json",
+    "site_variance_both_m250_256.json",
+    "site_variance_both_m245_256.json"
+  ],
+  "series": {
+    "const": "constant moments (baseline)",
+    "both_c1_cp1": "honest full variance (c=1, c'=1)",
+    "both_c1_cp0.5": "scaled source variance (c=1, c'=0.5)"
+  },
+  "points": {
+    "-2.850": {
+      "const": {
+        "blocks": 256,
+        "failures": 157,
+        "crc_bler": 0.61328125,
+        "wilson_95": [
+          0.5523681228806132,
+          0.6708447883699333
+        ],
+        "payload_ber": 0.09970528738839286,
+        "mean_network_forwards_per_decode": 19.0
+      },
+      "both_c1_cp1": {
+        "blocks": 256,
+        "failures": 222,
+        "crc_bler": 0.8671875,
+        "wilson_95": [
+          0.8201386934302514,
+          0.9033790188991063
+        ],
+        "payload_ber": 0.1477387097417092,
+        "paired_vs_constant": {
+          "broken": 65,
+          "rescued": 0,
+          "net_failure_change": 65,
+          "exact_two_sided_p": 5.421010862427522e-20
+        },
+        "mean_network_forwards_per_decode": 570.0
+      },
+      "both_c1_cp0.5": {
+        "blocks": 256,
+        "failures": 192,
+        "crc_bler": 0.75,
+        "wilson_95": [
+          0.6935238434514225,
+          0.7990839606877146
+        ],
+        "payload_ber": 0.12595725546077807,
+        "paired_vs_constant": {
+          "broken": 35,
+          "rescued": 0,
+          "net_failure_change": 35,
+          "exact_two_sided_p": 5.820766091346741e-11
+        },
+        "mean_network_forwards_per_decode": 570.0
+      }
+    },
+    "-2.700": {
+      "const": {
+        "blocks": 512,
+        "failures": 48,
+        "crc_bler": 0.09375,
+        "wilson_95": [
+          0.07144012440472913,
+          0.12211076408507085
+        ],
+        "payload_ber": 0.015017139668367346,
+        "mean_network_forwards_per_decode": 19.0
+      },
+      "both_c1_cp1": {
+        "blocks": 512,
+        "failures": 187,
+        "crc_bler": 0.365234375,
+        "wilson_95": [
+          0.3246740343542901,
+          0.40780198153896086
+        ],
+        "payload_ber": 0.06013582190688776,
+        "paired_vs_constant": {
+          "broken": 139,
+          "rescued": 0,
+          "net_failure_change": 139,
+          "exact_two_sided_p": 2.8698592549372254e-42
+        },
+        "mean_network_forwards_per_decode": 570.0
+      },
+      "both_c1_cp0.5": {
+        "blocks": 512,
+        "failures": 97,
+        "crc_bler": 0.189453125,
+        "wilson_95": [
+          0.15786963912440316,
+          0.22566204967308817
+        ],
+        "payload_ber": 0.03021956463249362,
+        "paired_vs_constant": {
+          "broken": 49,
+          "rescued": 0,
+          "net_failure_change": 49,
+          "exact_two_sided_p": 3.552713678800501e-15
+        },
+        "mean_network_forwards_per_decode": 570.0
+      }
+    },
+    "-2.600": {
+      "const": {
+        "blocks": 512,
+        "failures": 10,
+        "crc_bler": 0.01953125,
+        "wilson_95": [
+          0.010642806272117005,
+          0.035576032999473345
+        ],
+        "payload_ber": 0.00314144212372449,
+        "mean_network_forwards_per_decode": 19.0
+      },
+      "both_c1_cp1": {
+        "blocks": 512,
+        "failures": 58,
+        "crc_bler": 0.11328125,
+        "wilson_95": [
+          0.08865924065928768,
+          0.14366323973004114
+        ],
+        "payload_ber": 0.01856216119260204,
+        "paired_vs_constant": {
+          "broken": 48,
+          "rescued": 0,
+          "net_failure_change": 48,
+          "exact_two_sided_p": 7.105427357601002e-15
+        },
+        "mean_network_forwards_per_decode": 570.0
+      },
+      "both_c1_cp0.5": {
+        "blocks": 512,
+        "failures": 22,
+        "crc_bler": 0.04296875,
+        "wilson_95": [
+          0.02854448597889896,
+          0.06420026357212602
+        ],
+        "payload_ber": 0.007143604512117347,
+        "paired_vs_constant": {
+          "broken": 12,
+          "rescued": 0,
+          "net_failure_change": 12,
+          "exact_two_sided_p": 0.00048828125
+        },
+        "mean_network_forwards_per_decode": 570.0
+      }
+    },
+    "-2.550": {
+      "const": {
+        "blocks": 512,
+        "failures": 4,
+        "crc_bler": 0.0078125,
+        "wilson_95": [
+          0.0030421527296632823,
+          0.019913731402209756
+        ],
+        "payload_ber": 0.0011101547552614796,
+        "mean_network_forwards_per_decode": 19.0
+      },
+      "both_c1_cp1": {
+        "blocks": 512,
+        "failures": 25,
+        "crc_bler": 0.048828125,
+        "wilson_95": [
+          0.033289197524102775,
+          0.07108702959678084
+        ],
+        "payload_ber": 0.00772281568877551,
+        "paired_vs_constant": {
+          "broken": 21,
+          "rescued": 0,
+          "net_failure_change": 21,
+          "exact_two_sided_p": 9.5367431640625e-07
+        },
+        "mean_network_forwards_per_decode": 570.0
+      },
+      "both_c1_cp0.5": {
+        "blocks": 512,
+        "failures": 6,
+        "crc_bler": 0.01171875,
+        "wilson_95": [
+          0.0053814982556274,
+          0.02532870425615141
+        ],
+        "payload_ber": 0.0019425372688137755,
+        "paired_vs_constant": {
+          "broken": 3,
+          "rescued": 1,
+          "net_failure_change": 2,
+          "exact_two_sided_p": 0.625
+        },
+        "mean_network_forwards_per_decode": 570.0
+      }
+    },
+    "-2.500": {
+      "const": {
+        "blocks": 256,
+        "failures": 1,
+        "crc_bler": 0.00390625,
+        "wilson_95": [
+          0.0006898644160236098,
+          0.02179152424537626
+        ],
+        "payload_ber": 0.0006259217554209184,
+        "mean_network_forwards_per_decode": 19.0
+      },
+      "both_c1_cp1": {
+        "blocks": 256,
+        "failures": 7,
+        "crc_bler": 0.02734375,
+        "wilson_95": [
+          0.013306986698200709,
+          0.05535638360124326
+        ],
+        "payload_ber": 0.004732715840242347,
+        "paired_vs_constant": {
+          "broken": 6,
+          "rescued": 0,
+          "net_failure_change": 6,
+          "exact_two_sided_p": 0.03125
+        },
+        "mean_network_forwards_per_decode": 570.0
+      },
+      "both_c1_cp0.5": {
+        "blocks": 256,
+        "failures": 1,
+        "crc_bler": 0.00390625,
+        "wilson_95": [
+          0.0006898644160236098,
+          0.02179152424537626
+        ],
+        "payload_ber": 0.0006184480628188776,
+        "paired_vs_constant": {
+          "broken": 0,
+          "rescued": 0,
+          "net_failure_change": 0,
+          "exact_two_sided_p": 1.0
+        },
+        "mean_network_forwards_per_decode": 570.0
+      }
+    },
+    "-2.450": {
+      "const": {
+        "blocks": 256,
+        "failures": 0,
+        "crc_bler": 0.0,
+        "wilson_95": [
+          0.0,
+          0.014784391721725854
+        ],
+        "payload_ber": 0.0,
+        "mean_network_forwards_per_decode": 19.0
+      },
+      "both_c1_cp1": {
+        "blocks": 256,
+        "failures": 1,
+        "crc_bler": 0.00390625,
+        "wilson_95": [
+          0.0006898644160236098,
+          0.02179152424537626
+        ],
+        "payload_ber": 0.0006676498724489796,
+        "paired_vs_constant": {
+          "broken": 1,
+          "rescued": 0,
+          "net_failure_change": 1,
+          "exact_two_sided_p": 1.0
+        },
+        "mean_network_forwards_per_decode": 570.0
+      },
+      "both_c1_cp0.5": {
+        "blocks": 256,
+        "failures": 0,
+        "crc_bler": 0.0,
+        "wilson_95": [
+          0.0,
+          0.014784391721725854
+        ],
+        "payload_ber": 0.0,
+        "paired_vs_constant": {
+          "broken": 0,
+          "rescued": 0,
+          "net_failure_change": 0,
+          "exact_two_sided_p": 1.0
+        },
+        "mean_network_forwards_per_decode": 570.0
+      }
+    }
+  },
+  "knees": {
+    "const": {
+      "bler_1e-1": {
+        "estimate_db": -2.7051543070673776,
+        "bracket": [
+          [
+            -2.85,
+            0.61328125
+          ],
+          [
+            -2.7,
+            0.09375
+          ]
+        ],
+        "method": "linear interpolation in log10(BLER)"
+      },
+      "bler_1e-2": {
+        "estimate_db": -2.5634706196049044,
+        "bracket": [
+          [
+            -2.6,
+            0.01953125
+          ],
+          [
+            -2.55,
+            0.0078125
+          ]
+        ],
+        "method": "linear interpolation in log10(BLER)"
+      }
+    },
+    "both_c1_cp1": {
+      "bler_1e-1": {
+        "estimate_db": -2.592590996855441,
+        "bracket": [
+          [
+            -2.6,
+            0.11328125
+          ],
+          [
+            -2.55,
+            0.048828125
+          ]
+        ],
+        "method": "linear interpolation in log10(BLER)"
+      },
+      "bler_1e-2": {
+        "estimate_db": -2.474153408597715,
+        "bracket": [
+          [
+            -2.5,
+            0.02734375
+          ],
+          [
+            -2.45,
+            0.00390625
+          ]
+        ],
+        "method": "linear interpolation in log10(BLER)"
+      }
+    },
+    "both_c1_cp0.5": {
+      "bler_1e-1": {
+        "estimate_db": -2.6569330052077875,
+        "bracket": [
+          [
+            -2.7,
+            0.189453125
+          ],
+          [
+            -2.6,
+            0.04296875
+          ]
+        ],
+        "method": "linear interpolation in log10(BLER)"
+      },
+      "bler_1e-2": {
+        "estimate_db": -2.5427815739996444,
+        "bracket": [
+          [
+            -2.55,
+            0.01171875
+          ],
+          [
+            -2.5,
+            0.00390625
+          ]
+        ],
+        "method": "linear interpolation in log10(BLER)"
+      }
+    }
+  }
+}
